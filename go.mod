@@ -1,1 +1,1 @@
-module github.com/fluxynet/somesql
+module github.com/lsldigital/somesql

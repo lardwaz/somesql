@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/fluxynet/somesql"
+	"github.com/lsldigital/somesql"
 )
 
 func TestConditionIn(t *testing.T) {

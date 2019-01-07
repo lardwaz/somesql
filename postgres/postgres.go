@@ -1,6 +1,6 @@
 package postgres
 
-import "github.com/fluxynet/somesql"
+import "github.com/lsldigital/somesql"
 
 //Query represents a query implementation in postgresql database backend
 type Query struct {

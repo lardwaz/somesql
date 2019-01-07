@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/fluxynet/somesql"
-	"github.com/fluxynet/somesql/postgres"
+	"github.com/lsldigital/somesql"
+	"github.com/lsldigital/somesql/postgres"
 )
 
 func TestConditionQuery(t *testing.T) {
