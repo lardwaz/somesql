@@ -3,8 +3,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 DROP TABLE IF EXISTS datarepositories;
 CREATE TABLE datarepositories (
     "id"         UUID      NOT NULL DEFAULT uuid_generate_v4(),
-    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT timezone('Indian/Mauritius'::TEXT, NOW()),
-    "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT timezone('Indian/Mauritius'::TEXT, NOW()),
+    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Indian/Mauritius'::TEXT),
+    "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Indian/Mauritius'::TEXT),
     "status"     TEXT      NOT NULL DEFAULT 'draft',
     "owner_id"   UUID      NOT NULL DEFAULT uuid_nil(),
     "type"       TEXT      NOT NULL DEFAULT 'draft',
