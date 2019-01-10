@@ -60,12 +60,21 @@ func (c conditionClause) ConditionType() uint8 {
 // AsSQL to satisfy interface Condition
 func (c conditionClause) AsSQL() (string, []interface{}) {
 	var (
-		lhs, rhs string
-		values   []interface{}
+		lhs, rhs, field string
+		// values          []interface{}
 	)
 
-	if c.FieldFunction != None {
-		lhs = c.FieldFunction + "(" + c.Field + ")"
+	switch c.Field {
+	case "id", "created_at", "updated_at", "status", "owner_id", "type", "slug", "data":
+		field = c.Field
+	default:
+		field = `"data"->>'` + c.Field + `'`
+	}
+
+	if c.FieldFunction == None {
+		lhs = field
+	} else {
+		lhs = c.FieldFunction + "(" + field + ")"
 	}
 
 	if c.ValueFunction != None {
@@ -74,5 +83,5 @@ func (c conditionClause) AsSQL() (string, []interface{}) {
 		rhs = "?"
 	}
 
-	return lhs + c.Operator + rhs, values
+	return lhs + c.Operator + rhs, []interface{}{c.value}
 }

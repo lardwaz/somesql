@@ -1,10 +1,11 @@
 package somesql_test
 
 import (
-	"reflect"
+	"fmt"
 	"testing"
 
 	"github.com/lsldigital/somesql"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConditionClause(t *testing.T) {
@@ -37,7 +38,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{},
 			},
-			` AND data->>"name"=?`,
+			`"data"->>'name'=?`,
 			[]interface{}{"John Doe"},
 			caseAnd,
 		},
@@ -49,7 +50,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"", "LOWER"},
 			},
-			` AND "data"->>'name'=LOWER(?)`,
+			`"data"->>'name'=LOWER(?)`,
 			[]interface{}{"John Doe"},
 			caseAnd,
 		},
@@ -61,7 +62,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"LOWER"},
 			},
-			` AND LOWER(data->>"name")=?`,
+			`LOWER("data"->>'name')=?`,
 			[]interface{}{"John Doe"},
 			caseAnd,
 		},
@@ -73,7 +74,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"LOWER", "LOWER"},
 			},
-			` AND LOWER(data->>"name")=LOWER(?)`,
+			`LOWER("data"->>'name')=LOWER(?)`,
 			[]interface{}{"John Doe"},
 			caseAnd,
 		},
@@ -85,7 +86,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{},
 			},
-			` AND "data"->>'name' = ?`,
+			`"data"->>'name'=?`,
 			[]interface{}{"John Doe"},
 			caseAnd,
 		},
@@ -97,7 +98,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"", "LOWER"},
 			},
-			` AND "data"->>'name'=LOWER(?)`,
+			`"data"->>'name'=LOWER(?)`,
 			[]interface{}{"John Doe"},
 			caseAnd,
 		},
@@ -109,7 +110,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"LOWER"},
 			},
-			` AND LOWER("data"->>'name')=?`,
+			`LOWER("data"->>'name')=?`,
 			[]interface{}{"John Doe"},
 			caseAnd,
 		},
@@ -121,7 +122,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"LOWER", "LOWER"},
 			},
-			` AND LOWER("data"->>'name')=LOWER(?)`,
+			`LOWER("data"->>'name')=LOWER(?)`,
 			[]interface{}{"John Doe"},
 			caseAnd,
 		},
@@ -134,7 +135,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{},
 			},
-			` OR "data"->>'name'=?`,
+			`"data"->>'name'=?`,
 			[]interface{}{"John Doe"},
 			caseOr,
 		},
@@ -146,7 +147,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"LOWER"},
 			},
-			` OR LOWER("data"->>'name')=?`,
+			`LOWER("data"->>'name')=?`,
 			[]interface{}{"John Doe"},
 			caseOr,
 		},
@@ -158,7 +159,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"", "LOWER"},
 			},
-			` OR "data"->>'name'=LOWER(?)`,
+			`"data"->>'name'=LOWER(?)`,
 			[]interface{}{"John Doe"},
 			caseOr,
 		},
@@ -170,7 +171,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"LOWER", "LOWER"},
 			},
-			` OR LOWER("data"->>'name')=LOWER(?)`,
+			`LOWER("data"->>'name')=LOWER(?)`,
 			[]interface{}{"John Doe"},
 			caseOr,
 		},
@@ -182,7 +183,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{},
 			},
-			` OR "data"->'name' = ?`,
+			`"data"->>'name'=?`,
 			[]interface{}{"John Doe"},
 			caseOr,
 		},
@@ -194,7 +195,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"", "LOWER"},
 			},
-			` OR "data"->>'name'=LOWER(?)`,
+			`"data"->>'name'=LOWER(?)`,
 			[]interface{}{"John Doe"},
 			caseOr,
 		},
@@ -206,7 +207,7 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"LOWER"},
 			},
-			` OR LOWER("data"->>'name')=?`,
+			`LOWER("data"->>'name')=?`,
 			[]interface{}{"John Doe"},
 			caseOr,
 		},
@@ -218,32 +219,36 @@ func TestConditionClause(t *testing.T) {
 				value:    "John Doe",
 				funcs:    []string{"LOWER", "LOWER"},
 			},
-			` OR LOWER("data"->>'name')=LOWER(?)`,
+			`LOWER("data"->>'name')=LOWER(?)`,
 			[]interface{}{"John Doe"},
 			caseOr,
 		},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
 			var (
-				sql    string
-				values interface{}
+				sql       string
+				values    interface{}
+				condition somesql.Condition
 			)
 
 			if tt.caseType == caseAnd {
-				sql, values = somesql.And(tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...).AsSQL()
+				condition = somesql.And(tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
 			} else {
-				sql, values = somesql.Or(tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...).AsSQL()
+				condition = somesql.Or(tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
 			}
 
-			if tt.sql != sql {
-				t.Errorf("Got %s, want %s", sql, tt.sql)
-			}
+			sql, values = condition.AsSQL()
 
-			if !reflect.DeepEqual(values, tt.values) {
-				t.Errorf("Values = %v, want %v", values, tt.values)
+			assert.Equal(t, tt.sql, sql, fmt.Sprintf("%d: SQL invalid", i+1))
+			assert.Equal(t, tt.values, values, fmt.Sprintf("%d: Values invalid", i+1))
+
+			if tt.caseType == caseAnd {
+				assert.Equal(t, somesql.AndCondition, condition.ConditionType(), fmt.Sprintf("%d: Condition type must be AND", i+1))
+			} else {
+				assert.Equal(t, somesql.OrCondition, condition.ConditionType(), fmt.Sprintf("%d: Condition type must be OR", i+1))
 			}
 		})
 	}
