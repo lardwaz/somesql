@@ -34,45 +34,186 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN",
 			args{
-				field:    "name",
+				field:    "id",
 				operator: "IN",
 				value:    []string{"A", "B", "C"},
 			},
-			" AND name IN (?,?,?)", //TODO field according to db
+			"id IN (?,?,?)",
 			[]interface{}{"A", "B", "C"},
+			caseAndIn,
+		},
+		{
+			"AND IN (with func on field)",
+			args{
+				field:    "updated_at",
+				operator: "IN",
+				value:    []string{"2019"},
+				funcs:    []string{"YEAR"},
+			},
+			"YEAR(updated_at) IN (?)",
+			[]interface{}{"2019"},
 			caseAndIn,
 		},
 		{
 			"AND NOT IN",
 			args{
-				field:    "name",
+				field:    "id",
 				operator: "NOT IN",
 				value:    []string{"A", "B", "C"},
 			},
-			" AND name NOT IN (?,?,?)", //TODO field according to db
+			"id NOT IN (?,?,?)",
 			[]interface{}{"A", "B", "C"},
 			caseAndNotIn,
 		},
 		{
-			"OR IN",
+			"AND NOT IN (with func on field)",
+			args{
+				field:    "updated_at",
+				operator: "NOT IN",
+				value:    []string{"2016"},
+				funcs:    []string{"YEAR"},
+			},
+			"YEAR(updated_at) NOT IN (?)",
+			[]interface{}{"2016"},
+			caseAndNotIn,
+		},
+		{
+			"AND IN (JSONB)",
 			args{
 				field:    "name",
 				operator: "IN",
 				value:    []string{"A", "B", "C"},
 			},
-			" OR name IN (?,?,?)", //TODO field according to db
+			`"data"->>'name' IN (?,?,?)`,
 			[]interface{}{"A", "B", "C"},
+			caseAndIn,
+		},
+		{
+			"AND IN (JSONB) (with func on field)",
+			args{
+				field:    "badge",
+				operator: "IN",
+				value:    []string{"video", "audio"},
+				funcs:    []string{"LOWER"},
+			},
+			`LOWER("data"->>'badge') IN (?,?)`,
+			[]interface{}{"video", "audio"},
+			caseAndIn,
+		},
+		{
+			"AND NOT IN (JSONB)",
+			args{
+				field:    "name",
+				operator: "NOT IN",
+				value:    []string{"A", "B", "C"},
+			},
+			`"data"->>'name' NOT IN (?,?,?)`,
+			[]interface{}{"A", "B", "C"},
+			caseAndNotIn,
+		},
+		{
+			"AND NOT IN (JSONB) (with func on field)",
+			args{
+				field:    "name",
+				operator: "NOT IN",
+				value:    []string{"video", "audio"},
+				funcs:    []string{"LOWER"},
+			},
+			`LOWER("data"->>'badge') NOT IN (?,?)`,
+			[]interface{}{"video", "audio"},
+			caseAndNotIn,
+		},
+
+		{
+			"OR IN",
+			args{
+				field:    "id",
+				operator: "IN",
+				value:    []string{"A", "B", "C"},
+			},
+			"id IN (?,?,?)",
+			[]interface{}{"A", "B", "C"},
+			caseOrIn,
+		},
+		{
+			"OR IN (with func on field)",
+			args{
+				field:    "updated_at",
+				operator: "IN",
+				value:    []string{"2019"},
+				funcs:    []string{"YEAR"},
+			},
+			"YEAR(updated_at) IN (?)",
+			[]interface{}{"2019"},
 			caseOrIn,
 		},
 		{
 			"OR NOT IN",
 			args{
+				field:    "id",
+				operator: "IN",
+				value:    []string{"A", "B", "C"},
+			},
+			"id NOT IN (?,?,?)",
+			[]interface{}{"A", "B", "C"},
+			caseOrNotIn,
+		},
+		{
+			"OR NOT IN (with func on field)",
+			args{
+				field:    "updated_at",
+				operator: "NOT IN",
+				value:    []string{"2015"},
+				funcs:    []string{"YEAR"},
+			},
+			"YEAR(updated_at) NOT IN (?)",
+			[]interface{}{"2015"},
+			caseOrNotIn,
+		},
+		{
+			"OR IN (JSONB)",
+			args{
 				field:    "name",
 				operator: "IN",
 				value:    []string{"A", "B", "C"},
 			},
-			" OR name NOT IN (?,?,?)", //TODO field according to db
+			`"data"->>'name' IN (?,?,?)`,
 			[]interface{}{"A", "B", "C"},
+			caseOrIn,
+		},
+		{
+			"OR IN (JSONB) (with func on field)",
+			args{
+				field:    "badge",
+				operator: "IN",
+				value:    []string{"video", "audio"},
+				funcs:    []string{"LOWER"},
+			},
+			`LOWER("data"->>'badge') IN (?,?)`,
+			[]interface{}{"video", "audio"},
+			caseOrIn,
+		},
+		{
+			"OR NOT IN (JSONB)",
+			args{
+				field:    "name",
+				operator: "NOT IN",
+				value:    []string{"A", "B", "C"},
+			},
+			`"data"->>'name' NOT IN (?,?,?)`,
+			[]interface{}{"A", "B", "C"},
+			caseOrNotIn,
+		},
+		{
+			"OR NOT IN (JSONB) (with func on field)",
+			args{
+				field:    "badge",
+				operator: "NOT IN",
+				value:    []string{"video", "audio"},
+				funcs:    []string{"LOWER"},
+			},
+			`LOWER("data"->>'badge') NOT IN (?,?)`,
+			[]interface{}{"video", "audio"},
 			caseOrNotIn,
 		},
 	}
