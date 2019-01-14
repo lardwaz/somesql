@@ -43,6 +43,18 @@ func TestConditionClause(t *testing.T) {
 			caseAnd,
 		},
 		{
+			"AND Normal (boolean)",
+			args{
+				field:    "status",
+				operator: "=",
+				value:    true,
+				funcs:    []string{},
+			},
+			"status=?",
+			[]interface{}{true},
+			caseAnd,
+		},
+		{
 			"AND with func on value",
 			args{
 				field:    "type",
@@ -88,6 +100,18 @@ func TestConditionClause(t *testing.T) {
 			},
 			`"data"->>'name'=?`,
 			[]interface{}{"John Doe"},
+			caseAnd,
+		},
+		{
+			"AND JSONB (boolean)",
+			args{
+				field:    "has_video",
+				operator: "=",
+				value:    true,
+				funcs:    []string{},
+			},
+			`("data"->>'has_video')::BOOLEAN=?`,
+			[]interface{}{true},
 			caseAnd,
 		},
 		{
