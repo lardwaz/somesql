@@ -1,10 +1,11 @@
 package somesql_test
 
 import (
-	"reflect"
+	"fmt"
 	"testing"
 
 	"github.com/lsldigital/somesql"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConditionIn(t *testing.T) {
@@ -218,7 +219,7 @@ func TestConditionIn(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
 			var (
@@ -237,13 +238,8 @@ func TestConditionIn(t *testing.T) {
 				sql, values = somesql.OrNotIn(tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...).AsSQL()
 			}
 
-			if tt.sql != sql {
-				t.Errorf("Got %s, want %s", sql, tt.sql)
-			}
-
-			if !reflect.DeepEqual(values, tt.values) {
-				t.Errorf("Values = %v, want %v", values, tt.values)
-			}
+			assert.Equal(t, tt.sql, sql, fmt.Sprintf("%d: SQL invalid", i+1))
+			assert.Equal(t, tt.values, values, fmt.Sprintf("%d: Values invalid", i+1))
 		})
 	}
 }
