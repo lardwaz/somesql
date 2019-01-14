@@ -1,0 +1,16 @@
+version: "2"
+
+services:
+  postgres:
+    container_name: somesql-postgres
+    hostname: somesql-postgres-DEV
+    image: postgres:10-alpine
+    ports:
+      - "8432:5432"
+    environment:
+      - POSTGRES_USER=somesql
+      - POSTGRES_PASSWORD=somesql
+      - POSTGRES_DB=somesql
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./repo.sql:/docker-entrypoint-initdb.d/repo.sql
