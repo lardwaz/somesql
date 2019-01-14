@@ -16,17 +16,16 @@ func TestConditionIn(t *testing.T) {
 	)
 
 	type args struct {
-		field    string
-		operator string
-		value    interface{}
-		funcs    []string
+		field string
+		value interface{}
+		funcs []string
 	}
 
 	type testcase struct {
 		name     string
 		args     args
 		sql      string
-		values   []interface{}
+		values   interface{}
 		caseType uint8
 	}
 
@@ -34,9 +33,8 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN",
 			args{
-				field:    "id",
-				operator: "IN",
-				value:    []string{"A", "B", "C"},
+				field: "id",
+				value: []string{"A", "B", "C"},
 			},
 			"id IN (?,?,?)",
 			[]interface{}{"A", "B", "C"},
@@ -45,10 +43,9 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (with func on field)",
 			args{
-				field:    "updated_at",
-				operator: "IN",
-				value:    []string{"2019"},
-				funcs:    []string{"YEAR"},
+				field: "updated_at",
+				value: []string{"2019"},
+				funcs: []string{"YEAR"},
 			},
 			"YEAR(updated_at) IN (?)",
 			[]interface{}{"2019"},
@@ -57,9 +54,8 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN",
 			args{
-				field:    "id",
-				operator: "NOT IN",
-				value:    []string{"A", "B", "C"},
+				field: "id",
+				value: []string{"A", "B", "C"},
 			},
 			"id NOT IN (?,?,?)",
 			[]interface{}{"A", "B", "C"},
@@ -68,10 +64,9 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN (with func on field)",
 			args{
-				field:    "updated_at",
-				operator: "NOT IN",
-				value:    []string{"2016"},
-				funcs:    []string{"YEAR"},
+				field: "updated_at",
+				value: []string{"2016"},
+				funcs: []string{"YEAR"},
 			},
 			"YEAR(updated_at) NOT IN (?)",
 			[]interface{}{"2016"},
@@ -80,9 +75,8 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (JSONB)",
 			args{
-				field:    "name",
-				operator: "IN",
-				value:    []string{"A", "B", "C"},
+				field: "name",
+				value: []string{"A", "B", "C"},
 			},
 			`"data"->>'name' IN (?,?,?)`,
 			[]interface{}{"A", "B", "C"},
@@ -91,10 +85,9 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (JSONB) (with func on field)",
 			args{
-				field:    "badge",
-				operator: "IN",
-				value:    []string{"video", "audio"},
-				funcs:    []string{"LOWER"},
+				field: "badge",
+				value: []string{"video", "audio"},
+				funcs: []string{"LOWER"},
 			},
 			`LOWER("data"->>'badge') IN (?,?)`,
 			[]interface{}{"video", "audio"},
@@ -103,9 +96,8 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN (JSONB)",
 			args{
-				field:    "name",
-				operator: "NOT IN",
-				value:    []string{"A", "B", "C"},
+				field: "name",
+				value: []string{"A", "B", "C"},
 			},
 			`"data"->>'name' NOT IN (?,?,?)`,
 			[]interface{}{"A", "B", "C"},
@@ -114,12 +106,11 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN (JSONB) (with func on field)",
 			args{
-				field:    "name",
-				operator: "NOT IN",
-				value:    []string{"video", "audio"},
-				funcs:    []string{"LOWER"},
+				field: "name",
+				value: []string{"video", "audio"},
+				funcs: []string{"LOWER"},
 			},
-			`LOWER("data"->>'badge') NOT IN (?,?)`,
+			`LOWER("data"->>'name') NOT IN (?,?)`,
 			[]interface{}{"video", "audio"},
 			caseAndNotIn,
 		},
@@ -127,9 +118,8 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN",
 			args{
-				field:    "id",
-				operator: "IN",
-				value:    []string{"A", "B", "C"},
+				field: "id",
+				value: []string{"A", "B", "C"},
 			},
 			"id IN (?,?,?)",
 			[]interface{}{"A", "B", "C"},
@@ -138,10 +128,9 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN (with func on field)",
 			args{
-				field:    "updated_at",
-				operator: "IN",
-				value:    []string{"2019"},
-				funcs:    []string{"YEAR"},
+				field: "updated_at",
+				value: []string{"2019"},
+				funcs: []string{"YEAR"},
 			},
 			"YEAR(updated_at) IN (?)",
 			[]interface{}{"2019"},
@@ -150,9 +139,8 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN",
 			args{
-				field:    "id",
-				operator: "IN",
-				value:    []string{"A", "B", "C"},
+				field: "id",
+				value: []string{"A", "B", "C"},
 			},
 			"id NOT IN (?,?,?)",
 			[]interface{}{"A", "B", "C"},
@@ -161,10 +149,9 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN (with func on field)",
 			args{
-				field:    "updated_at",
-				operator: "NOT IN",
-				value:    []string{"2015"},
-				funcs:    []string{"YEAR"},
+				field: "updated_at",
+				value: []string{"2015"},
+				funcs: []string{"YEAR"},
 			},
 			"YEAR(updated_at) NOT IN (?)",
 			[]interface{}{"2015"},
@@ -173,9 +160,8 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN (JSONB)",
 			args{
-				field:    "name",
-				operator: "IN",
-				value:    []string{"A", "B", "C"},
+				field: "name",
+				value: []string{"A", "B", "C"},
 			},
 			`"data"->>'name' IN (?,?,?)`,
 			[]interface{}{"A", "B", "C"},
@@ -184,10 +170,9 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN (JSONB) (with func on field)",
 			args{
-				field:    "badge",
-				operator: "IN",
-				value:    []string{"video", "audio"},
-				funcs:    []string{"LOWER"},
+				field: "badge",
+				value: []string{"video", "audio"},
+				funcs: []string{"LOWER"},
 			},
 			`LOWER("data"->>'badge') IN (?,?)`,
 			[]interface{}{"video", "audio"},
@@ -196,9 +181,8 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN (JSONB)",
 			args{
-				field:    "name",
-				operator: "NOT IN",
-				value:    []string{"A", "B", "C"},
+				field: "name",
+				value: []string{"A", "B", "C"},
 			},
 			`"data"->>'name' NOT IN (?,?,?)`,
 			[]interface{}{"A", "B", "C"},
@@ -207,10 +191,9 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN (JSONB) (with func on field)",
 			args{
-				field:    "badge",
-				operator: "NOT IN",
-				value:    []string{"video", "audio"},
-				funcs:    []string{"LOWER"},
+				field: "badge",
+				value: []string{"video", "audio"},
+				funcs: []string{"LOWER"},
 			},
 			`LOWER("data"->>'badge') NOT IN (?,?)`,
 			[]interface{}{"video", "audio"},
@@ -228,13 +211,13 @@ func TestConditionIn(t *testing.T) {
 
 			switch tt.caseType {
 			case caseAndIn:
-				sql, values = somesql.AndIn(tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...).AsSQL()
+				sql, values = somesql.AndIn(tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
 			case caseOrIn:
-				sql, values = somesql.OrIn(tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...).AsSQL()
+				sql, values = somesql.OrIn(tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
 			case caseAndNotIn:
-				sql, values = somesql.AndNotIn(tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...).AsSQL()
+				sql, values = somesql.AndNotIn(tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
 			case caseOrNotIn:
-				sql, values = somesql.OrNotIn(tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...).AsSQL()
+				sql, values = somesql.OrNotIn(tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
 			}
 
 			if tt.sql != sql {

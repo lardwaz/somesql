@@ -20,14 +20,7 @@ type ConditionClause struct {
 // one instance of each at runtime
 func andor(conditionType uint8) func(field, operator string, value interface{}, funcs ...string) ConditionClause {
 	return func(field, operator string, value interface{}, funcs ...string) ConditionClause {
-		var fieldFunction, valueFunction string
-
-		if l := len(funcs); l == 2 {
-			fieldFunction = funcs[0]
-			valueFunction = funcs[1]
-		} else if l == 1 {
-			fieldFunction = funcs[0]
-		}
+		fieldFunction, valueFunction := getFieldValueFunctions(funcs)
 
 		return ConditionClause{
 			Type:          conditionType,
