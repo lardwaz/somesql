@@ -7,13 +7,13 @@ type ConditionGroup struct {
 }
 
 //AndGroup creates a condition group in the format AND((condition1) OR (condition2) AND (condition3))
-func AndGroup(conditions ...Condition) Condition {
+func AndGroup(conditions ...Condition) ConditionGroup {
 	panic("not implemented")
 	return ConditionGroup{}
 }
 
 //OrGroup creates a condition group in the format OR((condition1) OR (condition2) AND (condition3))
-func OrGroup(conditions ...Condition) Condition {
+func OrGroup(conditions ...Condition) ConditionGroup {
 	panic("not implemented")
 	return ConditionGroup{}
 }

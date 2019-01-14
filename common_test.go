@@ -1,51 +1,52 @@
 package somesql
 
-import "testing"
+import (
+	"fmt"
+	"testing"
 
-func Test_getFieldValueFunctions(t *testing.T) {
+	"github.com/stretchr/testify/assert"
+)
+
+func TestGetFieldValueFunctions(t *testing.T) {
 	type args struct {
 		funcs []string
 	}
 	tests := []struct {
 		name  string
 		args  args
-		want  string
-		want1 string
+		field string
+		value string
 	}{
 		{
 			name:  "Zero",
 			args:  args{},
-			want:  "",
-			want1: "",
+			field: "",
+			value: "",
 		},
 		{
 			name:  "One",
 			args:  args{funcs: []string{"FOO"}},
-			want:  "FOO",
-			want1: "",
+			field: "FOO",
+			value: "",
 		},
 		{
 			name:  "Two",
 			args:  args{funcs: []string{"FOO", "BAR"}},
-			want:  "FOO",
-			want1: "BAR",
+			field: "FOO",
+			value: "BAR",
 		},
 		{
 			name:  "More",
 			args:  args{funcs: []string{"FOO", "BAR", "BAZ", "BOINK"}},
-			want:  "FOO",
-			want1: "BAR",
+			field: "FOO",
+			value: "BAR",
 		},
 	}
-	for _, tt := range tests {
+	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := getFieldValueFunctions(tt.args.funcs)
-			if got != tt.want {
-				t.Errorf("getFieldValueFunctions() got = %v, want %v", got, tt.want)
-			}
-			if got1 != tt.want1 {
-				t.Errorf("getFieldValueFunctions() got1 = %v, want %v", got1, tt.want1)
-			}
+			field, value := getFieldValueFunctions(tt.args.funcs)
+			assert.Equal(t, tt.field, field, fmt.Sprintf("%d: Field function invalid", i))
+			assert.Equal(t, tt.value, value, fmt.Sprintf("%d: Value function invalid", i))
 		})
 	}
 }
