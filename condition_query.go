@@ -1,38 +1,38 @@
 package somesql
 
-type conditionQuery struct {
+type ConditionQuery struct {
 	Type uint8
 }
 
 // AndInQuery returns a condition in the format IN(?,?,?) adjoined with AND
-func AndInQuery(fieldname string, query Query) Condition {
+func AndInQuery(fieldname string, query Query) ConditionQuery {
 	panic("not implemented")
-	return inCondition{}
+	return ConditionQuery{}
 }
 
 // OrInQuery returns a condition in the format IN(?,?,?) adjoined with OR
-func OrInQuery(fieldname string, query Query) Condition {
+func OrInQuery(fieldname string, query Query) ConditionQuery {
 	panic("not implemented")
-	return inCondition{}
+	return ConditionQuery{}
 }
 
 // AndNotInQuery returns a condition in the format NOT IN(?,?,?) adjoined with AND
-func AndNotInQuery(fieldname string, query Query) Condition {
+func AndNotInQuery(fieldname string, query Query) ConditionQuery {
 	panic("not implemented")
-	return inCondition{}
+	return ConditionQuery{}
 }
 
 // OrNotInQuery returns a condition in the format NOT IN(?,?,?) adjoined with OR
-func OrNotInQuery(fieldname string, query Query) Condition {
+func OrNotInQuery(fieldname string, query Query) ConditionQuery {
 	panic("not implemented")
-	return inCondition{}
+	return ConditionQuery{}
 }
 
-func (c conditionQuery) ConditionType() uint8 {
+func (c ConditionQuery) ConditionType() uint8 {
 	return c.Type
 }
 
-func (c conditionQuery) AsSQL() (string, []interface{}) {
+func (c ConditionQuery) AsSQL() (string, []interface{}) {
 	panic("not implemented")
 	return "", nil
 }

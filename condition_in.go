@@ -2,40 +2,40 @@ package somesql
 
 import "strings"
 
-type inCondition struct {
+type ConditionIn struct {
 	Type uint8
 }
 
 // AndIn returns a condition in the format IN(?,?,?) adjoined with AND
-func AndIn(field, operator string, value interface{}, funcs ...string) Condition {
+func AndIn(field, operator string, value interface{}, funcs ...string) ConditionIn {
 	panic("not implemented")
-	return inCondition{}
+	return ConditionIn{}
 }
 
 // OrIn returns a condition in the format IN(?,?,?) adjoined with OR
-func OrIn(field, operator string, value interface{}, funcs ...string) Condition {
+func OrIn(field, operator string, value interface{}, funcs ...string) ConditionIn {
 	panic("not implemented")
-	return inCondition{}
+	return ConditionIn{}
 }
 
 // AndNotIn returns a condition in the format NOT IN(?,?,?) adjoined with AND
-func AndNotIn(field, operator string, value interface{}, funcs ...string) Condition {
+func AndNotIn(field, operator string, value interface{}, funcs ...string) ConditionIn {
 	panic("not implemented")
-	return inCondition{}
+	return ConditionIn{}
 }
 
 // OrNotIn returns a condition in the format NOT IN(?,?,?) adjoined with OR
-func OrNotIn(field, operator string, value interface{}, funcs ...string) Condition {
+func OrNotIn(field, operator string, value interface{}, funcs ...string) ConditionIn {
 	panic("not implemented")
-	return inCondition{}
+	return ConditionIn{}
 }
 
 // ConditionType to satisfy interface Condition
-func (c inCondition) ConditionType() uint8 {
+func (c ConditionIn) ConditionType() uint8 {
 	return c.Type
 }
 
-func (c inCondition) AsSQL() (string, []interface{}) {
+func (c ConditionIn) AsSQL() (string, []interface{}) {
 	panic("not implemented")
 	return "", nil
 }
