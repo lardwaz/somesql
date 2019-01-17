@@ -129,12 +129,58 @@ func TestQuery_AsSQL_ConditionClause(t *testing.T) {
 		expectedValues []interface{}
 	}
 
-	// SELECT _ WHERE c1
-	// SELECT _ WHERE c1 AND c2
-	// SELECT _ WHERE c1 OR c2
-	// SELECT _ WHERE c1 AND c2 OR c3
-
-	tests := []testcase{}
+	tests := []testcase{
+		// Regular condition clauses on pre-defined fields
+		{
+			"WHERE id=?",
+			New().Select("data").Where(somesql.And("id", "=", "1")),
+			"SELECT data_en FROM repo WHERE id=?",
+			[]interface{}{"1"},
+		},
+		{
+			"WHERE id=? AND status=?",
+			New().Select("data").Where(somesql.And("id", "=", "1")).Where(somesql.And("status", "=", "published")),
+			"SELECT data_en FROM repo WHERE id=? AND status=?",
+			[]interface{}{"1", "published"},
+		},
+		{
+			"WHERE id=? OR status=?",
+			New().Select("data").Where(somesql.And("id", "=", "1")).Where(somesql.Or("status", "=", "published")),
+			"SELECT data_en FROM repo WHERE id=? OR status=?",
+			[]interface{}{"1", "published"},
+		},
+		{
+			"WHERE id=? AND status=? OR type=?",
+			New().Select("data").Where(somesql.And("id", "=", "1")).Where(somesql.And("status", "=", "published")).Where(somesql.Or("type", "=", "article")),
+			"SELECT data_en FROM repo WHERE id=? AND status=? OR type=?",
+			[]interface{}{"1", "published", "article"},
+		},
+		// Regular condition clauses on json attributes
+		{
+			"WHERE data_en->>'author_id'=?",
+			New().Select("data").Where(somesql.And("author_id", "=", "1")),
+			"SELECT data FROM repo WHERE data_en->>'author_id'=?",
+			[]interface{}{"1"},
+		},
+		{
+			"WHERE data_fr->>'author_id'=? (langFR)",
+			New().Select("data").SetLang(somesql.LangFR).Where(somesql.And("author_id", "=", "1")),
+			"SELECT data FROM repo WHERE data_fr->>'author_id'=?",
+			[]interface{}{"1"},
+		},
+		{
+			"WHERE data_fr->>'author_id'=? OR data_fr->>'category_id'=? (langFR)",
+			New().Select("data").SetLang(somesql.LangFR).Where(somesql.And("author_id", "=", "1")).Where(somesql.Or("category_id", "=", "2")),
+			"SELECT data FROM repo WHERE data_fr->>'author_id'=? OR data_fr->>'category_id'=?",
+			[]interface{}{"1", "2"},
+		},
+		{
+			"WHERE data_fr->>'author_id'=? AND data_fr->>'category_id'=? (langFR)",
+			New().Select("data").SetLang(somesql.LangFR).Where(somesql.And("author_id", "=", "1")).Where(somesql.And("category_id", "=", "2")),
+			"SELECT data FROM repo WHERE data_fr->>'author_id'=? AND data_fr->>'category_id'=?",
+			[]interface{}{"1", "2"},
+		},
+	}
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
