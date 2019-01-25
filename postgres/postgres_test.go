@@ -9,13 +9,13 @@ import (
 )
 
 func TestQuery_AsSQL_Fields(t *testing.T) {
-	type testcase struct {
+	type testCase struct {
 		name        string
 		query       Query
 		expectedSQL string
 	}
 
-	tests := []testcase{
+	tests := []testCase{
 		// Select ALL
 		{
 			"SELECT *",
@@ -122,14 +122,14 @@ func TestQuery_AsSQL_Fields(t *testing.T) {
 }
 
 func TestQuery_AsSQL_ConditionClause(t *testing.T) {
-	type testcase struct {
+	type testCase struct {
 		name           string
 		query          Query
 		expectedSQL    string
 		expectedValues []interface{}
 	}
 
-	tests := []testcase{
+	tests := []testCase{
 		// Regular condition clauses on pre-defined fields
 		{
 			"WHERE id=?",
@@ -193,7 +193,7 @@ func TestQuery_AsSQL_ConditionClause(t *testing.T) {
 }
 
 func TestQuery_AsSQL_ConditionGroup(t *testing.T) {
-	type testcase struct {
+	type testCase struct {
 		name           string
 		query          Query
 		expectedSQL    string
@@ -203,7 +203,7 @@ func TestQuery_AsSQL_ConditionGroup(t *testing.T) {
 	// SELECT _ WHERE c1 AND (c2 OR c3)
 	// SELECT _ WHERE (c1 AND c2) OR c3
 
-	tests := []testcase{}
+	tests := []testCase{}
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -216,21 +216,70 @@ func TestQuery_AsSQL_ConditionGroup(t *testing.T) {
 }
 
 func TestQuery_AsSQL_ConditionIN(t *testing.T) {
-	type testcase struct {
+	type testCase struct {
 		name           string
 		query          Query
 		expectedSQL    string
 		expectedValues []interface{}
 	}
 
-	// SELECT _ WHERE c1 IN (...)
-	// SELECT _ WHERE c1 NOT IN (...)
 	// SELECT _ WHERE c1 IN (...) AND c2 NOT IN (...)
 	// SELECT _ WHERE c1 IN (...) OR c2 NOT IN (...)
+
 	// SELECT _ WHERE (c1 IN (...) AND c2 NOT IN (...)) AND c3
 	// SELECT _ WHERE c3 OR (c1 IN (...) AND c2 NOT IN (...))
 
-	tests := []testcase{}
+	tests := []testCase{
+		{
+			"WHERE id IN (...) - predefined field",
+			New().Select("data").Where(somesql.AndIn("id", []string{"A", "B", "C"})),
+			"SELECT data_en FROM repo WHERE id IN (?,?,?)",
+			[]interface{}{"A", "B", "C"},
+		},
+		{
+			"WHERE field IN (...) - JSONB",
+			New().Where(somesql.AndIn("name", []string{"A", "B", "C"})),
+			`SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE "data_en"->>'name' IN (?,?,?)`,
+			[]interface{}{"A", "B", "C"},
+		},
+		{
+			"WHERE FUNC(field) IN (...) - predefined field",
+			New().Select("data").Where(somesql.AndIn("updated_at", []string{"2019"}, "YEAR")),
+			"SELECT data_en FROM repo WHERE YEAR(updated_at) IN (?)",
+			[]interface{}{"2019"},
+		},
+		{
+			"WHERE FUNC(field) IN (...) - JSONB",
+			New().Where(somesql.AndIn("name", []string{"a"}, "LOWER")),
+			`SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE LOWER("data_en"->>'name') IN (?)`,
+			[]interface{}{"a"},
+		},
+
+		{
+			"WHERE id NOT IN (...) - predefined field",
+			New().Select("data").Where(somesql.AndNotIn("id", []string{"A", "B", "C"})),
+			"SELECT data_en FROM repo WHERE id NOT IN (?,?,?)",
+			[]interface{}{"A", "B", "C"},
+		},
+		{
+			"WHERE FUNC(field) NOT IN (...) - predefined field",
+			New().Select("data").Where(somesql.AndNotIn("updated_at", []string{"2019"}, "YEAR")),
+			"SELECT data_en FROM repo WHERE YEAR(updated_at) NOT IN (?)",
+			[]interface{}{"2019"},
+		},
+		{
+			"WHERE field NOT IN (...) - JSONB",
+			New().Where(somesql.AndNotIn("name", []string{"A", "B", "C"})),
+			`SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE "data_en"->>'name' NOT IN (?,?,?)`,
+			[]interface{}{"A", "B", "C"},
+		},
+		{
+			"WHERE FUNC(field) NOT IN (...) - JSONB",
+			New().Where(somesql.AndIn("name", []string{"a"}, "LOWER")),
+			`SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE LOWER("data_en"->>'name') NOT IN (?)`,
+			[]interface{}{"a"},
+		},
+	}
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
