@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lsldigital/somesql"
+	. "github.com/lsldigital/somesql"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,98 +18,98 @@ func TestQuery_AsSQL_Fields(t *testing.T) {
 	tests := []testCase{
 		// Select ALL
 		{
-			"SELECT *",
-			New(),
-			"SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo",
+			name:        "SELECT *",
+			query:       New(),
+			expectedSQL: "SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo",
 		},
 		{
-			"SELECT * (langEN)",
-			New().SetLang(somesql.LangEN),
-			"SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo",
+			name:        "SELECT * (langEN)",
+			query:       New().SetLang(LangEN),
+			expectedSQL: "SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo",
 		},
 		{
-			"SELECT * (langFR)",
-			New().SetLang(somesql.LangFR),
-			"SELECT id, created_at, updated_at, owner_id, status, type, data_fr FROM repo",
+			name:        "SELECT * (langFR)",
+			query:       New().SetLang(LangFR),
+			expectedSQL: "SELECT id, created_at, updated_at, owner_id, status, type, data_fr FROM repo",
 		},
 		// Select some pre-defined fields
 		{
-			"SELECT id, type, data",
-			New().Select("id", "type", "data"),
-			`SELECT id, type, data_en FROM repo`,
+			name:        "SELECT id, type, data",
+			query:       New().Select("id", "type", "data"),
+			expectedSQL: `SELECT id, type, data_en FROM repo`,
 		},
 		{
-			"SELECT id, type, data (LangEN)",
-			New().Select("id", "type", "data").SetLang(somesql.LangEN),
-			`SELECT id, type, data_en FROM repo`,
+			name:        "SELECT id, type, data (LangEN)",
+			query:       New().Select("id", "type", "data").SetLang(LangEN),
+			expectedSQL: `SELECT id, type, data_en FROM repo`,
 		},
 		{
-			"SELECT id, type, data (LangFR)",
-			New().Select("id", "type", "data").SetLang(somesql.LangFR),
-			`SELECT id, type, data_fr FROM repo`,
+			name:        "SELECT id, type, data (LangFR)",
+			query:       New().Select("id", "type", "data").SetLang(LangFR),
+			expectedSQL: `SELECT id, type, data_fr FROM repo`,
 		},
 		// Select pre-defined fields and json attributes ('data_en'/'data_fr') from data_*
 		{
-			"SELECT id, type, data_en",
-			New().Select("id", "type", "data_en"),
-			`SELECT id, type, json_build_object('data_en', data_en->'data_en') "data" FROM repo`,
+			name:        "SELECT id, type, data_en",
+			query:       New().Select("id", "type", "data_en"),
+			expectedSQL: `SELECT id, type, json_build_object('data_en', data_en->'data_en') "data" FROM repo`,
 		},
 		{
-			"SELECT id, type, data_en (LangEN)",
-			New().Select("id", "type", "data_en").SetLang(somesql.LangEN),
-			`SELECT id, type, json_build_object('data_en', data_en->'data_en') "data" FROM repo`,
+			name:        "SELECT id, type, data_en (LangEN)",
+			query:       New().Select("id", "type", "data_en").SetLang(LangEN),
+			expectedSQL: `SELECT id, type, json_build_object('data_en', data_en->'data_en') "data" FROM repo`,
 		},
 		{
-			"SELECT id, type, data_en (LangFR)",
-			New().Select("id", "type", "data_en").SetLang(somesql.LangFR),
-			`SELECT id, type, json_build_object('data_en', data_fr->'data_en') "data" FROM repo`,
+			name:        "SELECT id, type, data_en (LangFR)",
+			query:       New().Select("id", "type", "data_en").SetLang(LangFR),
+			expectedSQL: `SELECT id, type, json_build_object('data_en', data_fr->'data_en') "data" FROM repo`,
 		},
 		{
-			"SELECT id, type, data_fr",
-			New().Select("id", "type", "data_fr"),
-			`SELECT id, type, json_build_object('data_fr', data_en->'data_fr') "data" FROM repo`,
+			name:        "SELECT id, type, data_fr",
+			query:       New().Select("id", "type", "data_fr"),
+			expectedSQL: `SELECT id, type, json_build_object('data_fr', data_en->'data_fr') "data" FROM repo`,
 		},
 		{
-			"SELECT id, type, data_fr (LangEN)",
-			New().Select("id", "type", "data_fr").SetLang(somesql.LangEN),
-			`SELECT id, type, json_build_object('data_fr', data_en->'data_fr') "data" FROM repo`,
+			name:        "SELECT id, type, data_fr (LangEN)",
+			query:       New().Select("id", "type", "data_fr").SetLang(LangEN),
+			expectedSQL: `SELECT id, type, json_build_object('data_fr', data_en->'data_fr') "data" FROM repo`,
 		},
 		{
-			"SELECT id, type, data_fr (LangFR)",
-			New().Select("id", "type", "data_fr").SetLang(somesql.LangFR),
-			`SELECT id, type, json_build_object('data_fr', data_fr->'data_fr') "data" FROM repo`,
+			name:        "SELECT id, type, data_fr (LangFR)",
+			query:       New().Select("id", "type", "data_fr").SetLang(LangFR),
+			expectedSQL: `SELECT id, type, json_build_object('data_fr', data_fr->'data_fr') "data" FROM repo`,
 		},
 		// Select pre-defined fields and json attributes (any other) from data_*
 		{
-			"SELECT id, type, data_en->'body'",
-			New().Select("id", "type", "body"),
-			`SELECT id, type, json_build_object('body', data_en->'body') "data" FROM repo`,
+			name:        "SELECT id, type, data_en->'body'",
+			query:       New().Select("id", "type", "body"),
+			expectedSQL: `SELECT id, type, json_build_object('body', data_en->'body') "data" FROM repo`,
 		},
 		{
-			"SELECT id, type, data_en->'body' (LangEN)",
-			New().Select("id", "type", "body").SetLang(somesql.LangEN),
-			`SELECT id, type, json_build_object('body', data_en->'body') "data" FROM repo`,
+			name:        "SELECT id, type, data_en->'body' (LangEN)",
+			query:       New().Select("id", "type", "body").SetLang(LangEN),
+			expectedSQL: `SELECT id, type, json_build_object('body', data_en->'body') "data" FROM repo`,
 		},
 		{
-			"SELECT id, type, data_fr->'body' (LangFR)",
-			New().Select("id", "type", "body").SetLang(somesql.LangFR),
-			`SELECT id, type, json_build_object('body', data_fr->'body') "data" FROM repo`,
+			name:        "SELECT id, type, data_fr->'body' (LangFR)",
+			query:       New().Select("id", "type", "body").SetLang(LangFR),
+			expectedSQL: `SELECT id, type, json_build_object('body', data_fr->'body') "data" FROM repo`,
 		},
 		// Select pre-defined fields and json attributes (any other + compound) from data_*
 		{
-			"SELECT id, type, data_en->'body', data_en->'author_id'",
-			New().Select("id", "type", "body", "author_id"),
-			`SELECT id, type, json_build_object('body', data_en->'body', 'author_id', data_en->'author_id') "data" FROM repo`,
+			name:        "SELECT id, type, data_en->'body', data_en->'author_id'",
+			query:       New().Select("id", "type", "body", "author_id"),
+			expectedSQL: `SELECT id, type, json_build_object('body', data_en->'body', 'author_id', data_en->'author_id') "data" FROM repo`,
 		},
 		{
-			"SELECT id, type, data_en->'body', data_en->'author_id' (LangEN)",
-			New().Select("id", "type", "body", "author_id").SetLang(somesql.LangEN),
-			`SELECT id, type, json_build_object('body', data_en->'body', 'author_id', data_en->'author_id') "data" FROM repo`,
+			name:        "SELECT id, type, data_en->'body', data_en->'author_id' (LangEN)",
+			query:       New().Select("id", "type", "body", "author_id").SetLang(LangEN),
+			expectedSQL: `SELECT id, type, json_build_object('body', data_en->'body', 'author_id', data_en->'author_id') "data" FROM repo`,
 		},
 		{
-			"SELECT id, type, data_fr->'body', data_fr->'author_id' (LangFR)",
-			New().Select("id", "type", "body", "author_id").SetLang(somesql.LangFR),
-			`SELECT id, type, json_build_object('body', data_fr->'body', 'author_id', data_fr->'author_id') "data" FROM repo`,
+			name:        "SELECT id, type, data_fr->'body', data_fr->'author_id' (LangFR)",
+			query:       New().Select("id", "type", "body", "author_id").SetLang(LangFR),
+			expectedSQL: `SELECT id, type, json_build_object('body', data_fr->'body', 'author_id', data_fr->'author_id') "data" FROM repo`,
 		},
 	}
 
@@ -132,53 +132,53 @@ func TestQuery_AsSQL_ConditionClause(t *testing.T) {
 	tests := []testCase{
 		// Regular condition clauses on pre-defined fields
 		{
-			"WHERE id=?",
-			New().Select("data").Where(somesql.And("id", "=", "1")),
-			"SELECT data_en FROM repo WHERE id=?",
-			[]interface{}{"1"},
+			name:           "WHERE id=?",
+			query:          New().Select("data").Where(And("id", "=", "1")),
+			expectedSQL:    "SELECT data_en FROM repo WHERE id=?",
+			expectedValues: []interface{}{"1"},
 		},
 		{
-			"WHERE id=? AND status=?",
-			New().Select("data").Where(somesql.And("id", "=", "1")).Where(somesql.And("status", "=", "published")),
-			"SELECT data_en FROM repo WHERE id=? AND status=?",
-			[]interface{}{"1", "published"},
+			name:           "WHERE id=? AND status=?",
+			query:          New().Select("data").Where(And("id", "=", "1")).Where(And("status", "=", "published")),
+			expectedSQL:    "SELECT data_en FROM repo WHERE id=? AND status=?",
+			expectedValues: []interface{}{"1", "published"},
 		},
 		{
-			"WHERE id=? OR status=?",
-			New().Select("data").Where(somesql.And("id", "=", "1")).Where(somesql.Or("status", "=", "published")),
-			"SELECT data_en FROM repo WHERE id=? OR status=?",
-			[]interface{}{"1", "published"},
+			name:           "WHERE id=? OR status=?",
+			query:          New().Select("data").Where(And("id", "=", "1")).Where(Or("status", "=", "published")),
+			expectedSQL:    "SELECT data_en FROM repo WHERE id=? OR status=?",
+			expectedValues: []interface{}{"1", "published"},
 		},
 		{
-			"WHERE id=? AND status=? OR type=?",
-			New().Select("data").Where(somesql.And("id", "=", "1")).Where(somesql.And("status", "=", "published")).Where(somesql.Or("type", "=", "article")),
-			"SELECT data_en FROM repo WHERE id=? AND status=? OR type=?",
-			[]interface{}{"1", "published", "article"},
+			name:           "WHERE id=? AND status=? OR type=?",
+			query:          New().Select("data").Where(And("id", "=", "1")).Where(And("status", "=", "published")).Where(Or("type", "=", "article")),
+			expectedSQL:    "SELECT data_en FROM repo WHERE id=? AND status=? OR type=?",
+			expectedValues: []interface{}{"1", "published", "article"},
 		},
 		// Regular condition clauses on json attributes
 		{
-			"WHERE data_en->>'author_id'=?",
-			New().Select("data").Where(somesql.And("author_id", "=", "1")),
-			"SELECT data FROM repo WHERE data_en->>'author_id'=?",
-			[]interface{}{"1"},
+			name:           "WHERE data_en->>'author_id'=?",
+			query:          New().Select("data").Where(And("author_id", "=", "1")),
+			expectedSQL:    "SELECT data FROM repo WHERE data_en->>'author_id'=?",
+			expectedValues: []interface{}{"1"},
 		},
 		{
-			"WHERE data_fr->>'author_id'=? (langFR)",
-			New().Select("data").SetLang(somesql.LangFR).Where(somesql.And("author_id", "=", "1")),
-			"SELECT data FROM repo WHERE data_fr->>'author_id'=?",
-			[]interface{}{"1"},
+			name:           "WHERE data_fr->>'author_id'=? (langFR)",
+			query:          New().Select("data").SetLang(LangFR).Where(And("author_id", "=", "1")),
+			expectedSQL:    "SELECT data FROM repo WHERE data_fr->>'author_id'=?",
+			expectedValues: []interface{}{"1"},
 		},
 		{
-			"WHERE data_fr->>'author_id'=? OR data_fr->>'category_id'=? (langFR)",
-			New().Select("data").SetLang(somesql.LangFR).Where(somesql.And("author_id", "=", "1")).Where(somesql.Or("category_id", "=", "2")),
-			"SELECT data FROM repo WHERE data_fr->>'author_id'=? OR data_fr->>'category_id'=?",
-			[]interface{}{"1", "2"},
+			name:           "WHERE data_fr->>'author_id'=? OR data_fr->>'category_id'=? (langFR)",
+			query:          New().Select("data").SetLang(LangFR).Where(And("author_id", "=", "1")).Where(Or("category_id", "=", "2")),
+			expectedSQL:    "SELECT data FROM repo WHERE data_fr->>'author_id'=? OR data_fr->>'category_id'=?",
+			expectedValues: []interface{}{"1", "2"},
 		},
 		{
-			"WHERE data_fr->>'author_id'=? AND data_fr->>'category_id'=? (langFR)",
-			New().Select("data").SetLang(somesql.LangFR).Where(somesql.And("author_id", "=", "1")).Where(somesql.And("category_id", "=", "2")),
-			"SELECT data FROM repo WHERE data_fr->>'author_id'=? AND data_fr->>'category_id'=?",
-			[]interface{}{"1", "2"},
+			name:           "WHERE data_fr->>'author_id'=? AND data_fr->>'category_id'=? (langFR)",
+			query:          New().Select("data").SetLang(LangFR).Where(And("author_id", "=", "1")).Where(And("category_id", "=", "2")),
+			expectedSQL:    "SELECT data FROM repo WHERE data_fr->>'author_id'=? AND data_fr->>'category_id'=?",
+			expectedValues: []interface{}{"1", "2"},
 		},
 	}
 
@@ -200,10 +200,44 @@ func TestQuery_AsSQL_ConditionGroup(t *testing.T) {
 		expectedValues []interface{}
 	}
 
-	// SELECT _ WHERE c1 AND (c2 OR c3)
-	// SELECT _ WHERE (c1 AND c2) OR c3
-
-	tests := []testCase{}
+	tests := []testCase{
+		{
+			name:           "WHERE (... OR ...) [1]",
+			query:          New().Select("data").Where(AndGroup(And("badge", "=", "video"), Or("badge", "=", "audio"))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? OR ("data_en"->>'badge')=?)`,
+			expectedValues: []interface{}{"video", "audio"},
+		},
+		{
+			name:           "WHERE (... OR ...) [2]",
+			query:          New().Select("data").Where(OrGroup(And("badge", "=", "video"), Or("badge", "=", "audio"))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? OR ("data_en"->>'badge')=?)`,
+			expectedValues: []interface{}{"video", "audio"},
+		},
+		{
+			name:           "WHERE (... AND ...) [1]",
+			query:          New().Select("data").Where(AndGroup(Or("badge", "=", "video"), And("has_video", "=", true))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
+			expectedValues: []interface{}{"video", true},
+		},
+		{
+			name:           "WHERE (... AND ...) [2]",
+			query:          New().Select("data").Where(OrGroup(Or("badge", "=", "video"), And("has_video", "=", true))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
+			expectedValues: []interface{}{"published", "video", true},
+		},
+		{
+			name:           "WHERE (... AND ...) AND (... OR ...) [1]",
+			query:          New().Select("data").Where(OrGroup(Or("badge", "=", "video"), And("has_video", "=", true))).Where(AndGroup(Or("badge", "=", "video"), Or("has_video", "=", true))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?) AND ("data_en"->>'badge'=? OR ("data_en"->>'has_video')::BOOLEAN=?)`,
+			expectedValues: []interface{}{"published", "video", true},
+		},
+		{
+			name:           "WHERE (... AND ...) OR (... AND ...) [2]",
+			query:          New().Select("data").Where(OrGroup(Or("badge", "=", "video"), And("has_video", "=", true))).Where(OrGroup(Or("badge", "=", "video"), And("has_video", "=", true))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?) OR ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
+			expectedValues: []interface{}{"published", "video", true},
+		},
+	}
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -223,61 +257,160 @@ func TestQuery_AsSQL_ConditionIN(t *testing.T) {
 		expectedValues []interface{}
 	}
 
-	// SELECT _ WHERE c1 IN (...) AND c2 NOT IN (...)
-	// SELECT _ WHERE c1 IN (...) OR c2 NOT IN (...)
-
-	// SELECT _ WHERE (c1 IN (...) AND c2 NOT IN (...)) AND c3
-	// SELECT _ WHERE c3 OR (c1 IN (...) AND c2 NOT IN (...))
-
 	tests := []testCase{
 		{
-			"WHERE id IN (...) - predefined field",
-			New().Select("data").Where(somesql.AndIn("id", []string{"A", "B", "C"})),
-			"SELECT data_en FROM repo WHERE id IN (?,?,?)",
-			[]interface{}{"A", "B", "C"},
+			name:           "WHERE id IN (...) - primitive field",
+			query:          New().Select("data").Where(AndIn("id", []string{"A", "B", "C"})),
+			expectedSQL:    "SELECT data_en FROM repo WHERE id IN (?,?,?)",
+			expectedValues: []interface{}{"A", "B", "C"},
 		},
 		{
-			"WHERE field IN (...) - JSONB",
-			New().Where(somesql.AndIn("name", []string{"A", "B", "C"})),
-			`SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE "data_en"->>'name' IN (?,?,?)`,
-			[]interface{}{"A", "B", "C"},
+			name:           "WHERE id IN (...) - primitive field - LangFR",
+			query:          New().Select("data").Where(AndIn("id", []string{"A", "B", "C"})).SetLang(LangFR),
+			expectedSQL:    "SELECT data_fr FROM repo WHERE id IN (?,?,?)",
+			expectedValues: []interface{}{"A", "B", "C"},
 		},
 		{
-			"WHERE FUNC(field) IN (...) - predefined field",
-			New().Select("data").Where(somesql.AndIn("updated_at", []string{"2019"}, "YEAR")),
-			"SELECT data_en FROM repo WHERE YEAR(updated_at) IN (?)",
-			[]interface{}{"2019"},
+			name:           "WHERE field IN (...) - JSONB",
+			query:          New().Where(AndIn("name", []string{"A", "B", "C"})),
+			expectedSQL:    `SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE "data_en"->>'name' IN (?,?,?)`,
+			expectedValues: []interface{}{"A", "B", "C"},
 		},
 		{
-			"WHERE FUNC(field) IN (...) - JSONB",
-			New().Where(somesql.AndIn("name", []string{"a"}, "LOWER")),
-			`SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE LOWER("data_en"->>'name') IN (?)`,
-			[]interface{}{"a"},
+			name:           "WHERE field IN (...) - JSONB - LangFR",
+			query:          New().Where(AndIn("name", []string{"A", "B", "C"})).SetLang(LangFR),
+			expectedSQL:    `SELECT id, created_at, updated_at, owner_id, status, type, data_fr FROM repo WHERE "data_fr"->>'name' IN (?,?,?)`,
+			expectedValues: []interface{}{"A", "B", "C"},
+		},
+		{
+			name:           "WHERE FUNC(field) IN (...) - primitive field",
+			query:          New().Select("data").Where(AndIn("updated_at", []string{"2019"}, "YEAR")),
+			expectedSQL:    "SELECT data_en FROM repo WHERE YEAR(updated_at) IN (?)",
+			expectedValues: []interface{}{"2019"},
+		},
+		{
+			name:           "WHERE FUNC(field) IN (...) - JSONB",
+			query:          New().Where(AndIn("name", []string{"a"}, "LOWER")),
+			expectedSQL:    `SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE LOWER("data_en"->>'name') IN (?)`,
+			expectedValues: []interface{}{"a"},
 		},
 
 		{
-			"WHERE id NOT IN (...) - predefined field",
-			New().Select("data").Where(somesql.AndNotIn("id", []string{"A", "B", "C"})),
-			"SELECT data_en FROM repo WHERE id NOT IN (?,?,?)",
-			[]interface{}{"A", "B", "C"},
+			name:           "WHERE id NOT IN (...) - primitive field",
+			query:          New().Select("data").Where(AndNotIn("id", []string{"A", "B", "C"})),
+			expectedSQL:    "SELECT data_en FROM repo WHERE id NOT IN (?,?,?)",
+			expectedValues: []interface{}{"A", "B", "C"},
 		},
 		{
-			"WHERE FUNC(field) NOT IN (...) - predefined field",
-			New().Select("data").Where(somesql.AndNotIn("updated_at", []string{"2019"}, "YEAR")),
-			"SELECT data_en FROM repo WHERE YEAR(updated_at) NOT IN (?)",
-			[]interface{}{"2019"},
+			name:           "WHERE id NOT IN (...) - primitive field - LangFR",
+			query:          New().Select("data").Where(AndNotIn("id", []string{"A", "B", "C"})).SetLang(LangFR),
+			expectedSQL:    "SELECT data_fr FROM repo WHERE id NOT IN (?,?,?)",
+			expectedValues: []interface{}{"A", "B", "C"},
 		},
 		{
-			"WHERE field NOT IN (...) - JSONB",
-			New().Where(somesql.AndNotIn("name", []string{"A", "B", "C"})),
-			`SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE "data_en"->>'name' NOT IN (?,?,?)`,
-			[]interface{}{"A", "B", "C"},
+			name:           "WHERE FUNC(field) NOT IN (...) - primitive field",
+			query:          New().Select("data").Where(AndNotIn("updated_at", []string{"2019"}, "YEAR")),
+			expectedSQL:    "SELECT data_en FROM repo WHERE YEAR(updated_at) NOT IN (?)",
+			expectedValues: []interface{}{"2019"},
 		},
 		{
-			"WHERE FUNC(field) NOT IN (...) - JSONB",
-			New().Where(somesql.AndIn("name", []string{"a"}, "LOWER")),
-			`SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE LOWER("data_en"->>'name') NOT IN (?)`,
-			[]interface{}{"a"},
+			name:           "WHERE field NOT IN (...) - JSONB",
+			query:          New().Where(AndNotIn("name", []string{"A", "B", "C"})),
+			expectedSQL:    `SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE "data_en"->>'name' NOT IN (?,?,?)`,
+			expectedValues: []interface{}{"A", "B", "C"},
+		},
+		{
+			name:           "WHERE field NOT IN (...) - JSONB",
+			query:          New().Where(AndNotIn("name", []string{"A", "B", "C"})),
+			expectedSQL:    `SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE "data_en"->>'name' NOT IN (?,?,?)`,
+			expectedValues: []interface{}{"A", "B", "C"},
+		},
+		{
+			name:           "WHERE FUNC(field) NOT IN (...) - JSONB",
+			query:          New().Where(AndIn("name", []string{"a"}, "LOWER")),
+			expectedSQL:    `SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE LOWER("data_en"->>'name') NOT IN (?)`,
+			expectedValues: []interface{}{"a"},
+		},
+
+		{
+			name:           "WHERE id IN (...) AND NOT IN (...) - primitive field",
+			query:          New().Select("data").Where(AndIn("id", []string{"A", "B"})).Where(AndNotIn("id", []string{"C", "D"})),
+			expectedSQL:    "SELECT data_en FROM repo WHERE id IN (?,?) AND id NOT IN (?,?)",
+			expectedValues: []interface{}{"A", "B", "C", "D"},
+		},
+		{
+			name:           "WHERE id IN (...) AND NOT IN (...) - JSONB",
+			query:          New().Select("data").Where(AndIn("name", []string{"A", "B"})).Where(AndNotIn("id", []string{"C", "D"})),
+			expectedSQL:    "SELECT data_en FROM repo WHERE id IN (?,?) AND id NOT IN (?,?)",
+			expectedValues: []interface{}{"A", "B", "C", "D"},
+		},
+		{
+			name:           "WHERE id IN (...) OR NOT IN (...) - primitive field",
+			query:          New().Select("data").Where(AndIn("id", []string{"A", "B"})).Where(OrNotIn("id", []string{"C", "D"})),
+			expectedSQL:    "SELECT data_en FROM repo WHERE id IN (?,?) OR id NOT IN (?,?)",
+			expectedValues: []interface{}{"A", "B", "C", "D"},
+		},
+		{
+			name:           "WHERE FUNC(field) IN (...) AND field NOT IN (...) - primitive field",
+			query:          New().Select("data").Where(AndIn("updated_at", []string{"2019"}, "YEAR")).Where(AndNotIn("id", []string{"A", "B"})),
+			expectedSQL:    "SELECT data_en FROM repo WHERE YEAR(updated_at) IN (?) AND id NOT IN (?,?)",
+			expectedValues: []interface{}{"2019", "A", "B"},
+		},
+
+		{
+			name:           "WHERE id IN (...) AND field = ...",
+			query:          New().Select("data").Where(AndIn("type", []string{"article", "dossier"})).Where(And("status", "=", []string{"published"})),
+			expectedSQL:    "SELECT data_en FROM repo WHERE type IN (?) AND status =?",
+			expectedValues: []interface{}{"article", "dossier", "published"},
+		},
+		{
+			name:           "WHERE id IN (...) AND field = ... - JSONB",
+			query:          New().Select("data").Where(AndIn("type", []string{"article", "dossier"})).Where(And("status", "=", []string{"published"})),
+			expectedSQL:    "SELECT data_en FROM repo WHERE type IN (?) AND status =?",
+			expectedValues: []interface{}{"article", "dossier", "published"},
+		},
+		{
+			name:           "WHERE FUNC(field) IN (...) AND field NOT IN (...) - primitive field",
+			query:          New().Select("data").Where(AndIn("updated_at", []string{"2019"}, "YEAR")).Where(AndNotIn("id", []string{"A", "B"})).Where(And("status", "=", "published")),
+			expectedSQL:    "SELECT data_en FROM repo WHERE YEAR(updated_at) IN (?) AND id NOT IN (?,?) AND status =?",
+			expectedValues: []interface{}{"2019", "A", "B", "published"},
+		},
+		{
+			name:           "WHERE FUNC(field) IN (...) AND field NOT IN (...) - JSONB",
+			query:          New().Select("data").Where(AndIn("tag_ids", []string{"A"})).Where(AndIn("author_ids", []string{"B"})).Where(And("status", "=", "published")),
+			expectedSQL:    `SELECT data_en FROM repo WHERE "data_en"->>'tag_ids' IN (?) AND "data_en"->>'author_ids' IN (?) AND status =?`,
+			expectedValues: []interface{}{"A", "B", "published"},
+		},
+
+		{
+			name:           "WHERE id IN (...) AND field = ...",
+			query:          New().Select("data").Where(AndGroup(And("badge", "=", "video"), And("has_video", "=", true))).Where(And("status", "=", []string{"published"})),
+			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?) AND status =?`,
+			expectedValues: []interface{}{"video", true, "published"},
+		},
+		{
+			name:           "WHERE field = ... OR (... AND ...) [1]",
+			query:          New().Select("data").Where(And("status", "=", []string{"published"})).Where(OrGroup(And("badge", "=", "video"), And("has_video", "=", true))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE status =? OR ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
+			expectedValues: []interface{}{"published", "video", true},
+		},
+		{
+			name:           "WHERE field = ... OR (... AND ...) [2]",
+			query:          New().Select("data").Where(Or("status", "=", []string{"published"})).Where(OrGroup(Or("badge", "=", "video"), And("has_video", "=", true))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE status =? OR ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
+			expectedValues: []interface{}{"published", "video", true},
+		},
+		{
+			name:           "WHERE field = ... AND (... OR ...) [1]",
+			query:          New().Select("data").Where(Or("status", "=", []string{"published"})).Where(AndGroup(And("badge", "=", "video"), Or("has_video", "=", true))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE status =? AND ("data_en"->>'badge'=? OR ("data_en"->>'has_video')::BOOLEAN=?)`,
+			expectedValues: []interface{}{"published", "video", true},
+		},
+		{
+			name:           "WHERE field = ... AND (... OR ...) [2]",
+			query:          New().Select("data").Where(Or("status", "=", []string{"published"})).Where(AndGroup(And("badge", "=", "video"), Or("badge", "=", "audio"))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE status =? AND ("data_en"->>'badge'=? OR ("data_en"->>'badge')=?)`,
+			expectedValues: []interface{}{"published", "video", "audio"},
 		},
 	}
 
