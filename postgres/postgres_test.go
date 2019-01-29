@@ -423,3 +423,49 @@ func TestQuery_AsSQL_ConditionIN(t *testing.T) {
 		})
 	}
 }
+
+func TestQuesy_AsSQL_InQuery(t *testing.T) {
+	type testCase struct {
+		name           string
+		query          Query
+		expectedSQL    string
+		expectedValues []interface{}
+	}
+
+	tests := []testCase{
+		{
+			name:           "AndInQuery",
+			query:          New().Select("data").Where(AndIn("id", []string{"A", "B", "C"})).Where(AndInQuery("author_id", New().Select("author_id").Where(And("id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) AND "data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' FROM repo WHERE id =?)`,
+			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
+		},
+		{
+			name:           "AndNotInQuery",
+			query:          New().Select("data").Where(AndIn("id", []string{"A", "B", "C"})).Where(AndNotInQuery("author_id", New().Select("author_id").Where(And("id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) AND "data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' FROM repo WHERE id =?)`,
+			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
+		},
+
+		{
+			name:           "OrInQuery",
+			query:          New().Select("data").Where(AndIn("id", []string{"A", "B", "C"})).Where(OrInQuery("author_id", New().Select("author_id").Where(And("id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) OR "data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' FROM repo WHERE id =?)`,
+			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
+		},
+		{
+			name:           "OrNotInQuery",
+			query:          New().Select("data").Where(AndIn("id", []string{"A", "B", "C"})).Where(OrNotInQuery("author_id", New().Select("author_id").Where(And("id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
+			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) OR "data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' FROM repo WHERE id =?)`,
+			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotSQL, gotValues := tt.query.AsSQL()
+
+			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
+			assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
+		})
+	}
+}
