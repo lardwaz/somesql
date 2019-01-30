@@ -3,7 +3,6 @@ package somesql_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"reflect"
 	"testing"
 
 	"github.com/lsldigital/somesql"

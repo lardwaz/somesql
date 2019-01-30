@@ -10,19 +10,19 @@ type Query struct {
 }
 
 //New declares a new query
-func New() Query {
+func New() somesql.Query {
 	var q Query
 	return q
 }
 
 // Select specifies which fields to retrieve data for
-func (q Query) Select(f ...string) Query {
+func (q Query) Select(f ...string) somesql.Query {
 	q.Fields = f
 	return q
 }
 
 // Where adds a condition clause to the Query
-func (q Query) Where(c somesql.Condition) Query {
+func (q Query) Where(c somesql.Condition) somesql.Query {
 	q.Conditions = append(q.Conditions, c)
 	return q
 }
@@ -52,7 +52,7 @@ func (q Query) AsSQL() (string, []interface{}) {
 }
 
 // SetLang is a setter for Language
-func (q Query) SetLang(lang string) Query {
+func (q Query) SetLang(lang string) somesql.Query {
 	q.Lang = lang // todo: verify available langs before setting
 	return q
 }
