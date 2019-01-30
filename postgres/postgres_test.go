@@ -158,25 +158,25 @@ func TestQuery_AsSQL_ConditionClause(t *testing.T) {
 		{
 			name:           "WHERE data_en->>'author_id'=?",
 			query:          New().Select("data").Where(somesql.And("author_id", "=", "1")),
-			expectedSQL:    "SELECT data FROM repo WHERE data_en->>'author_id'=?",
+			expectedSQL:    "SELECT data_en FROM repo WHERE data_en->>'author_id'=?",
 			expectedValues: []interface{}{"1"},
 		},
 		{
 			name:           "WHERE data_fr->>'author_id'=? (langFR)",
 			query:          New().Select("data").SetLang(somesql.LangFR).Where(somesql.And("author_id", "=", "1")),
-			expectedSQL:    "SELECT data FROM repo WHERE data_fr->>'author_id'=?",
+			expectedSQL:    "SELECT data_fr FROM repo WHERE data_fr->>'author_id'=?",
 			expectedValues: []interface{}{"1"},
 		},
 		{
 			name:           "WHERE data_fr->>'author_id'=? OR data_fr->>'category_id'=? (langFR)",
 			query:          New().Select("data").SetLang(somesql.LangFR).Where(somesql.And("author_id", "=", "1")).Where(somesql.Or("category_id", "=", "2")),
-			expectedSQL:    "SELECT data FROM repo WHERE data_fr->>'author_id'=? OR data_fr->>'category_id'=?",
+			expectedSQL:    "SELECT data_fr FROM repo WHERE data_fr->>'author_id'=? OR data_fr->>'category_id'=?",
 			expectedValues: []interface{}{"1", "2"},
 		},
 		{
 			name:           "WHERE data_fr->>'author_id'=? AND data_fr->>'category_id'=? (langFR)",
 			query:          New().Select("data").SetLang(somesql.LangFR).Where(somesql.And("author_id", "=", "1")).Where(somesql.And("category_id", "=", "2")),
-			expectedSQL:    "SELECT data FROM repo WHERE data_fr->>'author_id'=? AND data_fr->>'category_id'=?",
+			expectedSQL:    "SELECT data_fr FROM repo WHERE data_fr->>'author_id'=? AND data_fr->>'category_id'=?",
 			expectedValues: []interface{}{"1", "2"},
 		},
 	}
@@ -435,26 +435,26 @@ func TestQuesy_AsSQL_InQuery(t *testing.T) {
 		{
 			name:           "AndInQuery",
 			query:          New().Select("data").Where(somesql.AndIn("id", []string{"A", "B", "C"})).Where(somesql.AndInQuery("author_id", New().Select("author_id").Where(somesql.And("id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) AND "data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' FROM repo WHERE id =?)`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) AND "data_en"->>'author_id' IN (SELECT json_build_object('author_id', data_en->'author_id') "data" FROM repo WHERE id =?)`,
 			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
 			name:           "AndNotInQuery",
 			query:          New().Select("data").Where(somesql.AndIn("id", []string{"A", "B", "C"})).Where(somesql.AndNotInQuery("author_id", New().Select("author_id").Where(somesql.And("id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) AND "data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' FROM repo WHERE id =?)`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) AND "data_en"->>'author_id' NOT IN (SELECT json_build_object('author_id', data_en->'author_id') "data" FROM repo WHERE id =?)`,
 			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 
 		{
 			name:           "OrInQuery",
 			query:          New().Select("data").Where(somesql.AndIn("id", []string{"A", "B", "C"})).Where(somesql.OrInQuery("author_id", New().Select("author_id").Where(somesql.And("id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) OR "data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' FROM repo WHERE id =?)`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) OR "data_en"->>'author_id' IN (SELECT json_build_object('author_id', data_en->'author_id') "data" FROM repo WHERE id =?)`,
 			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
 			name:           "OrNotInQuery",
 			query:          New().Select("data").Where(somesql.AndIn("id", []string{"A", "B", "C"})).Where(somesql.OrNotInQuery("author_id", New().Select("author_id").Where(somesql.And("id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) OR "data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' FROM repo WHERE id =?)`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE id IN (?,?,?) OR "data_en"->>'author_id' NOT IN (SELECT json_build_object('author_id', data_en->'author_id') "data" FROM repo WHERE id =?)`,
 			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 	}
