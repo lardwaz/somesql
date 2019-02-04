@@ -1,7 +1,8 @@
 package somesql_test
 
 import (
-	"reflect"
+	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/lsldigital/somesql"
@@ -16,76 +17,88 @@ func TestConditionQuery(t *testing.T) {
 		caseOrNotIn
 	)
 
-	type testcase struct {
+	type testCase struct {
 		name      string
-		fieldname string
+		fieldName string
 		query     somesql.Query
 		sql       string
 		values    []interface{}
 		caseType  uint8
 	}
 
-	tests := []testcase{
+	tests := []testCase{
 		{
-			"AND IN",
-			"foo",
-			postgres.New().Select("a", "b").Where(somesql.And("bar", "=", "baz")),
-			" AND name IN (...)", //TODO write subquery
-			[]interface{}{"baz"},
-			caseAndIn,
+			name:      "AndInQuery [1]",
+			fieldName: "author_id",
+			query:     postgres.New().Select("author_id").Where(somesql.And("id", "=", "1")),
+			sql:       `"data_en"->>'author_id' IN (SELECT json_build_object('author_id', data_en->'author_id') "data" FROM repo WHERE id =?)`,
+			values:    []interface{}{"1"},
+			caseType:  caseAndIn,
 		},
 		{
-			"AND NOT IN",
-			"foo",
-			postgres.New().Select("a", "b").Where(somesql.And("bar", "=", "baz")),
-			" AND name NOT IN (...)", //TODO write subquery
-			[]interface{}{"baz"},
-			caseAndNotIn,
+			name:      "AndInQuery [2]",
+			fieldName: "author_id",
+			query:     postgres.New().Select("author_id").Where(somesql.And("id", "=", "1")).Where(somesql.And("status", "=", "published")),
+			sql:       `"data_en"->>'author_id' IN (SELECT json_build_object('author_id', data_en->'author_id') "data" FROM repo WHERE id =? AND status =?)`,
+			values:    []interface{}{"1", "published"},
+			caseType:  caseAndIn,
 		},
 		{
-			"OR IN",
-			"foo",
-			postgres.New().Select("a", "b").Where(somesql.And("bar", "=", "baz")),
-			" OR name IN (...)", //TODO write subquery
-			[]interface{}{"baz"},
-			caseOrIn,
+			name:      "AndNotInQuery",
+			fieldName: "author_id",
+			query:     postgres.New().Select("author_id").Where(somesql.And("id", "=", "1")),
+			sql:       `"data_en"->>'author_id' NOT IN (SELECT json_build_object('author_id', data_en->'author_id') "data" FROM repo WHERE id =?)`,
+			values:    []interface{}{"1"},
+			caseType:  caseAndNotIn,
 		},
 		{
-			"OR NOT IN",
-			"foo",
-			postgres.New().Select("a", "b").Where(somesql.And("bar", "=", "baz")),
-			" OR name NOT IN (...)", //TODO write subquery
-			[]interface{}{"baz"},
-			caseOrNotIn,
+			name:      "OrInQuery",
+			fieldName: "author_id",
+			query:     postgres.New().Select("author_id").Where(somesql.And("id", "=", "1")),
+			sql:       `"data_en"->>'author_id' IN (SELECT json_build_object('author_id', data_en->'author_id') "data" FROM repo WHERE id =?)`,
+			values:    []interface{}{"1"},
+			caseType:  caseOrIn,
+		},
+		{
+			name:      "OrNotInQuery",
+			fieldName: "author_id",
+			query:     postgres.New().Select("author_id").Where(somesql.And("id", "=", "1")),
+			sql:       `"data_en"->>'author_id' NOT IN (SELECT json_build_object('author_id', data_en->'author_id') "data" FROM repo WHERE id =?)`,
+			values:    []interface{}{"1"},
+			caseType:  caseOrNotIn,
 		},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
 			var (
+				cQuery somesql.ConditionQuery
 				sql    string
 				values interface{}
 			)
 
 			switch tt.caseType {
 			case caseAndIn:
-				sql, values = somesql.AndInQuery(tt.fieldname, tt.query).AsSQL()
+				cQuery = somesql.AndInQuery(tt.fieldName, tt.query)
 			case caseAndNotIn:
-				sql, values = somesql.OrInQuery(tt.fieldname, tt.query).AsSQL()
+				cQuery = somesql.AndNotInQuery(tt.fieldName, tt.query)
 			case caseOrIn:
-				sql, values = somesql.AndNotInQuery(tt.fieldname, tt.query).AsSQL()
+				cQuery = somesql.OrInQuery(tt.fieldName, tt.query)
 			case caseOrNotIn:
-				sql, values = somesql.OrNotInQuery(tt.fieldname, tt.query).AsSQL()
-
+				cQuery = somesql.OrNotInQuery(tt.fieldName, tt.query)
 			}
 
-			if tt.sql != sql {
-				t.Errorf("Got %s, want %s", sql, tt.sql)
-			}
+			sql, values = cQuery.AsSQL()
 
-			if !reflect.DeepEqual(values, tt.values) {
-				t.Errorf("Values = %v, want %v", values, tt.values)
+			assert.Equal(t, tt.sql, sql, fmt.Sprintf("%d: SQL invalid", i+1))
+			assert.Equal(t, tt.values, values, fmt.Sprintf("%d: Values invalid", i+1))
+
+			switch tt.caseType {
+			case caseAndIn, caseAndNotIn:
+				assert.Equal(t, somesql.AndCondition, cQuery.ConditionType(), fmt.Sprintf("%d: Condition type must be AND", i+1))
+			case caseOrIn, caseOrNotIn:
+				assert.Equal(t, somesql.OrCondition, cQuery.ConditionType(), fmt.Sprintf("%d: Condition type must be OR", i+1))
 			}
 		})
 	}

@@ -69,30 +69,9 @@ func TestConditionGroup(t *testing.T) {
 				somesql.And("badge", "=", "video"),
 				somesql.And("has_video", "=", true),
 			},
-			`("data"->>'badge'=? AND ("data"->>'has_video')::BOOLEAN=?)`,
+			`("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
 			[]interface{}{"video", true},
 			caseAnd,
-		},
-		{
-			"OR JSONB (fields in 'data' only)",
-			[]somesql.Condition{},
-			`("data"->>'badge'=? OR ("data"->>'has_video')::BOOLEAN=?)`,
-			[]interface{}{"video", true},
-			caseOr,
-		},
-		{
-			"AND JSONB (fields in 'data' and predefined fields)",
-			[]somesql.Condition{},
-			`("data"->>'badge'=? AND type=?)`,
-			[]interface{}{"video", "article"},
-			caseAnd,
-		},
-		{
-			"OR JSONB (fields in 'data' and predefined fields)",
-			[]somesql.Condition{},
-			`("data"->>'badge'=? OR type=?)`,
-			[]interface{}{"video", "article"},
-			caseOr,
 		},
 	}
 
