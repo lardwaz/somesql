@@ -1,5 +1,7 @@
 package somesql
 
+import "fmt"
+
 var (
 	and = andor(AndCondition)
 	or  = andor(OrCondition)
@@ -58,20 +60,25 @@ func (c ConditionClause) AsSQL() (string, []interface{}) {
 	)
 
 	switch c.Field {
-	case "id", "created_at", "updated_at", "status", "owner_id", "type", "slug", "data":
+	case "id", "created_at", "updated_at", "status", "owner_id", "type", "slug", "data_en", "data_fr":
 		field = c.Field
 	default:
-		field = `"data"->>'` + c.Field + `'`
+		field = fmt.Sprintf(`"data_%s"->>'%s'`, LangEN, c.Field)
 	}
 
 	if c.FieldFunction == None {
 		lhs = field
 	} else {
-		lhs = c.FieldFunction + "(" + field + ")"
+		lhs = fmt.Sprintf(`%s(%s)`, c.FieldFunction, field)
+	}
+
+	switch c.Value.(type) {
+	case bool:
+		lhs = fmt.Sprintf(`(%s)::BOOLEAN`, lhs)
 	}
 
 	if c.ValueFunction != None {
-		rhs = c.ValueFunction + "(?)"
+		rhs = fmt.Sprintf(`%s(?)`, c.ValueFunction)
 	} else {
 		rhs = "?"
 	}

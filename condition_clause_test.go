@@ -50,7 +50,7 @@ func TestConditionClause(t *testing.T) {
 				value:    true,
 				funcs:    []string{},
 			},
-			"status=?",
+			"(status)::BOOLEAN=?",
 			[]interface{}{true},
 			caseAnd,
 		},
