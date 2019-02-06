@@ -53,11 +53,17 @@ func (q Query) AsSQL() (string, []interface{}) {
 
 // SetLang is a setter for Language
 func (q Query) SetLang(lang string) somesql.Query {
-	q.Lang = lang // todo: verify available langs before setting
+	switch lang {
+	case somesql.LangEN, somesql.LangFR:
+		q.Lang = lang
+	}
 	return q
 }
 
 // GetLang is a getter for Language
 func (q Query) GetLang() string {
-	return somesql.LangEN // todo: if not set, return default lang
+	if q.Lang != "" {
+		return q.Lang
+	}
+	return somesql.LangEN
 }

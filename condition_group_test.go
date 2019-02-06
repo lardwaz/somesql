@@ -26,8 +26,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"AND (1)",
 			[]somesql.Condition{
-				somesql.And("id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.And("status", "=", true),
+				somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.And(somesql.LangEN, "status", "=", true),
 			},
 			"(id=? AND status=?)",
 			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", true},
@@ -36,8 +36,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"AND (2)",
 			[]somesql.Condition{
-				somesql.Or("id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.And("status", "=", true),
+				somesql.Or(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.And(somesql.LangEN, "status", "=", true),
 			},
 			"(id=? AND status=?)",
 			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", true},
@@ -46,8 +46,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"OR (1)",
 			[]somesql.Condition{
-				somesql.Or("id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.Or("status", "=", true),
+				somesql.Or(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.Or(somesql.LangEN, "status", "=", true),
 			},
 			"(id=? OR status=?)",
 			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", true},
@@ -56,8 +56,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"OR (2)",
 			[]somesql.Condition{
-				somesql.And("id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.Or("status", "=", true),
+				somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.Or(somesql.LangEN, "status", "=", true),
 			},
 			"(id=? OR status=?)",
 			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", true},
@@ -66,8 +66,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"AND JSONB (fields in 'data' only)",
 			[]somesql.Condition{
-				somesql.And("badge", "=", "video"),
-				somesql.And("has_video", "=", true),
+				somesql.And(somesql.LangEN, "badge", "=", "video"),
+				somesql.And(somesql.LangEN, "has_video", "=", true),
 			},
 			`("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
 			[]interface{}{"video", true},

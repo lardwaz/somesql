@@ -15,6 +15,7 @@ func TestConditionClause(t *testing.T) {
 	)
 
 	type args struct {
+		lang     string
 		field    string
 		operator string
 		value    interface{}
@@ -33,6 +34,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"AND Normal",
 			args{
+				lang:     somesql.LangEN,
 				field:    "id",
 				operator: "=",
 				value:    "002fd6b1-f715-4875-838b-1546f27327df",
@@ -45,6 +47,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"AND Normal (boolean)",
 			args{
+				lang:     somesql.LangEN,
 				field:    "status",
 				operator: "=",
 				value:    true,
@@ -57,6 +60,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"AND with func on value",
 			args{
+				lang:     somesql.LangEN,
 				field:    "type",
 				operator: "=",
 				value:    "Article",
@@ -69,6 +73,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"AND with func on field",
 			args{
+				lang:     somesql.LangEN,
 				field:    "type",
 				operator: "=",
 				value:    "article",
@@ -81,6 +86,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"AND with func on field and value",
 			args{
+				lang:     somesql.LangEN,
 				field:    "slug",
 				operator: "=",
 				value:    "Summertime-Beat-the-heat-and-stay-active",
@@ -93,6 +99,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"AND JSONB",
 			args{
+				lang:     somesql.LangEN,
 				field:    "name",
 				operator: "=",
 				value:    "John Doe",
@@ -105,6 +112,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"AND JSONB (boolean)",
 			args{
+				lang:     somesql.LangEN,
 				field:    "has_video",
 				operator: "=",
 				value:    true,
@@ -117,6 +125,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"AND JSONB with func on value",
 			args{
+				lang:     somesql.LangEN,
 				field:    "name",
 				operator: "=",
 				value:    "John Doe",
@@ -129,6 +138,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"AND JSONB with func on field",
 			args{
+				lang:     somesql.LangEN,
 				field:    "name",
 				operator: "=",
 				value:    "John Doe",
@@ -141,6 +151,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"AND JSONB with func on field and value",
 			args{
+				lang:     somesql.LangEN,
 				field:    "name",
 				operator: "=",
 				value:    "John Doe",
@@ -154,6 +165,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"OR Normal",
 			args{
+				lang:     somesql.LangEN,
 				field:    "id",
 				operator: "=",
 				value:    "002fd6b1-f715-4875-838b-1546f27327df",
@@ -166,6 +178,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"OR with func on value",
 			args{
+				lang:     somesql.LangEN,
 				field:    "type",
 				operator: "=",
 				value:    "Article",
@@ -178,6 +191,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"OR with func on field",
 			args{
+				lang:     somesql.LangEN,
 				field:    "type",
 				operator: "=",
 				value:    "article",
@@ -190,6 +204,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"OR with func on field and value",
 			args{
+				lang:     somesql.LangEN,
 				field:    "slug",
 				operator: "=",
 				value:    "Summertime-Beat-the-heat-and-stay-active",
@@ -202,6 +217,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"OR JSONB",
 			args{
+				lang:     somesql.LangEN,
 				field:    "name",
 				operator: "=",
 				value:    "John Doe",
@@ -214,6 +230,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"OR JSONB with func on value",
 			args{
+				lang:     somesql.LangEN,
 				field:    "name",
 				operator: "=",
 				value:    "John Doe",
@@ -226,6 +243,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"OR JSONB with func on field",
 			args{
+				lang:     somesql.LangEN,
 				field:    "name",
 				operator: "=",
 				value:    "John Doe",
@@ -238,6 +256,7 @@ func TestConditionClause(t *testing.T) {
 		{
 			"OR JSONB with func on field and value",
 			args{
+				lang:     somesql.LangEN,
 				field:    "name",
 				operator: "=",
 				value:    "John Doe",
@@ -259,9 +278,9 @@ func TestConditionClause(t *testing.T) {
 			)
 
 			if tt.caseType == caseAnd {
-				condition = somesql.And(tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
+				condition = somesql.And(tt.args.lang, tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
 			} else {
-				condition = somesql.Or(tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
+				condition = somesql.Or(tt.args.lang, tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
 			}
 
 			sql, values = condition.AsSQL()
