@@ -73,18 +73,18 @@ func (c ConditionClause) AsSQL() (string, []interface{}) {
 	if c.FieldFunction == None {
 		lhs = field
 	} else {
-		lhs = fmt.Sprintf(`%s(%s)`, c.FieldFunction, field)
+		lhs = fmt.Sprintf("%s(%s)", c.FieldFunction, field)
 	}
 
 	switch c.Value.(type) {
 	case bool:
-		lhs = fmt.Sprintf(`(%s)::BOOLEAN`, lhs)
+		lhs = fmt.Sprintf("(%s)::BOOLEAN", lhs)
 	}
 
-	if c.ValueFunction != None {
-		rhs = fmt.Sprintf(`%s(?)`, c.ValueFunction)
-	} else {
+	if c.ValueFunction == None {
 		rhs = "?"
+	} else {
+		rhs = fmt.Sprintf("%s(?)", c.ValueFunction)
 	}
 
 	return lhs + c.Operator + rhs, []interface{}{c.Value}
