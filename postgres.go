@@ -1,43 +1,41 @@
-package postgres
+package somesql
 
-import "github.com/lsldigital/somesql"
-
-// Query represents a query implementation in postgresql database backend
-type Query struct {
+// PQQuery represents a query implementation in postgresql database backend
+type PQQuery struct {
 	Lang       string
 	Fields     []string
-	Conditions []somesql.Condition
+	Conditions []Condition
 }
 
-//New declares a new query
-func New() somesql.Query {
-	var q Query
+// NewQuery declares a new query
+func NewQuery() Query {
+	var q PQQuery
 	return q
 }
 
 // Select specifies which fields to retrieve data for
-func (q Query) Select(f ...string) somesql.Query {
+func (q PQQuery) Select(f ...string) Query {
 	q.Fields = f
 	return q
 }
 
 // Where adds a condition clause to the Query
-func (q Query) Where(c somesql.Condition) somesql.Query {
+func (q PQQuery) Where(c Condition) Query {
 	q.Conditions = append(q.Conditions, c)
 	return q
 }
 
 // AsSQL returns the sql query and values for the query
-func (q Query) AsSQL() (string, []interface{}) {
+func (q PQQuery) AsSQL() (string, []interface{}) {
 	var values []interface{}
 
 	sql := `SELECT `
 
 	for i := range q.Conditions {
 		switch q.Conditions[i].ConditionType() {
-		case somesql.AndCondition:
+		case AndCondition:
 			sql += `AND `
-		case somesql.OrCondition:
+		case OrCondition:
 			sql += `OR `
 		default:
 			continue
@@ -52,18 +50,18 @@ func (q Query) AsSQL() (string, []interface{}) {
 }
 
 // SetLang is a setter for Language
-func (q Query) SetLang(lang string) somesql.Query {
+func (q PQQuery) SetLang(lang string) Query {
 	switch lang {
-	case somesql.LangEN, somesql.LangFR:
+	case LangEN, LangFR:
 		q.Lang = lang
 	}
 	return q
 }
 
 // GetLang is a getter for Language
-func (q Query) GetLang() string {
+func (q PQQuery) GetLang() string {
 	if q.Lang != "" {
 		return q.Lang
 	}
-	return somesql.LangEN
+	return LangEN
 }
