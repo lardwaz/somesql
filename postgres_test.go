@@ -278,7 +278,7 @@ func TestQuery_AsSQL_ConditionIN(t *testing.T) {
 		},
 		{
 			name:           "WHERE field IN (...) - JSONB - LangFR",
-			query:          somesql.NewQuery().Where(somesql.AndIn(somesql.LangEN, "name", []string{"A", "B", "C"})).SetLang(somesql.LangFR),
+			query:          somesql.NewQuery().Where(somesql.AndIn(somesql.LangFR, "name", []string{"A", "B", "C"})).SetLang(somesql.LangFR),
 			expectedSQL:    `SELECT id, created_at, updated_at, owner_id, status, type, data_fr FROM repo WHERE "data_fr"->>'name' IN (?,?,?)`,
 			expectedValues: []interface{}{"A", "B", "C"},
 		},
@@ -327,7 +327,7 @@ func TestQuery_AsSQL_ConditionIN(t *testing.T) {
 		},
 		{
 			name:           "WHERE FUNC(field) NOT IN (...) - JSONB",
-			query:          somesql.NewQuery().Where(somesql.AndIn(somesql.LangEN, "name", []string{"a"}, "LOWER")),
+			query:          somesql.NewQuery().Where(somesql.AndNotIn(somesql.LangEN, "name", []string{"a"}, "LOWER")),
 			expectedSQL:    `SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo WHERE LOWER("data_en"->>'name') NOT IN (?)`,
 			expectedValues: []interface{}{"a"},
 		},
@@ -341,7 +341,7 @@ func TestQuery_AsSQL_ConditionIN(t *testing.T) {
 		{
 			name:           "WHERE id IN (...) AND NOT IN (...) - JSONB",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndIn(somesql.LangEN, "name", []string{"A", "B"})).Where(somesql.AndNotIn(somesql.LangEN, "id", []string{"C", "D"})),
-			expectedSQL:    "SELECT data_en FROM repo WHERE id IN (?,?) AND id NOT IN (?,?)",
+			expectedSQL:    `SELECT data_en FROM repo WHERE "data_en"->>'name' IN (?,?) AND id NOT IN (?,?)`,
 			expectedValues: []interface{}{"A", "B", "C", "D"},
 		},
 		{
@@ -360,56 +360,56 @@ func TestQuery_AsSQL_ConditionIN(t *testing.T) {
 		{
 			name:           "WHERE id IN (...) AND field = ...",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndIn(somesql.LangEN, "type", []string{"article", "dossier"})).Where(somesql.And(somesql.LangEN, "status", "=", []string{"published"})),
-			expectedSQL:    "SELECT data_en FROM repo WHERE type IN (?) AND status =?",
+			expectedSQL:    "SELECT data_en FROM repo WHERE type IN (?,?) AND status=?",
 			expectedValues: []interface{}{"article", "dossier", "published"},
 		},
 		{
 			name:           "WHERE id IN (...) AND field = ... - JSONB",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndIn(somesql.LangEN, "type", []string{"article", "dossier"})).Where(somesql.And(somesql.LangEN, "status", "=", []string{"published"})),
-			expectedSQL:    "SELECT data_en FROM repo WHERE type IN (?) AND status =?",
+			expectedSQL:    "SELECT data_en FROM repo WHERE type IN (?,?) AND status=?",
 			expectedValues: []interface{}{"article", "dossier", "published"},
 		},
 		{
 			name:           "WHERE FUNC(field) IN (...) AND field NOT IN (...) - primitive field",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndIn(somesql.LangEN, "updated_at", []string{"2019"}, "YEAR")).Where(somesql.AndNotIn(somesql.LangEN, "id", []string{"A", "B"})).Where(somesql.And(somesql.LangEN, "status", "=", "published")),
-			expectedSQL:    "SELECT data_en FROM repo WHERE YEAR(updated_at) IN (?) AND id NOT IN (?,?) AND status =?",
+			expectedSQL:    "SELECT data_en FROM repo WHERE YEAR(updated_at) IN (?) AND id NOT IN (?,?) AND status=?",
 			expectedValues: []interface{}{"2019", "A", "B", "published"},
 		},
 		{
 			name:           "WHERE FUNC(field) IN (...) AND field NOT IN (...) - JSONB",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndIn(somesql.LangEN, "tag_ids", []string{"A"})).Where(somesql.AndIn(somesql.LangEN, "author_ids", []string{"B"})).Where(somesql.And(somesql.LangEN, "status", "=", "published")),
-			expectedSQL:    `SELECT data_en FROM repo WHERE "data_en"->>'tag_ids' IN (?) AND "data_en"->>'author_ids' IN (?) AND status =?`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE "data_en"->>'tag_ids' IN (?) AND "data_en"->>'author_ids' IN (?) AND status=?`,
 			expectedValues: []interface{}{"A", "B", "published"},
 		},
 
 		{
 			name:           "WHERE id IN (...) AND field = ...",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndGroup(somesql.And(somesql.LangEN, "badge", "=", "video"), somesql.And(somesql.LangEN, "has_video", "=", true))).Where(somesql.And(somesql.LangEN, "status", "=", []string{"published"})),
-			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?) AND status =?`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?) AND status=?`,
 			expectedValues: []interface{}{"video", true, "published"},
 		},
 		{
 			name:           "WHERE field = ... OR (... AND ...) [1]",
 			query:          somesql.NewQuery().Select("data").Where(somesql.And(somesql.LangEN, "status", "=", []string{"published"})).Where(somesql.OrGroup(somesql.And(somesql.LangEN, "badge", "=", "video"), somesql.And(somesql.LangEN, "has_video", "=", true))),
-			expectedSQL:    `SELECT data_en FROM repo WHERE status =? OR ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE status=? OR ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
 			expectedValues: []interface{}{"published", "video", true},
 		},
 		{
 			name:           "WHERE field = ... OR (... AND ...) [2]",
 			query:          somesql.NewQuery().Select("data").Where(somesql.Or(somesql.LangEN, "status", "=", []string{"published"})).Where(somesql.OrGroup(somesql.Or(somesql.LangEN, "badge", "=", "video"), somesql.And(somesql.LangEN, "has_video", "=", true))),
-			expectedSQL:    `SELECT data_en FROM repo WHERE status =? OR ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE status=? OR ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
 			expectedValues: []interface{}{"published", "video", true},
 		},
 		{
 			name:           "WHERE field = ... AND (... OR ...) [1]",
 			query:          somesql.NewQuery().Select("data").Where(somesql.Or(somesql.LangEN, "status", "=", []string{"published"})).Where(somesql.AndGroup(somesql.And(somesql.LangEN, "badge", "=", "video"), somesql.Or(somesql.LangEN, "has_video", "=", true))),
-			expectedSQL:    `SELECT data_en FROM repo WHERE status =? AND ("data_en"->>'badge'=? OR ("data_en"->>'has_video')::BOOLEAN=?)`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE status=? AND ("data_en"->>'badge'=? OR ("data_en"->>'has_video')::BOOLEAN=?)`,
 			expectedValues: []interface{}{"published", "video", true},
 		},
 		{
 			name:           "WHERE field = ... AND (... OR ...) [2]",
 			query:          somesql.NewQuery().Select("data").Where(somesql.Or(somesql.LangEN, "status", "=", []string{"published"})).Where(somesql.AndGroup(somesql.And(somesql.LangEN, "badge", "=", "video"), somesql.Or(somesql.LangEN, "badge", "=", "audio"))),
-			expectedSQL:    `SELECT data_en FROM repo WHERE status =? AND ("data_en"->>'badge'=? OR ("data_en"->>'badge')=?)`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE status=? AND ("data_en"->>'badge'=? OR "data_en"->>'badge'=?)`,
 			expectedValues: []interface{}{"published", "video", "audio"},
 		},
 	}
