@@ -87,5 +87,7 @@ func (c ConditionClause) AsSQL() (string, []interface{}) {
 		rhs = fmt.Sprintf("%s(?)", c.ValueFunction)
 	}
 
-	return lhs + c.Operator + rhs, []interface{}{c.Value}
+	vals := expandValues(c.Value)
+
+	return lhs + c.Operator + rhs, vals
 }
