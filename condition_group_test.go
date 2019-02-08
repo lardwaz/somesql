@@ -27,19 +27,29 @@ func TestConditionGroup(t *testing.T) {
 			"AND (1)",
 			[]somesql.Condition{
 				somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.And(somesql.LangEN, "status", "=", true),
+				somesql.And(somesql.LangEN, "status", "=", "published"),
 			},
-			"(id=? AND (status)::BOOLEAN=?)",
-			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", true},
+			"(id=? AND status=?)",
+			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", "published"},
 			caseAnd,
 		},
 		{
 			"AND (2)",
 			[]somesql.Condition{
 				somesql.Or(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.And(somesql.LangEN, "status", "=", true),
+				somesql.And(somesql.LangEN, "status", "=", "published"),
 			},
-			"(id=? AND (status)::BOOLEAN=?)",
+			"(id=? AND status=?)",
+			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", "published"},
+			caseAnd,
+		},
+		{
+			"AND (3)",
+			[]somesql.Condition{
+				somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.Or(somesql.LangEN, "status", "=", true),
+			},
+			"(id=? OR (status)::BOOLEAN=?)",
 			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", true},
 			caseAnd,
 		},
@@ -47,14 +57,24 @@ func TestConditionGroup(t *testing.T) {
 			"OR (1)",
 			[]somesql.Condition{
 				somesql.Or(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.Or(somesql.LangEN, "status", "=", true),
+				somesql.Or(somesql.LangEN, "status", "=", "published"),
 			},
-			"(id=? OR (status)::BOOLEAN=?)",
-			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", true},
+			"(id=? OR status=?)",
+			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", "published"},
 			caseOr,
 		},
 		{
 			"OR (2)",
+			[]somesql.Condition{
+				somesql.Or(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.And(somesql.LangEN, "status", "=", true),
+			},
+			"(id=? AND (status)::BOOLEAN=?)",
+			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", true},
+			caseOr,
+		},
+		{
+			"OR (3)",
 			[]somesql.Condition{
 				somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
 				somesql.Or(somesql.LangEN, "status", "=", true),
