@@ -204,13 +204,13 @@ func TestQuery_AsSQL_ConditionGroup(t *testing.T) {
 		{
 			name:           "WHERE (... OR ...) [1]",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndGroup(somesql.And(somesql.LangEN, "badge", "=", "video"), somesql.Or(somesql.LangEN, "badge", "=", "audio"))),
-			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? OR ("data_en"->>'badge')=?)`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? OR "data_en"->>'badge'=?)`,
 			expectedValues: []interface{}{"video", "audio"},
 		},
 		{
 			name:           "WHERE (... OR ...) [2]",
 			query:          somesql.NewQuery().Select("data").Where(somesql.OrGroup(somesql.And(somesql.LangEN, "badge", "=", "video"), somesql.Or(somesql.LangEN, "badge", "=", "audio"))),
-			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? OR ("data_en"->>'badge')=?)`,
+			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? OR "data_en"->>'badge'=?)`,
 			expectedValues: []interface{}{"video", "audio"},
 		},
 		{
@@ -223,19 +223,19 @@ func TestQuery_AsSQL_ConditionGroup(t *testing.T) {
 			name:           "WHERE (... AND ...) [2]",
 			query:          somesql.NewQuery().Select("data").Where(somesql.OrGroup(somesql.Or(somesql.LangEN, "badge", "=", "video"), somesql.And(somesql.LangEN, "has_video", "=", true))),
 			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
-			expectedValues: []interface{}{"published", "video", true},
+			expectedValues: []interface{}{"video", true},
 		},
 		{
 			name:           "WHERE (... AND ...) AND (... OR ...) [1]",
 			query:          somesql.NewQuery().Select("data").Where(somesql.OrGroup(somesql.Or(somesql.LangEN, "badge", "=", "video"), somesql.And(somesql.LangEN, "has_video", "=", true))).Where(somesql.AndGroup(somesql.Or(somesql.LangEN, "badge", "=", "video"), somesql.Or(somesql.LangEN, "has_video", "=", true))),
 			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?) AND ("data_en"->>'badge'=? OR ("data_en"->>'has_video')::BOOLEAN=?)`,
-			expectedValues: []interface{}{"published", "video", true},
+			expectedValues: []interface{}{"video", true, "video", true},
 		},
 		{
 			name:           "WHERE (... AND ...) OR (... AND ...) [2]",
 			query:          somesql.NewQuery().Select("data").Where(somesql.OrGroup(somesql.Or(somesql.LangEN, "badge", "=", "video"), somesql.And(somesql.LangEN, "has_video", "=", true))).Where(somesql.OrGroup(somesql.Or(somesql.LangEN, "badge", "=", "video"), somesql.And(somesql.LangEN, "has_video", "=", true))),
 			expectedSQL:    `SELECT data_en FROM repo WHERE ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?) OR ("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
-			expectedValues: []interface{}{"published", "video", true},
+			expectedValues: []interface{}{"video", true, "video", true},
 		},
 	}
 
