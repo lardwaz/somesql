@@ -157,27 +157,27 @@ func TestQuery_AsSQL_ConditionClause(t *testing.T) {
 		},
 		// Regular condition clauses on json attributes
 		{
-			name:           "WHERE data_en->>'author_id'=?",
+			name:           `WHERE "data_en"->>'author_id'=?`,
 			query:          somesql.NewQuery().Select("data").Where(somesql.And(somesql.LangEN, "author_id", "=", "1")),
-			expectedSQL:    "SELECT data_en FROM repo WHERE data_en->>'author_id'=?",
+			expectedSQL:    `SELECT data_en FROM repo WHERE "data_en"->>'author_id'=?`,
 			expectedValues: []interface{}{"1"},
 		},
 		{
-			name:           "WHERE data_fr->>'author_id'=? (langFR)",
-			query:          somesql.NewQuery().Select("data").SetLang(somesql.LangFR).Where(somesql.And(somesql.LangEN, "author_id", "=", "1")),
-			expectedSQL:    "SELECT data_fr FROM repo WHERE data_fr->>'author_id'=?",
+			name:           `WHERE "data_fr"->>'author_id'=? (langFR)`,
+			query:          somesql.NewQuery().Select("data").SetLang(somesql.LangFR).Where(somesql.And(somesql.LangFR, "author_id", "=", "1")),
+			expectedSQL:    `SELECT data_fr FROM repo WHERE "data_fr"->>'author_id'=?`,
 			expectedValues: []interface{}{"1"},
 		},
 		{
-			name:           "WHERE data_fr->>'author_id'=? OR data_fr->>'category_id'=? (langFR)",
-			query:          somesql.NewQuery().Select("data").SetLang(somesql.LangFR).Where(somesql.And(somesql.LangEN, "author_id", "=", "1")).Where(somesql.Or(somesql.LangEN, "category_id", "=", "2")),
-			expectedSQL:    "SELECT data_fr FROM repo WHERE data_fr->>'author_id'=? OR data_fr->>'category_id'=?",
+			name:           `WHERE "data_fr"->>'author_id'=? OR "data_fr"->>'category_id'=? (langFR)`,
+			query:          somesql.NewQuery().Select("data").SetLang(somesql.LangFR).Where(somesql.And(somesql.LangFR, "author_id", "=", "1")).Where(somesql.Or(somesql.LangFR, "category_id", "=", "2")),
+			expectedSQL:    `SELECT data_fr FROM repo WHERE "data_fr"->>'author_id'=? OR "data_fr"->>'category_id'=?`,
 			expectedValues: []interface{}{"1", "2"},
 		},
 		{
-			name:           "WHERE data_fr->>'author_id'=? AND data_fr->>'category_id'=? (langFR)",
-			query:          somesql.NewQuery().Select("data").SetLang(somesql.LangFR).Where(somesql.And(somesql.LangEN, "author_id", "=", "1")).Where(somesql.And(somesql.LangEN, "category_id", "=", "2")),
-			expectedSQL:    "SELECT data_fr FROM repo WHERE data_fr->>'author_id'=? AND data_fr->>'category_id'=?",
+			name:           `WHERE "data_fr"->>'author_id'=? AND "data_fr"->>'category_id'=? (langFR)`,
+			query:          somesql.NewQuery().Select("data").SetLang(somesql.LangFR).Where(somesql.And(somesql.LangFR, "author_id", "=", "1")).Where(somesql.And(somesql.LangFR, "category_id", "=", "2")),
+			expectedSQL:    `SELECT data_fr FROM repo WHERE "data_fr"->>'author_id'=? AND "data_fr"->>'category_id'=?`,
 			expectedValues: []interface{}{"1", "2"},
 		},
 	}

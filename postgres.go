@@ -68,14 +68,18 @@ func (q PQQuery) AsSQL() (string, []interface{}) {
 
 	sql += " FROM repo"
 
-	for _, cond := range q.Conditions {
-		switch cond.ConditionType() {
-		case AndCondition:
-			sql += `AND `
-		case OrCondition:
-			sql += `OR `
-		default:
-			continue
+	for i, cond := range q.Conditions {
+		if i == 0 {
+			sql += ` WHERE `
+		} else {
+			switch cond.ConditionType() {
+			case AndCondition:
+				sql += ` AND `
+			case OrCondition:
+				sql += ` OR `
+			default:
+				continue
+			}
 		}
 
 		s, v := cond.AsSQL()
