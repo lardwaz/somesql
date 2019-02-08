@@ -45,7 +45,7 @@ func (c ConditionGroup) AsSQL() (string, []interface{}) {
 			sqls = sql
 			continue
 		}
-		if c.Type == AndCondition {
+		if cond.ConditionType() == AndCondition {
 			sqls = fmt.Sprintf("%s AND %s", sqls, sql)
 		} else {
 			sqls = fmt.Sprintf("%s OR %s", sqls, sql)
