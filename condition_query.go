@@ -1,5 +1,6 @@
 package somesql
 
+// ConditionQuery defines conditions for a query
 type ConditionQuery struct {
 	Type uint8
 }
@@ -28,11 +29,13 @@ func OrNotInQuery(fieldname string, query Query) ConditionQuery {
 	return ConditionQuery{}
 }
 
+// ConditionType return the condition type (or / and)
 func (c ConditionQuery) ConditionType() uint8 {
 	return c.Type
 }
 
+// AsSQL returns part of SQL incuding the sub-query
 func (c ConditionQuery) AsSQL() (string, []interface{}) {
 	panic("not implemented")
-	return "", nil
+	// return "", []interface{}{}
 }
