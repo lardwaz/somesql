@@ -19,6 +19,14 @@ func expandValues(val interface{}) []interface{} {
 		for d := range data {
 			values = append(values, data[d])
 		}
+	} else if data, ok := val.([]bool); ok {
+		for d := range data {
+			values = append(values, data[d])
+		}
+	} else if data, ok := val.([]int); ok {
+		for d := range data {
+			values = append(values, data[d])
+		}
 	} else {
 		return []interface{}{val}
 	}
