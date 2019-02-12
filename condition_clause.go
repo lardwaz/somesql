@@ -55,7 +55,7 @@ func (c ConditionClause) ConditionType() uint8 {
 }
 
 // AsSQL to satisfy interface Condition
-func (c ConditionClause) AsSQL() (string, []interface{}) {
+func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		lhs, rhs, field string
 		// values          []interface{}
@@ -64,7 +64,7 @@ func (c ConditionClause) AsSQL() (string, []interface{}) {
 	dataField := fmt.Sprintf("data_%s", c.Lang)
 
 	switch c.Field {
-	case "id", "created_at", "updated_at", "status", "owner_id", "type", "slug", dataField:
+	case "id", "created_at", "updated_at", "status", "owner_id", "type", dataField:
 		field = c.Field
 	default:
 		field = fmt.Sprintf(`"%s"->>'%s'`, dataField, c.Field)

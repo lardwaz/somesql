@@ -32,7 +32,7 @@ func (c ConditionGroup) ConditionType() uint8 {
 }
 
 //AsSQL to satisfy interface Condition
-func (c ConditionGroup) AsSQL() (string, []interface{}) {
+func (c ConditionGroup) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		sqls   string
 		values []interface{}

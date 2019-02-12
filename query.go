@@ -25,11 +25,11 @@ type Query interface {
 	Where(Condition) Query
 	SetLang(string) Query
 	GetLang() string
-	AsSQL() (string, []interface{})
+	AsSQL(in ...bool) (string, []interface{})
 }
 
 // Condition represents a conditional clause in a statement
 type Condition interface {
 	ConditionType() uint8
-	AsSQL() (string, []interface{})
+	AsSQL(in ...bool) (string, []interface{})
 }

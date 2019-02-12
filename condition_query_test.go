@@ -23,6 +23,7 @@ func TestConditionQuery(t *testing.T) {
 		sql       string
 		values    []interface{}
 		caseType  uint8
+		lang 	  string
 	}
 
 	tests := []testCase{
@@ -31,58 +32,64 @@ func TestConditionQuery(t *testing.T) {
 			name:      "AndInQuery [error 1]",
 			fieldName: "author_id",
 			query:     somesql.NewQuery().Select("type", "slug").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")),
-			sql:       "",
-			values:    []interface{}{},
+			sql:       `"data_en"->>'author_id' IN (SELECT type, data_en->>'slug' "slug" FROM repo WHERE id=?)`,
+			values:    []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 			caseType:  caseAndIn,
+			lang:      somesql.LangEN,
 		},
 		{
 			name:      "OrInQuery [error 2]",
 			fieldName: "author_id",
 			query:     somesql.NewQuery().Select("type", "slug").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")),
-			sql:       "",
-			values:    []interface{}{},
+			sql:       `"data_en"->>'author_id' IN (SELECT type, data_en->>'slug' "slug" FROM repo WHERE id=?)`,
+			values:    []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 			caseType:  caseOrIn,
+			lang:      somesql.LangEN,
 		},
-
 		{
 			name:      "AndInQuery [1]",
 			fieldName: "author_id",
 			query:     somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "1")),
-			sql:       `"data_en"->>'author_id' IN (SELECT data_en->'author_id' FROM repo WHERE id =?)`,
+			sql:       `"data_en"->>'author_id' IN (SELECT data_en->>'author_id' "author_id" FROM repo WHERE id=?)`,
 			values:    []interface{}{"1"},
 			caseType:  caseAndIn,
+			lang:      somesql.LangEN,
 		},
 		{
 			name:      "AndInQuery [2]",
 			fieldName: "author_id",
 			query:     somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "1")).Where(somesql.And(somesql.LangEN, "status", "=", "published")),
-			sql:       `"data_en"->>'author_id' IN (SELECT data_en->'author_id' FROM repo WHERE id =? AND status =?)`,
+			sql:       `"data_en"->>'author_id' IN (SELECT data_en->>'author_id' "author_id" FROM repo WHERE id=? AND status=?)`,
 			values:    []interface{}{"1", "published"},
 			caseType:  caseAndIn,
+			lang:      somesql.LangEN,
 		},
 		{
 			name:      "AndNotInQuery",
 			fieldName: "author_id",
 			query:     somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "1")),
-			sql:       `"data_en"->>'author_id' NOT IN (SELECT data_en->'author_id' FROM repo WHERE id =?)`,
+			sql:       `"data_en"->>'author_id' NOT IN (SELECT data_en->>'author_id' "author_id" FROM repo WHERE id=?)`,
 			values:    []interface{}{"1"},
 			caseType:  caseAndNotIn,
+			lang:      somesql.LangEN,
 		},
 		{
 			name:      "OrInQuery",
 			fieldName: "author_id",
 			query:     somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "1")),
-			sql:       `"data_en"->>'author_id' IN (SELECT data_en->'author_id' FROM repo WHERE id =?)`,
+			sql:       `"data_en"->>'author_id' IN (SELECT data_en->>'author_id' "author_id" FROM repo WHERE id=?)`,
 			values:    []interface{}{"1"},
 			caseType:  caseOrIn,
+			lang:      somesql.LangEN,
 		},
 		{
 			name:      "OrNotInQuery",
 			fieldName: "author_id",
 			query:     somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "1")),
-			sql:       `"data_en"->>'author_id' NOT IN (SELECT data_en->'author_id' FROM repo WHERE id =?)`,
+			sql:       `"data_en"->>'author_id' NOT IN (SELECT data_en->>'author_id' "author_id" FROM repo WHERE id=?)`,
 			values:    []interface{}{"1"},
 			caseType:  caseOrNotIn,
+			lang:      somesql.LangEN,
 		},
 	}
 
@@ -97,13 +104,13 @@ func TestConditionQuery(t *testing.T) {
 
 			switch tt.caseType {
 			case caseAndIn:
-				cQuery = somesql.AndInQuery(tt.fieldName, tt.query)
+				cQuery = somesql.AndInQuery(tt.lang, tt.fieldName, tt.query)
 			case caseAndNotIn:
-				cQuery = somesql.AndNotInQuery(tt.fieldName, tt.query)
+				cQuery = somesql.AndNotInQuery(tt.lang, tt.fieldName, tt.query)
 			case caseOrIn:
-				cQuery = somesql.OrInQuery(tt.fieldName, tt.query)
+				cQuery = somesql.OrInQuery(tt.lang, tt.fieldName, tt.query)
 			case caseOrNotIn:
-				cQuery = somesql.OrNotInQuery(tt.fieldName, tt.query)
+				cQuery = somesql.OrNotInQuery(tt.lang, tt.fieldName, tt.query)
 			}
 
 			sql, values = cQuery.AsSQL()

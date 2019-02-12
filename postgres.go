@@ -21,6 +21,9 @@ func NewQuery() Query {
 
 // Select specifies which fields to retrieve data for
 func (q PQQuery) Select(f ...string) Query {
+	if len(f) == 0 {
+		return q
+	}
 	q.Fields = f
 	return q
 }
@@ -32,7 +35,7 @@ func (q PQQuery) Where(c Condition) Query {
 }
 
 // AsSQL returns the sql query and values for the query
-func (q PQQuery) AsSQL() (string, []interface{}) {
+func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		values []interface{}
 		lang   = q.GetLang()
@@ -52,15 +55,21 @@ func (q PQQuery) AsSQL() (string, []interface{}) {
 		}
 	}
 
+	inner := (len(in) != 0 && in[0])
+
 	dataFieldsLen := len(dataFields)
 	for i, dataField := range dataFields {
-		if i == 0 { // Genesis
-			sql += ` json_build_object(`
-		}
-		sql += fmt.Sprintf(`'%s', data_%s->'%s', `, dataField, lang, dataField)
-		if (dataFieldsLen) == i+1 { // End
-			sql = strings.TrimRight(sql, ", ")
-			sql += `) "data",`
+		if inner {
+			sql += fmt.Sprintf(` data_%s->>'%s' "%s",`, lang, dataField, dataField)
+		} else {
+			if i == 0 { // Genesis
+				sql += ` json_build_object(`
+			}
+			sql += fmt.Sprintf(`'%s', data_%s->'%s', `, dataField, lang, dataField)
+			if (dataFieldsLen) == i+1 { // End
+				sql = strings.TrimRight(sql, ", ")
+				sql += `) "data",`
+			}
 		}
 	}
 
@@ -68,23 +77,26 @@ func (q PQQuery) AsSQL() (string, []interface{}) {
 
 	sql += " FROM repo"
 
+	var conditions string
 	for i, cond := range q.Conditions {
-		if i == 0 {
-			sql += ` WHERE `
-		} else {
+		if i != 0 {
 			switch cond.ConditionType() {
 			case AndCondition:
-				sql += ` AND `
+				conditions += ` AND `
 			case OrCondition:
-				sql += ` OR `
+				conditions += ` OR `
 			default:
 				continue
 			}
 		}
 
 		s, v := cond.AsSQL()
-		sql += s
+		conditions += s
 		values = append(values, v...)
+	}
+	
+	if len(conditions) != 0 {
+		sql += " WHERE " + conditions
 	}
 
 	return sql, values
