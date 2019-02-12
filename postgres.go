@@ -10,12 +10,15 @@ type PQQuery struct {
 	Lang       string
 	Fields     []string
 	Conditions []Condition
+	Limit 	   int
+	Offset 	   int
 }
 
 // NewQuery declares a new query
 func NewQuery() Query {
 	var q PQQuery
 	q.Fields = []string{"id", "created_at", "updated_at", "owner_id", "status", "type", "data"}
+	q.Limit = 10
 	return q
 }
 
@@ -99,6 +102,14 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 		sql += " WHERE " + conditions
 	}
 
+	if q.Limit != 0 {
+		sql += fmt.Sprintf(" LIMIT %d", q.Limit) 
+	}
+
+	if q.Offset != 0 {
+		sql += fmt.Sprintf(" OFFSET %d", q.Offset) 
+	}
+
 	return sql, values
 }
 
@@ -117,4 +128,26 @@ func (q PQQuery) GetLang() string {
 		return q.Lang
 	}
 	return LangEN
+}
+
+// SetLimit is a setter for Limit
+func (q PQQuery) SetLimit(limit int) Query {
+	q.Limit = limit
+	return q
+}
+
+// GetLimit is a getter for Limit
+func (q PQQuery) GetLimit() int {
+	return q.Limit
+}
+
+// SetOffset is a setter for Offset
+func (q PQQuery) SetOffset(offset int) Query {
+	q.Offset = offset
+	return q
+}
+
+// GetOffset is a getter for Offset
+func (q PQQuery) GetOffset() int {
+	return q.Offset
 }

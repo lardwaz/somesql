@@ -25,6 +25,10 @@ type Query interface {
 	Where(Condition) Query
 	SetLang(string) Query
 	GetLang() string
+	SetLimit(int) Query
+	GetLimit() int
+	SetOffset(int) Query
+	GetOffset() int
 	AsSQL(in ...bool) (string, []interface{})
 }
 
