@@ -1,5 +1,7 @@
 package somesql
 
+import "fmt"
+
 var (
 	and = andor(AndCondition)
 	or  = andor(OrCondition)
@@ -13,13 +15,14 @@ type ConditionClause struct {
 	Operator      string
 	ValueFunction string
 	Value         interface{}
+	Lang          string
 }
 
 // andor is a factory function
 // it generates And + Or functions which are identical except for the conditionType.
 // one instance of each at runtime
-func andor(conditionType uint8) func(field, operator string, value interface{}, funcs ...string) ConditionClause {
-	return func(field, operator string, value interface{}, funcs ...string) ConditionClause {
+func andor(conditionType uint8) func(lang, field, operator string, value interface{}, funcs ...string) ConditionClause {
+	return func(lang, field, operator string, value interface{}, funcs ...string) ConditionClause {
 		fieldFunction, valueFunction := getFieldValueFunctions(funcs)
 
 		return ConditionClause{
@@ -29,20 +32,21 @@ func andor(conditionType uint8) func(field, operator string, value interface{}, 
 			Operator:      operator,
 			Value:         value,
 			ValueFunction: valueFunction,
+			Lang:          lang,
 		}
 	}
 }
 
 // And creates an AND conditional clause
 // And("myfield", "=", "val", "FOO", "BAR") yields: AND FOO(myfield) = BAR(val)
-func And(field, operator string, value interface{}, funcs ...string) ConditionClause {
-	return and(field, operator, value, funcs...)
+func And(lang, field, operator string, value interface{}, funcs ...string) ConditionClause {
+	return and(lang, field, operator, value, funcs...)
 }
 
 // Or creates an AND conditional clause
 // Or("myfield", "=", "val", "FOO", "BAR") yields: OR FOO(myfield) = BAR(val)
-func Or(field, operator string, value interface{}, funcs ...string) ConditionClause {
-	return or(field, operator, value, funcs...)
+func Or(lang, field, operator string, value interface{}, funcs ...string) ConditionClause {
+	return or(lang, field, operator, value, funcs...)
 }
 
 // ConditionType to satisfy interface Condition
@@ -51,30 +55,39 @@ func (c ConditionClause) ConditionType() uint8 {
 }
 
 // AsSQL to satisfy interface Condition
-func (c ConditionClause) AsSQL() (string, []interface{}) {
+func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		lhs, rhs, field string
 		// values          []interface{}
 	)
 
+	dataField := fmt.Sprintf("data_%s", c.Lang)
+
 	switch c.Field {
-	case "id", "created_at", "updated_at", "status", "owner_id", "type", "slug", "data":
+	case "id", "created_at", "updated_at", "status", "owner_id", "type", dataField:
 		field = c.Field
 	default:
-		field = `"data"->>'` + c.Field + `'`
+		field = fmt.Sprintf(`"%s"->>'%s'`, dataField, c.Field)
 	}
 
 	if c.FieldFunction == None {
 		lhs = field
 	} else {
-		lhs = c.FieldFunction + "(" + field + ")"
+		lhs = fmt.Sprintf("%s(%s)", c.FieldFunction, field)
 	}
 
-	if c.ValueFunction != None {
-		rhs = c.ValueFunction + "(?)"
-	} else {
+	switch c.Value.(type) {
+	case bool:
+		lhs = fmt.Sprintf("(%s)::BOOLEAN", lhs)
+	}
+
+	if c.ValueFunction == None {
 		rhs = "?"
+	} else {
+		rhs = fmt.Sprintf("%s(?)", c.ValueFunction)
 	}
 
-	return lhs + c.Operator + rhs, []interface{}{c.Value}
+	vals := expandValues(c.Value)
+
+	return lhs + c.Operator + rhs, vals
 }

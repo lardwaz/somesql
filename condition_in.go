@@ -1,6 +1,9 @@
 package somesql
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 var (
 	andIn    = andorin(AndCondition, "IN")
@@ -16,13 +19,14 @@ type ConditionIn struct {
 	FieldFunction string
 	Operator      string
 	Values        interface{}
+	Lang          string
 }
 
 // andorin is a factory function
 // it generates And + Or functions which are identical except for the conditionType.
 // one instance of each at runtime
-func andorin(conditionType uint8, operator string) func(field string, values interface{}, funcs ...string) ConditionIn {
-	return func(field string, values interface{}, funcs ...string) ConditionIn {
+func andorin(conditionType uint8, operator string) func(lang, field string, values interface{}, funcs ...string) ConditionIn {
+	return func(lang, field string, values interface{}, funcs ...string) ConditionIn {
 		fieldFunction, _ := getFieldValueFunctions(funcs)
 
 		return ConditionIn{
@@ -31,28 +35,29 @@ func andorin(conditionType uint8, operator string) func(field string, values int
 			FieldFunction: fieldFunction,
 			Operator:      operator,
 			Values:        values,
+			Lang:          lang,
 		}
 	}
 }
 
 // AndIn returns a condition in the format IN(?,?,?) adjoined with AND
-func AndIn(field string, values interface{}, funcs ...string) ConditionIn {
-	return andIn(field, values, funcs...)
+func AndIn(lang, field string, values interface{}, funcs ...string) ConditionIn {
+	return andIn(lang, field, values, funcs...)
 }
 
 // OrIn returns a condition in the format IN(?,?,?) adjoined with OR
-func OrIn(field string, values interface{}, funcs ...string) ConditionIn {
-	return orIn(field, values, funcs...)
+func OrIn(lang, field string, values interface{}, funcs ...string) ConditionIn {
+	return orIn(lang, field, values, funcs...)
 }
 
 // AndNotIn returns a condition in the format NOT IN(?,?,?) adjoined with AND
-func AndNotIn(field string, values interface{}, funcs ...string) ConditionIn {
-	return andNotIn(field, values, funcs...)
+func AndNotIn(lang, field string, values interface{}, funcs ...string) ConditionIn {
+	return andNotIn(lang, field, values, funcs...)
 }
 
 // OrNotIn returns a condition in the format NOT IN(?,?,?) adjoined with OR
-func OrNotIn(field string, values interface{}, funcs ...string) ConditionIn {
-	return orNotIn(field, values, funcs...)
+func OrNotIn(lang, field string, values interface{}, funcs ...string) ConditionIn {
+	return orNotIn(lang, field, values, funcs...)
 }
 
 // ConditionType to satisfy interface Condition
@@ -60,118 +65,31 @@ func (c ConditionIn) ConditionType() uint8 {
 	return c.Type
 }
 
-func (c ConditionIn) AsSQL() (string, []interface{}) {
+// AsSQL to satisfy interface Condition
+func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		field, lhs, rhs string
 		vals            []interface{}
 	)
 
+	dataField := fmt.Sprintf("data_%s", c.Lang)
+
 	switch c.Field {
-	case "id", "created_at", "updated_at", "status", "owner_id", "type", "slug", "data":
+	case "id", "created_at", "updated_at", "status", "owner_id", "type", dataField:
 		field = c.Field
 	default:
-		field = `"data"->>'` + c.Field + `'`
+		field = fmt.Sprintf(`"%s"->>'%s'`, dataField, c.Field)
 	}
 
 	if c.FieldFunction == None {
 		lhs = field
 	} else {
-		lhs = c.FieldFunction + "(" + field + ")"
+		lhs = fmt.Sprintf("%s(%s)", c.FieldFunction, field)
 	}
 
-	rhs, vals = inValues(c.Values)
+	vals = expandValues(c.Values)
+	if l := len(vals); l != 0 {
+		rhs = " (" + strings.TrimSuffix(strings.Repeat("?,", l), ",") + ")"
+	}
 	return lhs + " " + c.Operator + rhs, vals
-}
-
-func inValues(val interface{}) (string, []interface{}) {
-	var (
-		values []interface{}
-		query  string
-	)
-
-	if data, ok := val.([]string); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]bool); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]byte); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]complex64); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]complex128); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]float32); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]float64); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]int); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]int8); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]int16); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]int32); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]int64); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]rune); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]uint); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]uint8); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]uint16); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]uint32); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]uint64); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else if data, ok := val.([]uintptr); ok {
-		for d := range data {
-			values = append(values, data[d])
-		}
-	} else {
-		return "", nil
-	}
-
-	if l := len(values); l != 0 {
-		query = " (" + strings.TrimSuffix(strings.Repeat("?,", l), ",") + ")"
-	}
-
-	return query, values
 }

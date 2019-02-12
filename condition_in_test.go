@@ -17,6 +17,7 @@ func TestConditionIn(t *testing.T) {
 	)
 
 	type args struct {
+		lang  string
 		field string
 		value interface{}
 		funcs []string
@@ -34,6 +35,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN",
 			args{
+				lang:  somesql.LangEN,
 				field: "id",
 				value: []string{"A", "B", "C"},
 			},
@@ -44,6 +46,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (with func on field)",
 			args{
+				lang:  somesql.LangEN,
 				field: "updated_at",
 				value: []string{"2019"},
 				funcs: []string{"YEAR"},
@@ -55,6 +58,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN",
 			args{
+				lang:  somesql.LangEN,
 				field: "id",
 				value: []string{"A", "B", "C"},
 			},
@@ -65,6 +69,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN (with func on field)",
 			args{
+				lang:  somesql.LangEN,
 				field: "updated_at",
 				value: []string{"2016"},
 				funcs: []string{"YEAR"},
@@ -76,6 +81,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (JSONB)",
 			args{
+				lang:  somesql.LangEN,
 				field: "name",
 				value: []string{"A", "B", "C"},
 			},
@@ -86,6 +92,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (JSONB) (with func on field)",
 			args{
+				lang:  somesql.LangEN,
 				field: "badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
@@ -97,6 +104,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN (JSONB)",
 			args{
+				lang:  somesql.LangEN,
 				field: "name",
 				value: []string{"A", "B", "C"},
 			},
@@ -107,6 +115,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN (JSONB) (with func on field)",
 			args{
+				lang:  somesql.LangEN,
 				field: "name",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
@@ -119,6 +128,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN",
 			args{
+				lang:  somesql.LangEN,
 				field: "id",
 				value: []string{"A", "B", "C"},
 			},
@@ -129,6 +139,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN (with func on field)",
 			args{
+				lang:  somesql.LangEN,
 				field: "updated_at",
 				value: []string{"2019"},
 				funcs: []string{"YEAR"},
@@ -140,6 +151,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN",
 			args{
+				lang:  somesql.LangEN,
 				field: "id",
 				value: []string{"A", "B", "C"},
 			},
@@ -150,6 +162,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN (with func on field)",
 			args{
+				lang:  somesql.LangEN,
 				field: "updated_at",
 				value: []string{"2015"},
 				funcs: []string{"YEAR"},
@@ -161,6 +174,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN (JSONB)",
 			args{
+				lang:  somesql.LangEN,
 				field: "name",
 				value: []string{"A", "B", "C"},
 			},
@@ -171,6 +185,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN (JSONB) (with func on field)",
 			args{
+				lang:  somesql.LangEN,
 				field: "badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
@@ -182,6 +197,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN (JSONB)",
 			args{
+				lang:  somesql.LangEN,
 				field: "name",
 				value: []string{"A", "B", "C"},
 			},
@@ -192,6 +208,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN (JSONB) (with func on field)",
 			args{
+				lang:  somesql.LangEN,
 				field: "badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
@@ -212,13 +229,13 @@ func TestConditionIn(t *testing.T) {
 
 			switch tt.caseType {
 			case caseAndIn:
-				sql, values = somesql.AndIn(tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
+				sql, values = somesql.AndIn(tt.args.lang, tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
 			case caseOrIn:
-				sql, values = somesql.OrIn(tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
+				sql, values = somesql.OrIn(tt.args.lang, tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
 			case caseAndNotIn:
-				sql, values = somesql.AndNotIn(tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
+				sql, values = somesql.AndNotIn(tt.args.lang, tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
 			case caseOrNotIn:
-				sql, values = somesql.OrNotIn(tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
+				sql, values = somesql.OrNotIn(tt.args.lang, tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
 			}
 
 			assert.Equal(t, tt.sql, sql, fmt.Sprintf("%d: SQL invalid", i+1))
