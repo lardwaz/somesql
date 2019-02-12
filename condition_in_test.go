@@ -44,6 +44,28 @@ func TestConditionIn(t *testing.T) {
 			caseAndIn,
 		},
 		{
+			"AND IN (boolean values)",
+			args{
+				lang:  somesql.LangEN,
+				field: "status",
+				value: []bool{true, false},
+			},
+			"status IN (?,?,?)",
+			[]interface{}{true, false},
+			caseAndIn,
+		},
+		{
+			"AND IN (integer values)",
+			args{
+				lang:  somesql.LangEN,
+				field: "num",
+				value: []int{1, 2},
+			},
+			"num IN (?,?,?)",
+			[]interface{}{1, 2},
+			caseAndIn,
+		},
+		{
 			"AND IN (with func on field)",
 			args{
 				lang:  somesql.LangEN,
