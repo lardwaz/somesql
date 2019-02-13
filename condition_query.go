@@ -64,7 +64,7 @@ func (c ConditionQuery) AsSQL(in ...bool) (string, []interface{}) {
 	)
 
 	if IsFieldMeta(c.Field) || IsFieldData(c.Field){
-		field = c.Field
+		field = fmt.Sprintf(`"%s"`, c.Field)
 	} else {
 		field = fmt.Sprintf(`"%s"->>'%s'`, GetFieldData(c.Lang), c.Field)
 	}

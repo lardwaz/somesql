@@ -50,9 +50,9 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	var dataFields []string
 	for _, field := range q.Fields {
 		if IsFieldMeta(field) {
-			sql += fmt.Sprintf(" %s,", field)
+			sql += fmt.Sprintf(` "%s",`, field)
 		} else if field == "data" {
-			sql += fmt.Sprintf(" %s,", fieldData)
+			sql += fmt.Sprintf(` "%s",`, fieldData)
 		} else {
 			dataFields = append(dataFields, field)
 		}
