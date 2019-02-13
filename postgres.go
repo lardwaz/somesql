@@ -17,7 +17,7 @@ type PQQuery struct {
 // NewQuery declares a new query
 func NewQuery() Query {
 	var q PQQuery
-	q.Fields = []string{"id", "created_at", "updated_at", "owner_id", "status", "type", "data"}
+	q.Fields = append(ReservedFields, FieldData)
 	q.Limit = 10
 	return q
 }
@@ -42,18 +42,18 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		values []interface{}
 		lang   = q.GetLang()
+		fieldData = GetFieldData(lang)
 	)
 
 	sql := `SELECT`
 
 	var dataFields []string
 	for _, field := range q.Fields {
-		switch field {
-		case "id", "created_at", "updated_at", "owner_id", "status", "type":
-			sql += " " + field + ","
-		case "data":
-			sql += " data_" + lang + ","
-		default:
+		if IsFieldMeta(field) {
+			sql += fmt.Sprintf(" %s,", field)
+		} else if field == "data" {
+			sql += fmt.Sprintf(" %s,", fieldData)
+		} else {
 			dataFields = append(dataFields, field)
 		}
 	}
@@ -63,15 +63,15 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	dataFieldsLen := len(dataFields)
 	for i, dataField := range dataFields {
 		if inner {
-			sql += fmt.Sprintf(` data_%s->>'%s' "%s",`, lang, dataField, dataField)
+			sql += fmt.Sprintf(` %s->>'%s' "%s",`, fieldData, dataField, dataField)
 		} else {
 			if i == 0 { // Genesis
 				sql += ` json_build_object(`
 			}
-			sql += fmt.Sprintf(`'%s', data_%s->'%s', `, dataField, lang, dataField)
+			sql += fmt.Sprintf(`'%s', %s->'%s', `, dataField, fieldData, dataField)
 			if (dataFieldsLen) == i+1 { // End
 				sql = strings.TrimRight(sql, ", ")
-				sql += `) "data",`
+				sql += fmt.Sprintf(`) "%s",`, FieldData)
 			}
 		}
 	}
@@ -99,14 +99,14 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	}
 	
 	if len(conditions) != 0 {
-		sql += " WHERE " + conditions
+		sql += fmt.Sprintf(" WHERE %s", conditions)
 	}
 
-	if q.Limit != 0 {
+	if q.GetLimit() != 0 {
 		sql += fmt.Sprintf(" LIMIT %d", q.Limit) 
 	}
 
-	if q.Offset != 0 {
+	if q.GetOffset() != 0 {
 		sql += fmt.Sprintf(" OFFSET %d", q.Offset) 
 	}
 
