@@ -110,6 +110,21 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 		sql += fmt.Sprintf(" OFFSET %d", q.Offset) 
 	}
 
+	// Inner SQL we return here
+	if inner {
+		return sql, values
+	}
+
+	// Replace all '?' with increasing '$N' (i.e $1,$2,$3)
+	var i int
+	for _, r := range sql {
+		if r == '?' {
+			i++
+			placeholder := fmt.Sprintf("$%d", i)
+			sql = strings.Replace(sql, "?", placeholder, 1)
+		}
+	}
+
 	return sql, values
 }
 
