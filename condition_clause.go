@@ -58,16 +58,12 @@ func (c ConditionClause) ConditionType() uint8 {
 func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		lhs, rhs, field string
-		// values          []interface{}
 	)
 
-	dataField := fmt.Sprintf("data_%s", c.Lang)
-
-	switch c.Field {
-	case "id", "created_at", "updated_at", "status", "owner_id", "type", dataField:
+	if IsFieldMeta(c.Field) || IsFieldData(c.Field){
 		field = c.Field
-	default:
-		field = fmt.Sprintf(`"%s"->>'%s'`, dataField, c.Field)
+	} else {
+		field = fmt.Sprintf(`"%s"->>'%s'`, GetFieldData(c.Lang), c.Field)
 	}
 
 	if c.FieldFunction == None {

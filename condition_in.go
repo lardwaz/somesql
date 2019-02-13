@@ -6,10 +6,10 @@ import (
 )
 
 var (
-	andIn    = andorin(AndCondition, "IN")
-	orIn     = andorin(OrCondition, "IN")
-	andNotIn = andorin(AndCondition, "NOT IN")
-	orNotIn  = andorin(OrCondition, "NOT IN")
+	andIn    = andOrIn(AndCondition, "IN")
+	orIn     = andOrIn(OrCondition, "IN")
+	andNotIn = andOrIn(AndCondition, "NOT IN")
+	orNotIn  = andOrIn(OrCondition, "NOT IN")
 )
 
 // ConditionIn represents a condition in the format IN(?,?,?) / NOT IN(?,?,?)
@@ -22,10 +22,10 @@ type ConditionIn struct {
 	Lang          string
 }
 
-// andorin is a factory function
+// andOrIn is a factory function
 // it generates And + Or functions which are identical except for the conditionType.
 // one instance of each at runtime
-func andorin(conditionType uint8, operator string) func(lang, field string, values interface{}, funcs ...string) ConditionIn {
+func andOrIn(conditionType uint8, operator string) func(lang, field string, values interface{}, funcs ...string) ConditionIn {
 	return func(lang, field string, values interface{}, funcs ...string) ConditionIn {
 		fieldFunction, _ := getFieldValueFunctions(funcs)
 
@@ -72,13 +72,10 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 		vals            []interface{}
 	)
 
-	dataField := fmt.Sprintf("data_%s", c.Lang)
-
-	switch c.Field {
-	case "id", "created_at", "updated_at", "status", "owner_id", "type", dataField:
+	if IsFieldMeta(c.Field) || IsFieldData(c.Field){
 		field = c.Field
-	default:
-		field = fmt.Sprintf(`"%s"->>'%s'`, dataField, c.Field)
+	} else {
+		field = fmt.Sprintf(`"%s"->>'%s'`, GetFieldData(c.Lang), c.Field)
 	}
 
 	if c.FieldFunction == None {

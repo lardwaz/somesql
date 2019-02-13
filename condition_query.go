@@ -62,13 +62,11 @@ func (c ConditionQuery) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		field string
 	)
-	
-	dataField := fmt.Sprintf("data_%s", c.Lang)
-	switch c.Field {
-	case "id", "created_at", "updated_at", "status", "owner_id", "type", dataField:
+
+	if IsFieldMeta(c.Field) || IsFieldData(c.Field){
 		field = c.Field
-	default:
-		field = fmt.Sprintf(`"%s"->>'%s'`, dataField, c.Field)
+	} else {
+		field = fmt.Sprintf(`"%s"->>'%s'`, GetFieldData(c.Lang), c.Field)
 	}
 
 	innerSQL, innerVals := c.Query.AsSQL(true)
