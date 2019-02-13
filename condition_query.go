@@ -2,7 +2,6 @@ package somesql
 
 import (
 	"fmt"
-	// "log"
 )
 
 var (
@@ -74,13 +73,7 @@ func (c ConditionQuery) AsSQL(in ...bool) (string, []interface{}) {
 
 	innerSQL, innerVals := c.Query.AsSQL(true)
 
-	if len(innerSQL) == 0 {
-		return "", []interface{}{}
-	} 
-
 	sql := fmt.Sprintf(`%s %s (%s)`, field, c.Operator, innerSQL)
-
-	// log.Println(sql)
 
 	return sql, innerVals
 }

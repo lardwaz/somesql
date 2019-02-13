@@ -59,6 +59,11 @@ func TestQuery_AsSQL_Fields(t *testing.T) {
 			expectedSQL: `SELECT id, type, data_en FROM repo LIMIT 10`,
 		},
 		{
+			name:        "SELECT (EMPTY)",
+			query:       somesql.NewQuery().Select(),
+			expectedSQL: `SELECT id, created_at, updated_at, owner_id, status, type, data_en FROM repo LIMIT 10`,
+		},
+		{
 			name:        "SELECT id, type, data (LangEN)",
 			query:       somesql.NewQuery().Select("id", "type", "data").SetLang(somesql.LangEN),
 			expectedSQL: `SELECT id, type, data_en FROM repo LIMIT 10`,

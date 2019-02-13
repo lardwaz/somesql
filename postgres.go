@@ -102,11 +102,11 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 		sql += " WHERE " + conditions
 	}
 
-	if q.Limit != 0 {
+	if q.GetLimit() != 0 {
 		sql += fmt.Sprintf(" LIMIT %d", q.Limit) 
 	}
 
-	if q.Offset != 0 {
+	if q.GetOffset() != 0 {
 		sql += fmt.Sprintf(" OFFSET %d", q.Offset) 
 	}
 
