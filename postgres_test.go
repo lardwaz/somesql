@@ -77,64 +77,64 @@ func TestQuery_AsSQL_Fields(t *testing.T) {
 		{
 			name:        "SELECT id, type, data_en",
 			query:       somesql.NewQuery().Select("id", "type", "data_en"),
-			expectedSQL: `SELECT "id", "type", json_build_object('data_en', data_en->'data_en') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('data_en', "data_en"->'data_en') "data" FROM repo LIMIT 10`,
 		},
 		{
 			name:        "SELECT id, type, data_en (LangEN)",
 			query:       somesql.NewQuery().Select("id", "type", "data_en").SetLang(somesql.LangEN),
-			expectedSQL: `SELECT "id", "type", json_build_object('data_en', data_en->'data_en') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('data_en', "data_en"->'data_en') "data" FROM repo LIMIT 10`,
 		},
 		{
 			name:        "SELECT id, type, data_en (LangFR)",
 			query:       somesql.NewQuery().Select("id", "type", "data_en").SetLang(somesql.LangFR),
-			expectedSQL: `SELECT "id", "type", json_build_object('data_en', data_fr->'data_en') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('data_en', "data_fr"->'data_en') "data" FROM repo LIMIT 10`,
 		},
 		{
 			name:        "SELECT id, type, data_fr",
 			query:       somesql.NewQuery().Select("id", "type", "data_fr"),
-			expectedSQL: `SELECT "id", "type", json_build_object('data_fr', data_en->'data_fr') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('data_fr', "data_en"->'data_fr') "data" FROM repo LIMIT 10`,
 		},
 		{
 			name:        "SELECT id, type, data_fr (LangEN)",
 			query:       somesql.NewQuery().Select("id", "type", "data_fr").SetLang(somesql.LangEN),
-			expectedSQL: `SELECT "id", "type", json_build_object('data_fr', data_en->'data_fr') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('data_fr', "data_en"->'data_fr') "data" FROM repo LIMIT 10`,
 		},
 		{
 			name:        "SELECT id, type, data_fr (LangFR)",
 			query:       somesql.NewQuery().Select("id", "type", "data_fr").SetLang(somesql.LangFR),
-			expectedSQL: `SELECT "id", "type", json_build_object('data_fr', data_fr->'data_fr') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('data_fr', "data_fr"->'data_fr') "data" FROM repo LIMIT 10`,
 		},
 		// Select pre-defined fields and json attributes (any other) from data_*
 		{
 			name:        "SELECT id, type, data_en->'body'",
 			query:       somesql.NewQuery().Select("id", "type", "body"),
-			expectedSQL: `SELECT "id", "type", json_build_object('body', data_en->'body') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('body', "data_en"->'body') "data" FROM repo LIMIT 10`,
 		},
 		{
 			name:        "SELECT id, type, data_en->'body' (LangEN)",
 			query:       somesql.NewQuery().Select("id", "type", "body").SetLang(somesql.LangEN),
-			expectedSQL: `SELECT "id", "type", json_build_object('body', data_en->'body') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('body', "data_en"->'body') "data" FROM repo LIMIT 10`,
 		},
 		{
 			name:        "SELECT id, type, data_fr->'body' (LangFR)",
 			query:       somesql.NewQuery().Select("id", "type", "body").SetLang(somesql.LangFR),
-			expectedSQL: `SELECT "id", "type", json_build_object('body', data_fr->'body') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('body', "data_fr"->'body') "data" FROM repo LIMIT 10`,
 		},
 		// Select pre-defined fields and json attributes (any other + compound) from data_*
 		{
 			name:        "SELECT id, type, data_en->'body', data_en->'author_id'",
 			query:       somesql.NewQuery().Select("id", "type", "body", "author_id"),
-			expectedSQL: `SELECT "id", "type", json_build_object('body', data_en->'body', 'author_id', data_en->'author_id') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('body', "data_en"->'body', 'author_id', "data_en"->'author_id') "data" FROM repo LIMIT 10`,
 		},
 		{
 			name:        "SELECT id, type, data_en->'body', data_en->'author_id' (LangEN)",
 			query:       somesql.NewQuery().Select("id", "type", "body", "author_id").SetLang(somesql.LangEN),
-			expectedSQL: `SELECT "id", "type", json_build_object('body', data_en->'body', 'author_id', data_en->'author_id') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('body', "data_en"->'body', 'author_id', "data_en"->'author_id') "data" FROM repo LIMIT 10`,
 		},
 		{
 			name:        "SELECT id, type, data_fr->'body', data_fr->'author_id' (LangFR)",
 			query:       somesql.NewQuery().Select("id", "type", "body", "author_id").SetLang(somesql.LangFR),
-			expectedSQL: `SELECT "id", "type", json_build_object('body', data_fr->'body', 'author_id', data_fr->'author_id') "data" FROM repo LIMIT 10`,
+			expectedSQL: `SELECT "id", "type", json_build_object('body', "data_fr"->'body', 'author_id', "data_fr"->'author_id') "data" FROM repo LIMIT 10`,
 		},
 	}
 
@@ -465,7 +465,7 @@ func TestQuery_AsSQL_InQuery(t *testing.T) {
 		{
 			name:           "AndInQuery 2 Fields",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndInQuery(somesql.LangEN, "type", somesql.NewQuery().Select("type", "slug").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", data_en->>'slug' "slug" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", "data_en"->>'slug' "slug" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
 			expectedValues: []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
@@ -477,37 +477,37 @@ func TestQuery_AsSQL_InQuery(t *testing.T) {
 		{
 			name:           "AndInQuery INNER NO LIMIT",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndInQuery(somesql.LangEN, "type", somesql.NewQuery().Select("type", "slug").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")).SetLimit(0))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", data_en->>'slug' "slug" FROM repo WHERE "id"=?) LIMIT 10`,
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", "data_en"->>'slug' "slug" FROM repo WHERE "id"=?) LIMIT 10`,
 			expectedValues: []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
 			name:           "AndInQuery INNER LIMIT 20",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndInQuery(somesql.LangEN, "type", somesql.NewQuery().Select("type", "slug").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")).SetLimit(20))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", data_en->>'slug' "slug" FROM repo WHERE "id"=? LIMIT 20) LIMIT 10`,
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", "data_en"->>'slug' "slug" FROM repo WHERE "id"=? LIMIT 20) LIMIT 10`,
 			expectedValues: []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
 			name:           "AndInQuery INNER OFFSET 20",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndInQuery(somesql.LangEN, "type", somesql.NewQuery().Select("type", "slug").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")).SetOffset(20))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", data_en->>'slug' "slug" FROM repo WHERE "id"=? LIMIT 10 OFFSET 20) LIMIT 10`,
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", "data_en"->>'slug' "slug" FROM repo WHERE "id"=? LIMIT 10 OFFSET 20) LIMIT 10`,
 			expectedValues: []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
 			name:           "AndInQuery",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndInQuery(somesql.LangEN, "author_id", somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "data_en"->>'author_id' IN (SELECT data_en->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
 			expectedValues: []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
 			name:           "AndInQuery",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndIn(somesql.LangEN, "id", []string{"A", "B", "C"})).Where(somesql.AndInQuery(somesql.LangEN, "author_id", somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "id" IN (?,?,?) AND "data_en"->>'author_id' IN (SELECT data_en->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "id" IN (?,?,?) AND "data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
 			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
 			name:           "AndNotInQuery",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndIn(somesql.LangEN, "id", []string{"A", "B", "C"})).Where(somesql.AndNotInQuery(somesql.LangEN, "author_id", somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "id" IN (?,?,?) AND "data_en"->>'author_id' NOT IN (SELECT data_en->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "id" IN (?,?,?) AND "data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
 			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 
@@ -515,7 +515,7 @@ func TestQuery_AsSQL_InQuery(t *testing.T) {
 		{
 			name:           "OrInQuery",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndInQuery(somesql.LangEN, "type", somesql.NewQuery().Select("type", "slug").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", data_en->>'slug' "slug" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", "data_en"->>'slug' "slug" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
 			expectedValues: []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
@@ -527,19 +527,19 @@ func TestQuery_AsSQL_InQuery(t *testing.T) {
 		{
 			name:           "OrInQuery",
 			query:          somesql.NewQuery().Select("data").Where(somesql.OrInQuery(somesql.LangEN, "author_id", somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "data_en"->>'author_id' IN (SELECT data_en->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
 			expectedValues: []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
 			name:           "OrInQuery",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndIn(somesql.LangEN, "id", []string{"A", "B", "C"})).Where(somesql.OrInQuery(somesql.LangEN, "author_id", somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "id" IN (?,?,?) OR "data_en"->>'author_id' IN (SELECT data_en->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "id" IN (?,?,?) OR "data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
 			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
 			name:           "OrNotInQuery",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndIn(somesql.LangEN, "id", []string{"A", "B", "C"})).Where(somesql.OrNotInQuery(somesql.LangEN, "author_id", somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "id" IN (?,?,?) OR "data_en"->>'author_id' NOT IN (SELECT data_en->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "id" IN (?,?,?) OR "data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id"=? LIMIT 10) LIMIT 10`,
 			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 	}

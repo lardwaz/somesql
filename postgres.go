@@ -63,12 +63,12 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	dataFieldsLen := len(dataFields)
 	for i, dataField := range dataFields {
 		if inner {
-			sql += fmt.Sprintf(` %s->>'%s' "%s",`, fieldData, dataField, dataField)
+			sql += fmt.Sprintf(` "%s"->>'%s' "%s",`, fieldData, dataField, dataField)
 		} else {
 			if i == 0 { // Genesis
 				sql += ` json_build_object(`
 			}
-			sql += fmt.Sprintf(`'%s', %s->'%s', `, dataField, fieldData, dataField)
+			sql += fmt.Sprintf(`'%s', "%s"->'%s', `, dataField, fieldData, dataField)
 			if (dataFieldsLen) == i+1 { // End
 				sql = strings.TrimRight(sql, ", ")
 				sql += fmt.Sprintf(`) "%s",`, FieldData)
