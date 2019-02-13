@@ -50,9 +50,9 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	var dataFields []string
 	for _, field := range q.Fields {
 		if IsFieldMeta(field) {
-			sql += fmt.Sprintf(" %s,", field)
+			sql += fmt.Sprintf(` "%s",`, field)
 		} else if field == "data" {
-			sql += fmt.Sprintf(" %s,", fieldData)
+			sql += fmt.Sprintf(` "%s",`, fieldData)
 		} else {
 			dataFields = append(dataFields, field)
 		}
@@ -63,12 +63,12 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	dataFieldsLen := len(dataFields)
 	for i, dataField := range dataFields {
 		if inner {
-			sql += fmt.Sprintf(` %s->>'%s' "%s",`, fieldData, dataField, dataField)
+			sql += fmt.Sprintf(` "%s"->>'%s' "%s",`, fieldData, dataField, dataField)
 		} else {
 			if i == 0 { // Genesis
 				sql += ` json_build_object(`
 			}
-			sql += fmt.Sprintf(`'%s', %s->'%s', `, dataField, fieldData, dataField)
+			sql += fmt.Sprintf(`'%s', "%s"->'%s', `, dataField, fieldData, dataField)
 			if (dataFieldsLen) == i+1 { // End
 				sql = strings.TrimRight(sql, ", ")
 				sql += fmt.Sprintf(`) "%s",`, FieldData)
@@ -108,6 +108,21 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 
 	if q.GetOffset() != 0 {
 		sql += fmt.Sprintf(" OFFSET %d", q.Offset) 
+	}
+
+	// Inner SQL we return here
+	if inner {
+		return sql, values
+	}
+
+	// Replace all '?' with increasing '$N' (i.e $1,$2,$3)
+	var i int
+	for _, r := range sql {
+		if r == '?' {
+			i++
+			placeholder := fmt.Sprintf("$%d", i)
+			sql = strings.Replace(sql, "?", placeholder, 1)
+		}
 	}
 
 	return sql, values
