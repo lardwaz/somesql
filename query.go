@@ -1,4 +1,4 @@
-package somesql
+package somesql //import go.lsl.digital/gocipe/somesql
 
 const (
 	// AndCondition represents a condition added to the query via AND keyword

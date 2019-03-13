@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lsldigital/somesql"
 	"github.com/stretchr/testify/assert"
+	"go.lsl.digital/gocipe/somesql"
 )
 
 func TestConditionClause(t *testing.T) {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lsldigital/somesql"
 	"github.com/stretchr/testify/assert"
+	"go.lsl.digital/gocipe/somesql"
 )
 
 func TestConditionQuery(t *testing.T) {
@@ -23,7 +23,7 @@ func TestConditionQuery(t *testing.T) {
 		sql       string
 		values    []interface{}
 		caseType  uint8
-		lang 	  string
+		lang      string
 	}
 
 	tests := []testCase{
