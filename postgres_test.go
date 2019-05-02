@@ -308,6 +308,25 @@ func TestQuery_AsSQL_ConditionGroup(t *testing.T) {
 			expectedSQL:    `SELECT "data_en" FROM repo WHERE ("data_en"->>'badge'=$1 AND ("data_en"->>'has_video')::BOOLEAN=$2) OR ("data_en"->>'badge'=$3 AND ("data_en"->>'has_video')::BOOLEAN=$4) LIMIT 10`,
 			expectedValues: []interface{}{"video", true, "video", true},
 		},
+		// DELETE
+		{
+			name:           "DELETE WHERE (... OR ...)",
+			query:          somesql.NewQuery().Delete().Where(somesql.AndGroup(somesql.And(somesql.LangEN, "badge", "=", "video"), somesql.Or(somesql.LangEN, "badge", "=", "audio"))),
+			expectedSQL:    `DELETE FROM repo WHERE ("data_en"->>'badge'=$1 OR "data_en"->>'badge'=$2)`,
+			expectedValues: []interface{}{"video", "audio"},
+		},
+		{
+			name:           "DELETE WHERE (... AND ...)",
+			query:          somesql.NewQuery().Delete().Where(somesql.OrGroup(somesql.Or(somesql.LangEN, "badge", "=", "video"), somesql.And(somesql.LangEN, "has_video", "=", true))),
+			expectedSQL:    `DELETE FROM repo WHERE ("data_en"->>'badge'=$1 AND ("data_en"->>'has_video')::BOOLEAN=$2)`,
+			expectedValues: []interface{}{"video", true},
+		},
+		{
+			name:           "DELETE WHERE (... AND ...) AND (... OR ...)",
+			query:          somesql.NewQuery().Delete().Where(somesql.OrGroup(somesql.Or(somesql.LangEN, "badge", "=", "video"), somesql.And(somesql.LangEN, "has_video", "=", true))).Where(somesql.AndGroup(somesql.Or(somesql.LangEN, "badge", "=", "video"), somesql.Or(somesql.LangEN, "has_video", "=", true))),
+			expectedSQL:    `DELETE FROM repo WHERE ("data_en"->>'badge'=$1 AND ("data_en"->>'has_video')::BOOLEAN=$2) AND ("data_en"->>'badge'=$3 OR ("data_en"->>'has_video')::BOOLEAN=$4)`,
+			expectedValues: []interface{}{"video", true, "video", true},
+		},
 	}
 
 	for i, tt := range tests {
@@ -483,6 +502,37 @@ func TestQuery_AsSQL_ConditionIN(t *testing.T) {
 			expectedSQL:    `SELECT "data_en" FROM repo WHERE "status"=$1 AND ("data_en"->>'badge'=$2 OR "data_en"->>'badge'=$3) LIMIT 10`,
 			expectedValues: []interface{}{"published", "video", "audio"},
 		},
+		// DELETE
+		{
+			name:           "DELETE WHERE id IN (...) - primitive field",
+			query:          somesql.NewQuery().Delete().Where(somesql.AndIn(somesql.LangEN, "id", []string{"A", "B", "C"})),
+			expectedSQL:    `DELETE FROM repo WHERE "id" IN ($1,$2,$3)`,
+			expectedValues: []interface{}{"A", "B", "C"},
+		},
+		{
+			name:           "DELETE WHERE field IN (...) - JSONB - LangFR",
+			query:          somesql.NewQuery().Delete().Where(somesql.AndIn(somesql.LangFR, "name", []string{"A", "B", "C"})).SetLang(somesql.LangFR),
+			expectedSQL:    `DELETE FROM repo WHERE "data_fr"->>'name' IN ($1,$2,$3)`,
+			expectedValues: []interface{}{"A", "B", "C"},
+		},
+		{
+			name:           "DELETE WHERE FUNC(field) IN (...) AND field NOT IN (...) - primitive field",
+			query:          somesql.NewQuery().Delete().Where(somesql.AndIn(somesql.LangEN, "updated_at", []string{"2019"}, "YEAR")).Where(somesql.AndNotIn(somesql.LangEN, "id", []string{"A", "B"})),
+			expectedSQL:    `DELETE FROM repo WHERE YEAR("updated_at") IN ($1) AND "id" NOT IN ($2,$3)`,
+			expectedValues: []interface{}{"2019", "A", "B"},
+		},
+		{
+			name:           "DELETE WHERE FUNC(field) IN (...) AND field NOT IN (...) - JSONB",
+			query:          somesql.NewQuery().Delete().Where(somesql.AndIn(somesql.LangEN, "tag_ids", []string{"A"})).Where(somesql.AndIn(somesql.LangEN, "author_ids", []string{"B"})).Where(somesql.And(somesql.LangEN, "status", "=", "published")),
+			expectedSQL:    `DELETE FROM repo WHERE "data_en"->>'tag_ids' IN ($1) AND "data_en"->>'author_ids' IN ($2) AND "status"=$3`,
+			expectedValues: []interface{}{"A", "B", "published"},
+		},
+		{
+			name:           "DELETE WHERE field = ... OR (... AND ...)",
+			query:          somesql.NewQuery().Delete().Where(somesql.Or(somesql.LangEN, "status", "=", []string{"published"})).Where(somesql.OrGroup(somesql.Or(somesql.LangEN, "badge", "=", "video"), somesql.And(somesql.LangEN, "has_video", "=", true))),
+			expectedSQL:    `DELETE FROM repo WHERE "status"=$1 OR ("data_en"->>'badge'=$2 AND ("data_en"->>'has_video')::BOOLEAN=$3)`,
+			expectedValues: []interface{}{"published", "video", true},
+		},
 	}
 
 	for i, tt := range tests {
@@ -586,6 +636,19 @@ func TestQuery_AsSQL_InQuery(t *testing.T) {
 			name:           "OrNotInQuery",
 			query:          somesql.NewQuery().Select("data").Where(somesql.AndIn(somesql.LangEN, "id", []string{"A", "B", "C"})).Where(somesql.OrNotInQuery(somesql.LangEN, "author_id", somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
 			expectedSQL:    `SELECT "data_en" FROM repo WHERE "id" IN ($1,$2,$3) OR "data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id"=$4 LIMIT 10) LIMIT 10`,
+			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
+		},
+		// DELETE
+		{
+			name:           "DELETE AndInQuery 2 Fields",
+			query:          somesql.NewQuery().Delete().Where(somesql.AndInQuery(somesql.LangEN, "type", somesql.NewQuery().Select("type", "slug").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
+			expectedSQL:    `DELETE FROM repo WHERE "type" IN (SELECT "type", "data_en"->>'slug' "slug" FROM repo WHERE "id"=$1 LIMIT 10)`,
+			expectedValues: []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
+		},
+		{
+			name:           "DELETE OrNotInQuery",
+			query:          somesql.NewQuery().Delete().Where(somesql.AndIn(somesql.LangEN, "id", []string{"A", "B", "C"})).Where(somesql.OrNotInQuery(somesql.LangEN, "author_id", somesql.NewQuery().Select("author_id").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")))),
+			expectedSQL:    `DELETE FROM repo WHERE "id" IN ($1,$2,$3) OR "data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id"=$4 LIMIT 10)`,
 			expectedValues: []interface{}{"A", "B", "C", "002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 	}
