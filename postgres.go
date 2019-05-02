@@ -60,6 +60,7 @@ func (q PQQuery) Merge(f ...string) Query {
 func (q PQQuery) Delete() Query {
 	q.Type = DeleteQueryType
 	q.Fields = nil
+	q.Limit = 0
 	return q
 }
 

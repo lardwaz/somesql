@@ -138,18 +138,18 @@ func TestQuery_AsSQL_Fields(t *testing.T) {
 		},
 		// DELETE
 		{
-			name:        "DELETE * LIMIT",
-			query:       somesql.NewQuery().Delete(),
-			expectedSQL: `DELETE FROM repo LIMIT 10`,
-		},
-		{
 			name:        "DELETE * NO LIMIT",
-			query:       somesql.NewQuery().Delete().SetLimit(0),
+			query:       somesql.NewQuery().Delete(),
 			expectedSQL: `DELETE FROM repo`,
 		},
 		{
+			name:        "DELETE * LIMIT",
+			query:       somesql.NewQuery().Delete().SetLimit(20),
+			expectedSQL: `DELETE FROM repo LIMIT 20`,
+		},
+		{
 			name:        "DELETE * OFFSET 10",
-			query:       somesql.NewQuery().Delete().SetLimit(0).SetOffset(10),
+			query:       somesql.NewQuery().Delete().SetOffset(10),
 			expectedSQL: `DELETE FROM repo OFFSET 10`,
 		},
 		{
@@ -224,6 +224,31 @@ func TestQuery_AsSQL_ConditionClause(t *testing.T) {
 			name:           `WHERE "data_fr"->>'author_id'=? AND "data_fr"->>'category_id'=? (langFR)`,
 			query:          somesql.NewQuery().Select("data").SetLang(somesql.LangFR).Where(somesql.And(somesql.LangFR, "author_id", "=", "1")).Where(somesql.And(somesql.LangFR, "category_id", "=", "2")),
 			expectedSQL:    `SELECT "data_fr" FROM repo WHERE "data_fr"->>'author_id'=$1 AND "data_fr"->>'category_id'=$2 LIMIT 10`,
+			expectedValues: []interface{}{"1", "2"},
+		},
+		// DELETE
+		{
+			name:           "DELETE WHERE id=?",
+			query:          somesql.NewQuery().Delete().Where(somesql.And(somesql.LangEN, "id", "=", "1")),
+			expectedSQL:    `DELETE FROM repo WHERE "id"=$1`,
+			expectedValues: []interface{}{"1"},
+		},
+		{
+			name:           "DELETE WHERE id=? AND status=? OR type=?",
+			query:          somesql.NewQuery().Delete().Where(somesql.And(somesql.LangEN, "id", "=", "1")).Where(somesql.And(somesql.LangEN, "status", "=", "published")).Where(somesql.Or(somesql.LangEN, "type", "=", "article")),
+			expectedSQL:    `DELETE FROM repo WHERE "id"=$1 AND "status"=$2 OR "type"=$3`,
+			expectedValues: []interface{}{"1", "published", "article"},
+		},
+		{
+			name:           `DELETE WHERE "data_en"->>'author_id'=?`,
+			query:          somesql.NewQuery().Delete().Where(somesql.And(somesql.LangEN, "author_id", "=", "1")),
+			expectedSQL:    `DELETE FROM repo WHERE "data_en"->>'author_id'=$1`,
+			expectedValues: []interface{}{"1"},
+		},
+		{
+			name:           `DELETE WHERE "data_fr"->>'author_id'=? AND "data_fr"->>'category_id'=? (langFR)`,
+			query:          somesql.NewQuery().Delete().SetLang(somesql.LangFR).Where(somesql.And(somesql.LangFR, "author_id", "=", "1")).Where(somesql.And(somesql.LangFR, "category_id", "=", "2")),
+			expectedSQL:    `DELETE FROM repo WHERE "data_fr"->>'author_id'=$1 AND "data_fr"->>'category_id'=$2`,
 			expectedValues: []interface{}{"1", "2"},
 		},
 	}
