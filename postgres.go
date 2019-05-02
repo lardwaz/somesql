@@ -5,13 +5,29 @@ import (
 	"strings"
 )
 
+const (
+	// UnknownQueryType represents an UNKNOWN query type
+	UnknownQueryType uint8 = iota
+
+	// SelectQueryType represents a SELECT query type
+	SelectQueryType
+
+	// MergeQueryType represents a MERGE query type
+	// INSERT ON CONFLICT DO UPDATE
+	MergeQueryType
+
+	// DeleteQueryType represents a DELETE query type
+	DeleteQueryType
+)
+
 // PQQuery represents a query implementation in postgresql database backend
 type PQQuery struct {
+	Type       uint8 // Default: UnknownQueryType
 	Lang       string
 	Fields     []string
 	Conditions []Condition
-	Limit 	   int
-	Offset 	   int
+	Limit      int
+	Offset     int
 }
 
 // NewQuery declares a new query
@@ -24,10 +40,26 @@ func NewQuery() Query {
 
 // Select specifies which fields to retrieve data for
 func (q PQQuery) Select(f ...string) Query {
+	q.Type = SelectQueryType
+
 	if len(f) == 0 {
 		return q
 	}
 	q.Fields = f
+	return q
+}
+
+// Merge specifies a MERGE query
+func (q PQQuery) Merge(f ...string) Query {
+	q.Type = MergeQueryType
+	// TODO: fields for INSERT/UPDATE ?
+	return q
+}
+
+// Delete specifies a DELETE query
+func (q PQQuery) Delete() Query {
+	q.Type = DeleteQueryType
+	q.Fields = nil
 	return q
 }
 
@@ -40,12 +72,20 @@ func (q PQQuery) Where(c Condition) Query {
 // AsSQL returns the sql query and values for the query
 func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	var (
-		values []interface{}
-		lang   = q.GetLang()
+		sql       string
+		values    []interface{}
+		lang      = q.GetLang()
 		fieldData = GetFieldData(lang)
 	)
 
-	sql := `SELECT`
+	switch q.Type {
+	case SelectQueryType, UnknownQueryType:
+		sql = `SELECT`
+	case MergeQueryType:
+		sql = `INSERT INTO`
+	case DeleteQueryType:
+		sql = `DELETE`
+	}
 
 	var dataFields []string
 	for _, field := range q.Fields {
@@ -97,17 +137,17 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 		conditions += s
 		values = append(values, v...)
 	}
-	
+
 	if len(conditions) != 0 {
 		sql += fmt.Sprintf(" WHERE %s", conditions)
 	}
 
 	if q.GetLimit() != 0 {
-		sql += fmt.Sprintf(" LIMIT %d", q.Limit) 
+		sql += fmt.Sprintf(" LIMIT %d", q.Limit)
 	}
 
 	if q.GetOffset() != 0 {
-		sql += fmt.Sprintf(" OFFSET %d", q.Offset) 
+		sql += fmt.Sprintf(" OFFSET %d", q.Offset)
 	}
 
 	// Inner SQL we return here

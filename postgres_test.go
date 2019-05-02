@@ -136,6 +136,27 @@ func TestQuery_AsSQL_Fields(t *testing.T) {
 			query:       somesql.NewQuery().Select("id", "type", "body", "author_id").SetLang(somesql.LangFR),
 			expectedSQL: `SELECT "id", "type", json_build_object('body', "data_fr"->'body', 'author_id', "data_fr"->'author_id') "data" FROM repo LIMIT 10`,
 		},
+		// DELETE
+		{
+			name:        "DELETE * LIMIT",
+			query:       somesql.NewQuery().Delete(),
+			expectedSQL: `DELETE FROM repo LIMIT 10`,
+		},
+		{
+			name:        "DELETE * NO LIMIT",
+			query:       somesql.NewQuery().Delete().SetLimit(0),
+			expectedSQL: `DELETE FROM repo`,
+		},
+		{
+			name:        "DELETE * OFFSET 10",
+			query:       somesql.NewQuery().Delete().SetLimit(0).SetOffset(10),
+			expectedSQL: `DELETE FROM repo OFFSET 10`,
+		},
+		{
+			name:        "DELETE * LIMIT 20 OFFSET 10",
+			query:       somesql.NewQuery().Delete().SetLimit(20).SetOffset(10),
+			expectedSQL: `DELETE FROM repo LIMIT 20 OFFSET 10`,
+		},
 	}
 
 	for i, tt := range tests {
