@@ -1,8 +1,10 @@
 package somesql
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
+	"text/template"
 )
 
 const (
@@ -52,6 +54,7 @@ func (q PQQuery) Select(f ...string) Query {
 // Merge specifies a MERGE query
 func (q PQQuery) Merge(f ...string) Query {
 	q.Type = MergeQueryType
+	q.Limit = 0
 	// TODO: fields for INSERT/UPDATE ?
 	return q
 }
@@ -73,53 +76,39 @@ func (q PQQuery) Where(c Condition) Query {
 // AsSQL returns the sql query and values for the query
 func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	var (
-		sql       string
-		values    []interface{}
+		err        error
+		sql        string
+		values     []interface{}
+		dataFields []string
+		metaFields []string
+
 		lang      = q.GetLang()
 		fieldData = GetFieldData(lang)
+		inner     = (len(in) != 0 && in[0])
+		t         = template.New("queries").Funcs(funcMap)
 	)
 
 	switch q.Type {
 	case SelectQueryType, UnknownQueryType:
-		sql = `SELECT`
+		t, err = t.Parse(selectTplStr)
 	case MergeQueryType:
-		sql = `INSERT INTO`
+		t, err = t.Parse(mergeTplStr)
 	case DeleteQueryType:
-		sql = `DELETE`
+		t, err = t.Parse(deleteTplStr)
+	}
+	if err != nil {
+		return sql, values
 	}
 
-	var dataFields []string
 	for _, field := range q.Fields {
 		if IsFieldMeta(field) {
-			sql += fmt.Sprintf(` "%s",`, field)
+			metaFields = append(metaFields, field)
 		} else if field == "data" {
-			sql += fmt.Sprintf(` "%s",`, fieldData)
+			metaFields = append(metaFields, fieldData)
 		} else {
 			dataFields = append(dataFields, field)
 		}
 	}
-
-	inner := (len(in) != 0 && in[0])
-
-	dataFieldsLen := len(dataFields)
-	for i, dataField := range dataFields {
-		if inner {
-			sql += fmt.Sprintf(` "%s"->>'%s' "%s",`, fieldData, dataField, dataField)
-		} else {
-			if i == 0 { // Genesis
-				sql += ` json_build_object(`
-			}
-			sql += fmt.Sprintf(`'%s', "%s"->'%s', `, dataField, fieldData, dataField)
-			if (dataFieldsLen) == i+1 { // End
-				sql = strings.TrimRight(sql, ", ")
-				sql += fmt.Sprintf(`) "%s",`, FieldData)
-			}
-		}
-	}
-
-	sql = strings.TrimRight(sql, ",")
-
-	sql += " FROM repo"
 
 	var conditions string
 	for i, cond := range q.Conditions {
@@ -139,17 +128,29 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 		values = append(values, v...)
 	}
 
-	if len(conditions) != 0 {
-		sql += fmt.Sprintf(" WHERE %s", conditions)
+	var buf bytes.Buffer
+	err = t.Execute(&buf, struct {
+		Query         PQQuery
+		MetaFields    []string
+		DataFields    []string
+		FieldData     string
+		FieldDataLang string
+		Conditions    string
+		Inner         bool
+	}{
+		Query:         q,
+		MetaFields:    metaFields,
+		DataFields:    dataFields,
+		FieldData:     FieldData,
+		FieldDataLang: fieldData,
+		Conditions:    conditions,
+		Inner:         inner,
+	})
+	if err != nil {
+		return sql, values
 	}
 
-	if q.GetLimit() != 0 {
-		sql += fmt.Sprintf(" LIMIT %d", q.Limit)
-	}
-
-	if q.GetOffset() != 0 {
-		sql += fmt.Sprintf(" OFFSET %d", q.Offset)
-	}
+	sql = buf.String()
 
 	// Inner SQL we return here
 	if inner {
