@@ -167,6 +167,35 @@ func TestQuery_AsSQL_Fields(t *testing.T) {
 	}
 }
 
+func TestQuery_AsSQL_Save(t *testing.T) {
+	type testCase struct {
+		name        string
+		query       somesql.Query
+		expectedSQL string
+	}
+
+	tests := []testCase{
+		// Save
+		{
+			name:        "SAVE",
+			query:       somesql.NewQuery().Save(),
+			expectedSQL: `INSERT INTO repo ("id", "created_at", "updated_at", "owner_id", "status", "type", "data_en") VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO UPDATE SET "id" = $1, "created_at" = $2, "updated_at" = $3, "owner_id" = $4, "status" = $5, "type" = $6, "data_en" = $7`,
+		},
+		{
+			name:        "SAVE (LangFR)",
+			query:       somesql.NewQuery().Save().SetLang(somesql.LangFR),
+			expectedSQL: `INSERT INTO repo ("id", "created_at", "updated_at", "owner_id", "status", "type", "data_fr") VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO UPDATE SET "id" = $1, "created_at" = $2, "updated_at" = $3, "owner_id" = $4, "status" = $5, "type" = $6, "data_fr" = $7`,
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotSQL, _ := tt.query.AsSQL()
+			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: %s", i+1, tt.name))
+		})
+	}
+}
+
 func TestQuery_AsSQL_ConditionClause(t *testing.T) {
 	type testCase struct {
 		name           string

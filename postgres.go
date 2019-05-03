@@ -14,9 +14,9 @@ const (
 	// SelectQueryType represents a SELECT query type
 	SelectQueryType
 
-	// MergeQueryType represents a MERGE query type
+	// SaveQueryType represents a SAVE query type
 	// INSERT ON CONFLICT DO UPDATE
-	MergeQueryType
+	SaveQueryType
 
 	// DeleteQueryType represents a DELETE query type
 	DeleteQueryType
@@ -51,11 +51,11 @@ func (q PQQuery) Select(f ...string) Query {
 	return q
 }
 
-// Merge specifies a MERGE query
-func (q PQQuery) Merge(f ...string) Query {
-	q.Type = MergeQueryType
+// Save specifies a SAVE query
+func (q PQQuery) Save() Query {
+	q.Type = SaveQueryType
 	q.Limit = 0
-	// TODO: fields for INSERT/UPDATE ?
+
 	return q
 }
 
@@ -91,8 +91,8 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	switch q.Type {
 	case SelectQueryType, UnknownQueryType:
 		t, err = t.Parse(selectTplStr)
-	case MergeQueryType:
-		t, err = t.Parse(mergeTplStr)
+	case SaveQueryType:
+		t, err = t.Parse(saveTplStr)
 	case DeleteQueryType:
 		t, err = t.Parse(deleteTplStr)
 	}

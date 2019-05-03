@@ -18,11 +18,11 @@ const (
 )
 
 // Query represents a composable query
-// Setters: Select(), Merge(), Delete(), Where(), SetLang(), SetLimit(), SetOffset()
+// Setters: Select(), Save(), Delete(), Where(), SetLang(), SetLimit(), SetOffset()
 // Getters: GetLang(), GetLimit(), GetOffset(), AsSQL()
 type Query interface {
 	Select(...string) Query
-	Merge(...string) Query
+	Save() Query
 	Delete() Query
 	Where(Condition) Query
 	SetLang(string) Query

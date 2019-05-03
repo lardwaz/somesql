@@ -21,18 +21,28 @@ var (
 	{{- end }} FROM repo
 	{{- if ne (len .Conditions) 0 }} WHERE {{ .Conditions }}{{ end }}
 	{{- if ne (.Query.GetLimit) 0 }} LIMIT {{ .Query.GetLimit }}{{ end }}
-	{{- if ne (.Query.GetOffset) 0 }} OFFSET {{ .Query.GetOffset }}{{ end -}}
-	`
+	{{- if ne (.Query.GetOffset) 0 }} OFFSET {{ .Query.GetOffset }}{{ end -}}`
 
-	mergeTplStr = `INSERT INTO 
-	
-	`
+	saveTplStr = `INSERT INTO repo (
+	{{- range $i, $v := .MetaFields -}}
+		"{{ $v }}"
+		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
+	{{- end -}}
+	) VALUES (
+	{{- range $i, $v := .MetaFields -}}
+		${{ plus $i }}
+		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
+	{{- end -}}
+	) ON CONFLICT (id) DO UPDATE SET{{ " " -}}
+	{{- range $i, $v := .MetaFields -}}
+		"{{ $v }}" = ${{ plus $i }}
+		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
+	{{- end -}}`
 
 	deleteTplStr = `DELETE FROM repo
 	{{- if ne (len .Conditions) 0 }} WHERE {{ .Conditions }}{{ end }}
 	{{- if ne (.Query.GetLimit) 0 }} LIMIT {{ .Query.GetLimit }}{{ end }}
-	{{- if ne (.Query.GetOffset) 0 }} OFFSET {{ .Query.GetOffset }}{{ end -}}
-	`
+	{{- if ne (.Query.GetOffset) 0 }} OFFSET {{ .Query.GetOffset }}{{ end -}}`
 
 	funcMap = template.FuncMap{
 		// The name "plus" is what the function will be called in the template text.
