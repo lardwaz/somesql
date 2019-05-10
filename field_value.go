@@ -8,6 +8,7 @@ import (
 
 // FieldValue implements the FieldValuer interface
 type FieldValue struct {
+	pos    map[string]int
 	fields []string
 	values []interface{}
 }
@@ -15,6 +16,8 @@ type FieldValue struct {
 // NewFieldValue returns a new FieldValue
 func NewFieldValue() *FieldValue {
 	var f FieldValue
+
+	f.pos = make(map[string]int, 0)
 	f.fields = make([]string, 0)
 	f.values = make([]interface{}, 0)
 
@@ -76,17 +79,15 @@ func (f *FieldValue) UseDefaults() FieldValuer {
 }
 
 // Set implements the FieldValuer interface
-// TODO: perf issue!
 func (f *FieldValue) Set(field string, value interface{}) FieldValuer {
-	for i, ff := range f.fields {
-		if ff == field {
-			f.values[i] = value
-			return f
-		}
+	if pos, ok := f.pos[field]; ok {
+		f.values[pos] = value
+		return f
 	}
 
 	f.fields = append(f.fields, field)
 	f.values = append(f.values, value)
+	f.pos[field] = len(f.fields) - 1
 
 	return f
 }
