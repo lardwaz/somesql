@@ -16,7 +16,7 @@ var (
 
 // IsFieldMeta returns if field is a meta field
 func IsFieldMeta(field string) bool {
-	for _,f := range ReservedFields {
+	for _, f := range ReservedFields {
 		if f == field {
 			return true
 		}

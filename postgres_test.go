@@ -3,7 +3,9 @@ package somesql_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"go.lsl.digital/gocipe/somesql"
 )
@@ -163,6 +165,110 @@ func TestQuery_AsSQL_Fields(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gotSQL, _ := tt.query.AsSQL()
 			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: %s", i+1, tt.name))
+		})
+	}
+}
+
+func TestQuery_AsSQL_Insert(t *testing.T) {
+	type testCase struct {
+		name           string
+		query          somesql.Query
+		expectedSQL    string
+		expectedValues []interface{}
+	}
+
+	tests := []testCase{
+		// Insert
+		{
+			name:           "INSERT defaults",
+			query:          somesql.NewQuery().Insert(somesql.NewFieldValue().UseDefaults().ID("1").CreatedAt(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)).UpdatedAt(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)).Status("published")),
+			expectedSQL:    `INSERT INTO repo ("id", "created_at", "updated_at", "owner_id", "status", "type", "data_en") VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			expectedValues: []interface{}{"1", time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC), time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC), uuid.Nil.String(), "published", "", "{}"},
+		},
+		{
+			name:           "INSERT no defaults",
+			query:          somesql.NewQuery().Insert(somesql.NewFieldValue().ID("1").Status("published")),
+			expectedSQL:    `INSERT INTO repo ("id", "status") VALUES ($1, $2)`,
+			expectedValues: []interface{}{"1", "published"},
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotSQL, gotValues := tt.query.AsSQL()
+
+			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
+			assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
+		})
+	}
+}
+
+func TestQuery_AsSQL_Update(t *testing.T) {
+	type testCase struct {
+		name           string
+		query          somesql.Query
+		expectedSQL    string
+		expectedValues []interface{}
+	}
+
+	tests := []testCase{
+		// Update
+		{
+			name:           "UPDATE meta fields",
+			query:          somesql.NewQuery().Update(somesql.NewFieldValue().ID("1").Status("published")),
+			expectedSQL:    `UPDATE repo SET "id" = $1, "status" = $2`,
+			expectedValues: []interface{}{"1", "published"},
+		},
+		{
+			name:           "UPDATE data fields",
+			query:          somesql.NewQuery().Update(somesql.NewFieldValue().Set("body", "body value").Set("author_id", "123")),
+			expectedSQL:    `UPDATE repo SET "data_en" = "data_en" || {"body": $1, "author_id": $2}`,
+			expectedValues: []interface{}{"body value", "123"},
+		},
+		{
+			name:           "UPDATE data fields (LangFR)",
+			query:          somesql.NewQuery().Update(somesql.NewFieldValue().Set("body", "body value").Set("author_id", "123")).SetLang(somesql.LangFR),
+			expectedSQL:    `UPDATE repo SET "data_fr" = "data_fr" || {"body": $1, "author_id": $2}`,
+			expectedValues: []interface{}{"body value", "123"},
+		},
+		{
+			name:           "UPDATE meta + data fields",
+			query:          somesql.NewQuery().Update(somesql.NewFieldValue().ID("1").Status("published").Set("body", "body value").Set("author_id", "123")),
+			expectedSQL:    `UPDATE repo SET "id" = $1, "status" = $2, "data_en" = "data_en" || {"body": $3, "author_id": $4}`,
+			expectedValues: []interface{}{"1", "published", "body value", "123"},
+		},
+		{
+			name:           "UPDATE meta + data fields (LangFR)",
+			query:          somesql.NewQuery().Update(somesql.NewFieldValue().ID("1").Status("published").Set("body", "body value").Set("author_id", "123")).SetLang(somesql.LangFR),
+			expectedSQL:    `UPDATE repo SET "id" = $1, "status" = $2, "data_fr" = "data_fr" || {"body": $3, "author_id": $4}`,
+			expectedValues: []interface{}{"1", "published", "body value", "123"},
+		},
+		{
+			name:           "UPDATE meta + data fields conditions",
+			query:          somesql.NewQuery().Update(somesql.NewFieldValue().ID("1").Status("published").Set("body", "body value").Set("author_id", "123")).Where(somesql.And(somesql.LangEN, "id", "=", "234")),
+			expectedSQL:    `UPDATE repo SET "id" = $1, "status" = $2, "data_en" = "data_en" || {"body": $3, "author_id": $4} WHERE "id"=$5`,
+			expectedValues: []interface{}{"1", "published", "body value", "123", "234"},
+		},
+		{
+			name:           "UPDATE meta + data fields conditions 2",
+			query:          somesql.NewQuery().Update(somesql.NewFieldValue().ID("1").Status("published").Set("body", "body value").Set("author_id", "123")).Where(somesql.And(somesql.LangEN, "author_id", "=", "234")),
+			expectedSQL:    `UPDATE repo SET "id" = $1, "status" = $2, "data_en" = "data_en" || {"body": $3, "author_id": $4} WHERE "data_en"->>'author_id'=$5`,
+			expectedValues: []interface{}{"1", "published", "body value", "123", "234"},
+		},
+		{
+			name:           "UPDATE meta + data json",
+			query:          somesql.NewQuery().Update(somesql.NewFieldValue().ID("1").Data(`{"body": 'body value', "author_id": 1}`)),
+			expectedSQL:    `UPDATE repo SET "id" = $1, "data_en" = $2`,
+			expectedValues: []interface{}{"1", `{"body": 'body value', "author_id": 1}`},
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotSQL, gotValues := tt.query.AsSQL()
+
+			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
+			assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
 		})
 	}
 }

@@ -11,8 +11,14 @@ const (
 	// UnknownQueryType represents an UNKNOWN query type
 	UnknownQueryType uint8 = iota
 
+	// InsertQueryType represents a INSERT query type
+	InsertQueryType
+
 	// SelectQueryType represents a SELECT query type
 	SelectQueryType
+
+	// UpdateQueryType represents a UPDATE query type
+	UpdateQueryType
 
 	// SaveQueryType represents a SAVE query type
 	// INSERT ON CONFLICT DO UPDATE
@@ -28,6 +34,8 @@ type PQQuery struct {
 	Lang       string
 	Fields     []string
 	Conditions []Condition
+	SQL        string
+	Values     []interface{}
 	Limit      int
 	Offset     int
 }
@@ -40,14 +48,32 @@ func NewQuery() Query {
 	return q
 }
 
+// Insert specifies an INSERT query
+func (q PQQuery) Insert(fieldValue FieldValuer) Query {
+	q.Type = InsertQueryType
+
+	q.Fields, q.Values = fieldValue.List()
+
+	return q
+}
+
 // Select specifies which fields to retrieve data for
-func (q PQQuery) Select(f ...string) Query {
+func (q PQQuery) Select(fields ...string) Query {
 	q.Type = SelectQueryType
 
-	if len(f) == 0 {
+	if len(fields) == 0 {
 		return q
 	}
-	q.Fields = f
+	q.Fields = fields
+	return q
+}
+
+// Update specifies an UPDATE query
+func (q PQQuery) Update(fieldValue FieldValuer) Query {
+	q.Type = UpdateQueryType
+
+	q.Fields, q.Values = fieldValue.List()
+
 	return q
 }
 
@@ -74,23 +100,29 @@ func (q PQQuery) Where(c Condition) Query {
 }
 
 // AsSQL returns the sql query and values for the query
-func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
+func (q PQQuery) AsSQL(inner ...bool) (string, []interface{}) {
 	var (
 		err        error
 		sql        string
-		values     []interface{}
 		dataFields []string
 		metaFields []string
 
+		values    = q.Values
 		lang      = q.GetLang()
 		fieldData = GetFieldData(lang)
-		inner     = (len(in) != 0 && in[0])
+		isInner   = (len(inner) != 0 && inner[0])
 		t         = template.New("queries").Funcs(funcMap)
 	)
 
 	switch q.Type {
+	default:
+		fallthrough
 	case SelectQueryType, UnknownQueryType:
 		t, err = t.Parse(selectTplStr)
+	case InsertQueryType:
+		t, err = t.Parse(insertTplStr)
+	case UpdateQueryType:
+		t, err = t.Parse(updateTplStr)
 	case SaveQueryType:
 		t, err = t.Parse(saveTplStr)
 	case DeleteQueryType:
@@ -144,7 +176,7 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 		FieldData:     FieldData,
 		FieldDataLang: fieldData,
 		Conditions:    conditions,
-		Inner:         inner,
+		Inner:         isInner,
 	})
 	if err != nil {
 		return sql, values
@@ -153,7 +185,7 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 	sql = buf.String()
 
 	// Inner SQL we return here
-	if inner {
+	if isInner {
 		return sql, values
 	}
 
@@ -167,8 +199,38 @@ func (q PQQuery) AsSQL(in ...bool) (string, []interface{}) {
 		}
 	}
 
+	// q.SQL = sql wont work.. need pointer receiver
+
 	return sql, values
 }
+
+// Exec executes stmt values using a specific sql transaction
+// func (q PQQuery) Exec(tx *sql.Tx, autocommit bool) error {
+// 	stmt, err := tx.Prepare(q.SQL)
+// 	defer stmt.Close()
+// 	if err != nil {
+// 		tx.Rollback()
+// 		return err
+// 	}
+
+// 	_, err = stmt.Exec(q.Values...)
+
+// 	return err
+// }
+
+// // ExecValues executes stmt values using a specific sql transaction and values
+// func (q PQQuery) ExecValues(tx *sql.Tx, id string, createdAt time.Time, updatedAt time.Time, ownerID string, status string, repoType string, data string, autocommit bool) error {
+// 	stmt, err := tx.Prepare(q.SQL)
+// 	defer stmt.Close()
+// 	if err != nil {
+// 		tx.Rollback()
+// 		return err
+// 	}
+
+// 	_, err = stmt.Exec(id, createdAt, updatedAt, ownerID, status, repoType, data)
+
+// 	return err
+// }
 
 // SetLang is a setter for Language
 func (q PQQuery) SetLang(lang string) Query {
