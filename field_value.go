@@ -76,6 +76,7 @@ func (f *FieldValue) UseDefaults() FieldValuer {
 }
 
 // Set implements the FieldValuer interface
+// TODO: perf issue!
 func (f *FieldValue) Set(field string, value interface{}) FieldValuer {
 	for i, ff := range f.fields {
 		if ff == field {
