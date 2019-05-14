@@ -49,7 +49,8 @@ type QueryResulter interface {
 	Query
 	GetSQL() string
 	GetValues() []interface{}
-	Exec(autocommit bool) error
+	Exec(db *sql.DB, autocommit bool) error
+	Rows(db *sql.DB) (*sql.Rows, error)
 }
 
 // FieldValuer assigns a value to a field
