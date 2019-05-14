@@ -13,21 +13,21 @@ var (
 
 // ConditionQuery defines conditions for a query
 type ConditionQuery struct {
-	Type uint8
-	Field string
+	Type     uint8
+	Field    string
 	Operator string
-	Query Query
-	Lang string
+	Query    Query
+	Lang     string
 }
 
 func andOrInQuery(conditionType uint8, operator string) func(lang, field string, query Query) ConditionQuery {
 	return func(lang, field string, query Query) ConditionQuery {
 		return ConditionQuery{
-			Type:          conditionType,
-			Field:         field,
-			Operator:      operator,
-			Query:		   query,
-			Lang:		   lang,
+			Type:     conditionType,
+			Field:    field,
+			Operator: operator,
+			Query:    query,
+			Lang:     lang,
 		}
 	}
 }
@@ -56,14 +56,14 @@ func OrNotInQuery(lang, field string, query Query) ConditionQuery {
 func (c ConditionQuery) ConditionType() uint8 {
 	return c.Type
 }
- 
-// AsSQL returns part of SQL incuding the sub-query
+
+// AsSQL returns part of SQL including the sub-query
 func (c ConditionQuery) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		field string
 	)
 
-	if IsFieldMeta(c.Field) || IsFieldData(c.Field){
+	if IsFieldMeta(c.Field) || IsFieldData(c.Field) {
 		field = fmt.Sprintf(`"%s"`, c.Field)
 	} else {
 		field = fmt.Sprintf(`"%s"->>'%s'`, GetFieldData(c.Lang), c.Field)

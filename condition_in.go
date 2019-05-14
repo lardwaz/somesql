@@ -72,7 +72,7 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 		vals            []interface{}
 	)
 
-	if IsFieldMeta(c.Field) || IsFieldData(c.Field){
+	if IsFieldMeta(c.Field) || IsFieldData(c.Field) {
 		field = fmt.Sprintf(`"%s"`, c.Field)
 	} else {
 		field = fmt.Sprintf(`"%s"->>'%s'`, GetFieldData(c.Lang), c.Field)

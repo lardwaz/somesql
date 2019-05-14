@@ -110,7 +110,7 @@ func (q PQQuery) AsSQL(inner ...bool) (string, []interface{}) {
 		values    = q.Values
 		lang      = q.GetLang()
 		fieldData = GetFieldData(lang)
-		isInner   = (len(inner) != 0 && inner[0])
+		isInner   = len(inner) != 0 && inner[0]
 		t         = template.New("queries").Funcs(funcMap)
 	)
 
