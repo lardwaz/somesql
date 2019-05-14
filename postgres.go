@@ -2,6 +2,7 @@ package somesql
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"strings"
 	"text/template"
@@ -20,10 +21,6 @@ const (
 	// UpdateQueryType represents a UPDATE query type
 	UpdateQueryType
 
-	// SaveQueryType represents a SAVE query type
-	// INSERT ON CONFLICT DO UPDATE
-	SaveQueryType
-
 	// DeleteQueryType represents a DELETE query type
 	DeleteQueryType
 )
@@ -38,14 +35,22 @@ type PQQuery struct {
 	Values     []interface{}
 	Limit      int
 	Offset     int
+	Inner      bool
+	Tx         *sql.Tx
 }
 
 // NewQuery declares a new query
-func NewQuery() Query {
+func NewQuery(tx *sql.Tx) Query {
 	var q PQQuery
 	q.Fields = append(ReservedFields, FieldData)
 	q.Limit = 10
 	return q
+}
+
+// NewInnerQuery declares a new query
+func NewInnerQuery() Query {
+	q := NewQuery(nil)
+	return q.SetInner(true)
 }
 
 // Insert specifies an INSERT query
@@ -77,14 +82,6 @@ func (q PQQuery) Update(fieldValue FieldValuer) Query {
 	return q
 }
 
-// Save specifies a SAVE query
-func (q PQQuery) Save() Query {
-	q.Type = SaveQueryType
-	q.Limit = 0
-
-	return q
-}
-
 // Delete specifies a DELETE query
 func (q PQQuery) Delete() Query {
 	q.Type = DeleteQueryType
@@ -100,7 +97,7 @@ func (q PQQuery) Where(c Condition) Query {
 }
 
 // AsSQL returns the sql query and values for the query
-func (q PQQuery) AsSQL(inner ...bool) (string, []interface{}) {
+func (q PQQuery) AsSQL() (string, []interface{}) {
 	var (
 		err        error
 		sql        string
@@ -110,7 +107,7 @@ func (q PQQuery) AsSQL(inner ...bool) (string, []interface{}) {
 		values    = q.Values
 		lang      = q.GetLang()
 		fieldData = GetFieldData(lang)
-		isInner   = (len(inner) != 0 && inner[0])
+		isInner   = q.IsInner()
 		t         = template.New("queries").Funcs(funcMap)
 	)
 
@@ -123,8 +120,6 @@ func (q PQQuery) AsSQL(inner ...bool) (string, []interface{}) {
 		t, err = t.Parse(insertTplStr)
 	case UpdateQueryType:
 		t, err = t.Parse(updateTplStr)
-	case SaveQueryType:
-		t, err = t.Parse(saveTplStr)
 	case DeleteQueryType:
 		t, err = t.Parse(deleteTplStr)
 	}
@@ -205,32 +200,19 @@ func (q PQQuery) AsSQL(inner ...bool) (string, []interface{}) {
 }
 
 // Exec executes stmt values using a specific sql transaction
-// func (q PQQuery) Exec(tx *sql.Tx, autocommit bool) error {
-// 	stmt, err := tx.Prepare(q.SQL)
-// 	defer stmt.Close()
-// 	if err != nil {
-// 		tx.Rollback()
-// 		return err
-// 	}
+func (q PQQuery) Exec(autocommit bool) error {
+	tx := q.GetTx()
+	stmt, err := tx.Prepare(q.SQL)
+	defer stmt.Close()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
 
-// 	_, err = stmt.Exec(q.Values...)
+	_, err = stmt.Exec(q.Values...)
 
-// 	return err
-// }
-
-// // ExecValues executes stmt values using a specific sql transaction and values
-// func (q PQQuery) ExecValues(tx *sql.Tx, id string, createdAt time.Time, updatedAt time.Time, ownerID string, status string, repoType string, data string, autocommit bool) error {
-// 	stmt, err := tx.Prepare(q.SQL)
-// 	defer stmt.Close()
-// 	if err != nil {
-// 		tx.Rollback()
-// 		return err
-// 	}
-
-// 	_, err = stmt.Exec(id, createdAt, updatedAt, ownerID, status, repoType, data)
-
-// 	return err
-// }
+	return err
+}
 
 // SetLang is a setter for Language
 func (q PQQuery) SetLang(lang string) Query {
@@ -269,4 +251,26 @@ func (q PQQuery) SetOffset(offset int) Query {
 // GetOffset is a getter for Offset
 func (q PQQuery) GetOffset() int {
 	return q.Offset
+}
+
+// SetTx is a setter for sql.Tx
+func (q PQQuery) SetTx(tx *sql.Tx) Query {
+	q.Tx = tx
+	return q
+}
+
+// GetTx is a getter for sql.Tx
+func (q PQQuery) GetTx() *sql.Tx {
+	return q.Tx
+}
+
+// SetInner is a setter for Limit
+func (q PQQuery) SetInner(inner bool) Query {
+	q.Inner = inner
+	return q
+}
+
+// IsInner is a getter for inner
+func (q PQQuery) IsInner() bool {
+	return q.Inner
 }
