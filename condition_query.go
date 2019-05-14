@@ -69,7 +69,9 @@ func (c ConditionQuery) AsSQL(in ...bool) (string, []interface{}) {
 		field = fmt.Sprintf(`"%s"->>'%s'`, GetFieldData(c.Lang), c.Field)
 	}
 
-	innerSQL, innerVals := c.Query.AsSQL()
+	queryResult := c.Query.AsSQL()
+
+	innerSQL, innerVals := queryResult.GetSQL(), queryResult.GetValues()
 
 	sql := fmt.Sprintf(`%s %s (%s)`, field, c.Operator, innerSQL)
 

@@ -41,7 +41,14 @@ type Query interface {
 	GetTx() *sql.Tx
 	SetInner(inner bool) Query
 	IsInner() bool
-	AsSQL() (string, []interface{})
+	AsSQL() QueryResulter
+}
+
+// QueryResulter is the result of running AsSQL on Query
+type QueryResulter interface {
+	Query
+	GetSQL() string
+	GetValues() []interface{}
 	Exec(autocommit bool) error
 }
 

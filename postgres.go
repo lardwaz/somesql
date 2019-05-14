@@ -31,7 +31,6 @@ type PQQuery struct {
 	Lang       string
 	Fields     []string
 	Conditions []Condition
-	SQL        string
 	Values     []interface{}
 	Limit      int
 	Offset     int
@@ -96,8 +95,8 @@ func (q PQQuery) Where(c Condition) Query {
 	return q
 }
 
-// AsSQL returns the sql query and values for the query
-func (q PQQuery) AsSQL() (string, []interface{}) {
+// AsSQL returns the result for the query
+func (q PQQuery) AsSQL() QueryResulter {
 	var (
 		err        error
 		sql        string
@@ -124,7 +123,7 @@ func (q PQQuery) AsSQL() (string, []interface{}) {
 		t, err = t.Parse(deleteTplStr)
 	}
 	if err != nil {
-		return sql, values
+		return NewQueryResult(q, sql, values)
 	}
 
 	for _, field := range q.Fields {
@@ -174,14 +173,14 @@ func (q PQQuery) AsSQL() (string, []interface{}) {
 		Inner:         isInner,
 	})
 	if err != nil {
-		return sql, values
+		return NewQueryResult(q, sql, values)
 	}
 
 	sql = buf.String()
 
 	// Inner SQL we return here
 	if isInner {
-		return sql, values
+		return NewQueryResult(q, sql, values)
 	}
 
 	// Replace all '?' with increasing '$N' (i.e $1,$2,$3)
@@ -194,24 +193,7 @@ func (q PQQuery) AsSQL() (string, []interface{}) {
 		}
 	}
 
-	// q.SQL = sql wont work.. need pointer receiver
-
-	return sql, values
-}
-
-// Exec executes stmt values using a specific sql transaction
-func (q PQQuery) Exec(autocommit bool) error {
-	tx := q.GetTx()
-	stmt, err := tx.Prepare(q.SQL)
-	defer stmt.Close()
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	_, err = stmt.Exec(q.Values...)
-
-	return err
+	return NewQueryResult(q, sql, values)
 }
 
 // SetLang is a setter for Language

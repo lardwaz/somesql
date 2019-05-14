@@ -163,7 +163,7 @@ func TestQuery_AsSQL_Fields(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSQL, _ := tt.query.AsSQL()
+			gotSQL := tt.query.AsSQL().GetSQL()
 			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: %s", i+1, tt.name))
 		})
 	}
@@ -195,7 +195,8 @@ func TestQuery_AsSQL_Insert(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSQL, gotValues := tt.query.AsSQL()
+			queryResult := tt.query.AsSQL()
+			gotSQL, gotValues := queryResult.GetSQL(), queryResult.GetValues()
 
 			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
 			assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
@@ -265,7 +266,8 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSQL, gotValues := tt.query.AsSQL()
+			queryResult := tt.query.AsSQL()
+			gotSQL, gotValues := queryResult.GetSQL(), queryResult.GetValues()
 
 			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
 			assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
@@ -361,7 +363,8 @@ func TestQuery_AsSQL_ConditionClause(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSQL, gotValues := tt.query.AsSQL()
+			queryResult := tt.query.AsSQL()
+			gotSQL, gotValues := queryResult.GetSQL(), queryResult.GetValues()
 
 			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
 			assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
@@ -437,7 +440,8 @@ func TestQuery_AsSQL_ConditionGroup(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSQL, gotValues := tt.query.AsSQL()
+			queryResult := tt.query.AsSQL()
+			gotSQL, gotValues := queryResult.GetSQL(), queryResult.GetValues()
 
 			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
 			assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
@@ -643,7 +647,8 @@ func TestQuery_AsSQL_ConditionIN(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSQL, gotValues := tt.query.AsSQL()
+			queryResult := tt.query.AsSQL()
+			gotSQL, gotValues := queryResult.GetSQL(), queryResult.GetValues()
 
 			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
 			assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
@@ -761,7 +766,8 @@ func TestQuery_AsSQL_InQuery(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSQL, gotValues := tt.query.AsSQL()
+			queryResult := tt.query.AsSQL()
+			gotSQL, gotValues := queryResult.GetSQL(), queryResult.GetValues()
 
 			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
 			assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
