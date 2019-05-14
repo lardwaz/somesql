@@ -54,10 +54,10 @@ func (q QueryResult) Exec(db *sql.DB, autocommit bool) error {
 	}
 
 	stmt, err := tx.Prepare(q.GetSQL())
-	defer stmt.Close()
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
 
 	_, err = stmt.Exec(q.Values...)
 	if err != nil {
