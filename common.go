@@ -33,3 +33,20 @@ func expandValues(val interface{}) []interface{} {
 
 	return values
 }
+
+// getSliceChange returns all elements that are present in sliceTwo but NOT in sliceOne
+func getSliceChange(sliceOne, sliceTwo []string) (change []string) {
+	m := make(map[string]bool)
+
+	for _, item := range sliceOne {
+		m[item] = true
+	}
+
+	for _, item := range sliceTwo {
+		if _, ok := m[item]; !ok {
+			change = append(change, item)
+		}
+	}
+
+	return change
+}
