@@ -3,6 +3,7 @@ package somesql
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
@@ -30,6 +31,7 @@ type PQQuery struct {
 	Type       uint8 // Default: UnknownQueryType
 	Lang       string
 	Fields     []string
+	Relations  map[string][]string
 	Conditions []Condition
 	Values     []interface{}
 	Limit      int
@@ -63,8 +65,7 @@ func NewInnerQuery() Query {
 // Insert specifies an INSERT query
 func (q PQQuery) Insert(fieldValue FieldValuer) Query {
 	q.Type = InsertQueryType
-
-	q.Fields, q.Values = fieldValue.List()
+	q.Fields, q.Values, q.Relations = fieldValue.List()
 
 	return q
 }
@@ -76,6 +77,7 @@ func (q PQQuery) Select(fields ...string) Query {
 	if len(fields) == 0 {
 		return q
 	}
+
 	q.Fields = fields
 	return q
 }
@@ -83,8 +85,7 @@ func (q PQQuery) Select(fields ...string) Query {
 // Update specifies an UPDATE query
 func (q PQQuery) Update(fieldValue FieldValuer) Query {
 	q.Type = UpdateQueryType
-
-	q.Fields, q.Values = fieldValue.List()
+	q.Fields, q.Values, q.Relations = fieldValue.List()
 
 	return q
 }
@@ -107,9 +108,10 @@ func (q PQQuery) Where(c Condition) Query {
 func (q PQQuery) AsSQL() QueryResulter {
 	var (
 		err        error
-		sql        string
+		sqlStmt    string
 		dataFields []string
 		metaFields []string
+		relFields  []string
 
 		values    = q.Values
 		lang      = q.GetLang()
@@ -131,7 +133,7 @@ func (q PQQuery) AsSQL() QueryResulter {
 		t, err = t.Parse(deleteTplStr)
 	}
 	if err != nil {
-		return NewQueryResult(q, sql, values)
+		return NewQueryResult(q, sqlStmt, values)
 	}
 
 	for _, field := range q.Fields {
@@ -141,6 +143,14 @@ func (q PQQuery) AsSQL() QueryResulter {
 			metaFields = append(metaFields, fieldData)
 		} else {
 			dataFields = append(dataFields, field)
+		}
+	}
+
+	// add relations values
+	for rel, relVal := range q.Relations {
+		if bytes, err := json.Marshal(relVal); err == nil {
+			relFields = append(relFields, rel)
+			values = append(values, string(bytes))
 		}
 	}
 
@@ -169,6 +179,8 @@ func (q PQQuery) AsSQL() QueryResulter {
 		DataFields    []string
 		FieldData     string
 		FieldDataLang string
+		FieldRelation string
+		RelFields     []string
 		Conditions    string
 		Inner         bool
 	}{
@@ -177,31 +189,33 @@ func (q PQQuery) AsSQL() QueryResulter {
 		DataFields:    dataFields,
 		FieldData:     FieldData,
 		FieldDataLang: fieldData,
+		FieldRelation: FieldRelations,
+		RelFields:     relFields,
 		Conditions:    conditions,
 		Inner:         isInner,
 	})
 	if err != nil {
-		return NewQueryResult(q, sql, values)
+		return NewQueryResult(q, sqlStmt, values)
 	}
 
-	sql = buf.String()
+	sqlStmt = buf.String()
 
 	// Inner SQL we return here
 	if isInner {
-		return NewQueryResult(q, sql, values)
+		return NewQueryResult(q, sqlStmt, values)
 	}
 
 	// Replace all '?' with increasing '$N' (i.e $1,$2,$3)
 	var i int
-	for _, r := range sql {
+	for _, r := range sqlStmt {
 		if r == '?' {
 			i++
 			placeholder := fmt.Sprintf("$%d", i)
-			sql = strings.Replace(sql, "?", placeholder, 1)
+			sqlStmt = strings.Replace(sqlStmt, "?", placeholder, 1)
 		}
 	}
 
-	return NewQueryResult(q, sql, values)
+	return NewQueryResult(q, sqlStmt, values)
 }
 
 // SetLang is a setter for Language

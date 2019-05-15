@@ -66,7 +66,8 @@ type FieldValuer interface {
 	Data(json string) FieldValuer
 	UseDefaults() FieldValuer
 	Set(field string, value interface{}) FieldValuer
-	List() ([]string, []interface{})
+	SetRel(rel string, value []string) FieldValuer
+	List() ([]string, []interface{}, map[string][]string)
 }
 
 // Condition represents a conditional clause in a statement

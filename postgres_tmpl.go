@@ -47,6 +47,14 @@ var (
 		{{- if ne (len $.DataFields) (plus $i) }}, {{ end }}
 		{{- if eq (len $.DataFields) (plus $i) -}} } {{- end }}
 	{{- end }}
+	{{- if and (ne (len .MetaFields) 0) (ne (len .RelFields) 0) }}, {{ end -}}
+	{{- if and (ne (len .DataFields) 0) (ne (len .RelFields) 0) }}, {{ end -}}
+	{{- range $i, $v := .RelFields -}}
+		{{ if eq $i 0 }}"{{ $.FieldRelation }}" = "{{ $.FieldRelation }}" || { {{- end -}}
+		"{{ $v }}": ?
+		{{- if ne (len $.RelFields) (plus $i) }}, {{ end }}
+		{{- if eq (len $.RelFields) (plus $i) -}} } {{- end }}
+	{{- end }}
 	{{- if ne (len .Conditions) 0 }} WHERE {{ .Conditions }}{{ end }}`
 
 	deleteTplStr = `DELETE FROM repo

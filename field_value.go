@@ -8,9 +8,10 @@ import (
 
 // FieldValue implements the FieldValuer interface
 type FieldValue struct {
-	pos    map[string]int
-	fields []string
-	values []interface{}
+	pos       map[string]int
+	fields    []string
+	values    []interface{}
+	relations map[string][]string
 }
 
 // NewFieldValue returns a new FieldValue
@@ -20,6 +21,7 @@ func NewFieldValue() *FieldValue {
 	f.pos = make(map[string]int, 0)
 	f.fields = make([]string, 0)
 	f.values = make([]interface{}, 0)
+	f.relations = make(map[string][]string, 0)
 
 	return &f
 }
@@ -92,7 +94,13 @@ func (f *FieldValue) Set(field string, value interface{}) FieldValuer {
 	return f
 }
 
+// SetRel implements the FieldValuer interface
+func (f *FieldValue) SetRel(rel string, value []string) FieldValuer {
+	f.relations[rel] = value
+	return f
+}
+
 // List implements the FieldValuer interface
-func (f *FieldValue) List() ([]string, []interface{}) {
-	return f.fields, f.values
+func (f *FieldValue) List() ([]string, []interface{}, map[string][]string) {
+	return f.fields, f.values, f.relations
 }

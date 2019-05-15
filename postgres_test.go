@@ -262,6 +262,19 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 			expectedSQL:    `UPDATE repo SET "id" = $1, "data_en" = $2`,
 			expectedValues: []interface{}{"1", `{"body": 'body value', "author_id": 1}`},
 		},
+		// Update relations
+		{
+			name:           "UPDATE relations only",
+			query:          somesql.NewQuery(nil).Update(somesql.NewFieldValue().SetRel("tags", []string{"a", "b", "c"})),
+			expectedSQL:    `UPDATE repo SET "relations" = "relations" || {"tags": $1}`,
+			expectedValues: []interface{}{`["a","b","c"]`},
+		},
+		{
+			name:           "UPDATE relations and meta",
+			query:          somesql.NewQuery(nil).Update(somesql.NewFieldValue().Status("published").SetRel("tags", []string{"a", "b", "c"})),
+			expectedSQL:    `UPDATE repo SET "status" = $1, "relations" = "relations" || {"tags": $2}`,
+			expectedValues: []interface{}{"published", `["a","b","c"]`},
+		},
 	}
 
 	for i, tt := range tests {
