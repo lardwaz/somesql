@@ -54,7 +54,7 @@ func NewQuery(db ...*sql.DB) Query {
 
 // NewInnerQuery declares a new query
 func NewInnerQuery() Query {
-	q := NewQuery(nil)
+	q := NewQuery()
 	return q.SetInner(true)
 }
 
