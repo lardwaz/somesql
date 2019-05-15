@@ -49,22 +49,6 @@ var (
 	{{- end }}
 	{{- if ne (len .Conditions) 0 }} WHERE {{ .Conditions }}{{ end }}`
 
-	saveTplStr = `INSERT INTO repo (
-	{{- range $i, $v := .MetaFields -}}
-		"{{ $v }}"
-		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
-	{{- end -}}
-	) VALUES (
-	{{- range $i, $v := .MetaFields -}}
-		${{ plus $i }}
-		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
-	{{- end -}}
-	) ON CONFLICT (id) DO UPDATE SET{{ " " -}}
-	{{- range $i, $v := .MetaFields -}}
-		"{{ $v }}" = ${{ plus $i }}
-		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
-	{{- end -}}`
-
 	deleteTplStr = `DELETE FROM repo
 	{{- if ne (len .Conditions) 0 }} WHERE {{ .Conditions }}{{ end }}
 	{{- if ne (.Query.GetLimit) 0 }} LIMIT {{ .Query.GetLimit }}{{ end }}

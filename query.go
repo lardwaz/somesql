@@ -1,6 +1,9 @@
 package somesql //import go.lsl.digital/gocipe/somesql
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 const (
 	// AndCondition represents a condition added to the query via AND keyword
@@ -21,12 +24,11 @@ const (
 
 // Query represents a composable query
 // Setters: Select(), Save(), Delete(), Where(), SetLang(), SetLimit(), SetOffset()
-// Getters: GetLang(), GetLimit(), GetOffset(), AsSQL()
+// Getters: GetLang(), GetLimit(), GetOffset(), GetTx(), IsInner(), AsSQL()
 type Query interface {
-	Insert(FieldValuer) Query // TODO: type, tmpl and logic (meta fields by default + data)
+	Insert(FieldValuer) Query
 	Select(fields ...string) Query
-	Update(FieldValuer) Query // TODO: type, tmpl and logic (meta fields by default + data)
-	Save() Query              // TBC: Deprecated?
+	Update(FieldValuer) Query
 	Delete() Query
 	Where(Condition) Query
 	SetLang(lang string) Query
@@ -35,9 +37,22 @@ type Query interface {
 	GetLimit() int
 	SetOffset(offset int) Query
 	GetOffset() int
-	AsSQL(inner ...bool) (string, []interface{})
-	// Exec(tx *sql.Tx, autocommit bool) error // TODO: Change logic and follow what is done by Condition.. another interface for insert and update called Values?
-	// ExecValues(tx *sql.Tx, id string, createdAt time.Time, updatedAt time.Time, ownerID string, status string, repoType string, data string, autocommit bool) error
+	SetDB(db *sql.DB) Query
+	GetDB() *sql.DB
+	SetTx(tx *sql.Tx) Query
+	GetTx() *sql.Tx
+	SetInner(inner bool) Query
+	IsInner() bool
+	AsSQL() QueryResulter
+}
+
+// QueryResulter is the result of running AsSQL on Query
+type QueryResulter interface {
+	Query
+	GetSQL() string
+	GetValues() []interface{}
+	Exec(autocommit bool) error
+	Rows() (*sql.Rows, error)
 }
 
 // FieldValuer assigns a value to a field
