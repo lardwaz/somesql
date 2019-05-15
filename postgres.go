@@ -39,16 +39,21 @@ type PQQuery struct {
 }
 
 // NewQuery declares a new query
-func NewQuery(tx *sql.Tx) Query {
+func NewQuery(tx ...*sql.Tx) Query {
 	var q PQQuery
 	q.Fields = append(ReservedFields, FieldData)
 	q.Limit = 10
+
+	if len(tx) == 1 {
+		q.Tx = tx[1]
+	}
+
 	return q
 }
 
 // NewInnerQuery declares a new query
 func NewInnerQuery() Query {
-	q := NewQuery(nil)
+	q := NewQuery()
 	return q.SetInner(true)
 }
 
