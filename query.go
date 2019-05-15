@@ -39,8 +39,6 @@ type Query interface {
 	GetOffset() int
 	SetDB(db *sql.DB) Query
 	GetDB() *sql.DB
-	SetTx(tx *sql.Tx) Query
-	GetTx() *sql.Tx
 	SetInner(inner bool) Query
 	IsInner() bool
 	AsSQL() QueryResulter
@@ -52,7 +50,9 @@ type QueryResulter interface {
 	GetSQL() string
 	GetValues() []interface{}
 	Exec(autocommit bool) error
+	ExecTx(tx *sql.Tx, autocommit bool) error
 	Rows() (*sql.Rows, error)
+	RowsTx(tx *sql.Tx) (*sql.Rows, error)
 }
 
 // FieldValuer assigns a value to a field
