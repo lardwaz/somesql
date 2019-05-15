@@ -98,7 +98,7 @@ func (q QueryResult) Rows(db *sql.DB) (*sql.Rows, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close() // Is it safe? We closed (defer) then returned it
+	// defer rows.Close() // Is it safe? We closed (defer) then returned it
 
 	return rows, nil
 }
