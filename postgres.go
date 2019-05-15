@@ -40,15 +40,13 @@ type PQQuery struct {
 }
 
 // NewQuery declares a new query
-func NewQuery(db *sql.DB, tx ...*sql.Tx) Query {
+func NewQuery(db ...*sql.DB) Query {
 	var q PQQuery
 	q.Fields = append(ReservedFields, FieldData)
 	q.Limit = 10
 
-	q.DB = db
-
-	if len(tx) > 0 {
-		q.Tx = tx[1]
+	if len(db) > 0 {
+		q.DB = db[0]
 	}
 
 	return q
@@ -252,17 +250,6 @@ func (q PQQuery) SetDB(db *sql.DB) Query {
 // GetDB is a getter for sql.DB
 func (q PQQuery) GetDB() *sql.DB {
 	return q.DB
-}
-
-// SetTx is a setter for sql.Tx
-func (q PQQuery) SetTx(tx *sql.Tx) Query {
-	q.Tx = tx
-	return q
-}
-
-// GetTx is a getter for sql.Tx
-func (q PQQuery) GetTx() *sql.Tx {
-	return q.Tx
 }
 
 // SetInner is a setter for Limit

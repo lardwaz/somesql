@@ -34,26 +34,26 @@ func (q QueryResult) GetValues() []interface{} {
 
 // Exec executes stmt values using a specific sql transaction
 func (q QueryResult) Exec(autocommit bool) error {
-	var (
-		err error
-	)
-
-	tx := q.GetTx()
 	db := q.GetDB()
-	if tx == nil && db == nil {
+	if db == nil {
 		return ErrorNoDBTX
-	} else if tx == nil {
-		tx, err = db.Begin()
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if err != nil {
-				tx.Rollback()
-			}
-		}()
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	return q.ExecTx(tx, autocommit)
+}
+
+// ExecTx executes stmt values using a specific sql transaction
+func (q QueryResult) ExecTx(tx *sql.Tx, autocommit bool) error {
 	stmt, err := tx.Prepare(q.GetSQL())
 	if err != nil {
 		return err
@@ -76,31 +76,30 @@ func (q QueryResult) Exec(autocommit bool) error {
 
 // Rows executes stmt values using a specific sql transaction
 func (q QueryResult) Rows() (*sql.Rows, error) {
-	var (
-		err error
-	)
-
-	tx := q.GetTx()
 	db := q.GetDB()
-	if tx == nil && db == nil {
+	if db == nil {
 		return nil, ErrorNoDBTX
-	} else if tx == nil {
-		tx, err = db.Begin()
-		if err != nil {
-			return nil, err
-		}
-		defer func() {
-			if err != nil {
-				tx.Rollback()
-			}
-		}()
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	return q.RowsTx(tx)
+}
+
+// RowsTx executes stmt values using a specific sql transaction
+func (q QueryResult) RowsTx(tx *sql.Tx) (*sql.Rows, error) {
 	rows, err := tx.Query(q.GetSQL(), q.GetValues()...)
 	if err != nil {
 		return nil, err
 	}
-	// defer rows.Close() // Is it safe? We closed (defer) then returned it
 
 	return rows, nil
 }
