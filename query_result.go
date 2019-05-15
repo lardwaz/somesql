@@ -60,7 +60,7 @@ func (q QueryResult) Exec(autocommit bool) error {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(q.Values...)
+	_, err = stmt.Exec(q.GetValues()...)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (q QueryResult) Rows() (*sql.Rows, error) {
 		}()
 	}
 
-	rows, err := tx.Query(q.GetSQL(), q.Values...)
+	rows, err := tx.Query(q.GetSQL(), q.GetValues()...)
 	if err != nil {
 		return nil, err
 	}
