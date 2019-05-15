@@ -35,16 +35,19 @@ type PQQuery struct {
 	Limit      int
 	Offset     int
 	Inner      bool
+	DB         *sql.DB
 	Tx         *sql.Tx
 }
 
 // NewQuery declares a new query
-func NewQuery(tx ...*sql.Tx) Query {
+func NewQuery(db *sql.DB, tx ...*sql.Tx) Query {
 	var q PQQuery
 	q.Fields = append(ReservedFields, FieldData)
 	q.Limit = 10
 
-	if len(tx) == 1 {
+	q.DB = db
+
+	if len(tx) > 0 {
 		q.Tx = tx[1]
 	}
 
@@ -53,7 +56,7 @@ func NewQuery(tx ...*sql.Tx) Query {
 
 // NewInnerQuery declares a new query
 func NewInnerQuery() Query {
-	q := NewQuery()
+	q := NewQuery(nil)
 	return q.SetInner(true)
 }
 
@@ -238,6 +241,17 @@ func (q PQQuery) SetOffset(offset int) Query {
 // GetOffset is a getter for Offset
 func (q PQQuery) GetOffset() int {
 	return q.Offset
+}
+
+// SetDB is a setter for sql.DB
+func (q PQQuery) SetDB(db *sql.DB) Query {
+	q.DB = db
+	return q
+}
+
+// GetDB is a getter for sql.DB
+func (q PQQuery) GetDB() *sql.DB {
+	return q.DB
 }
 
 // SetTx is a setter for sql.Tx

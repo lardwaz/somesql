@@ -7,7 +7,7 @@ import (
 
 // QueryResulter related errors
 var (
-	ErrorNewTxCreate = errors.New("error creating new Tx")
+	ErrorNoDBTX = errors.New("invalid DB or Tx")
 )
 
 // QueryResult is an implementation of QueryResulter
@@ -33,14 +33,15 @@ func (q QueryResult) GetValues() []interface{} {
 }
 
 // Exec executes stmt values using a specific sql transaction
-func (q QueryResult) Exec(db *sql.DB, autocommit bool) error {
+func (q QueryResult) Exec(autocommit bool) error {
 	var (
 		err error
 	)
 
 	tx := q.GetTx()
+	db := q.GetDB()
 	if tx == nil && db == nil {
-		return ErrorNewTxCreate
+		return ErrorNoDBTX
 	} else if tx == nil {
 		tx, err = db.Begin()
 		if err != nil {
@@ -74,14 +75,15 @@ func (q QueryResult) Exec(db *sql.DB, autocommit bool) error {
 }
 
 // Rows executes stmt values using a specific sql transaction
-func (q QueryResult) Rows(db *sql.DB) (*sql.Rows, error) {
+func (q QueryResult) Rows() (*sql.Rows, error) {
 	var (
 		err error
 	)
 
 	tx := q.GetTx()
+	db := q.GetDB()
 	if tx == nil && db == nil {
-		return nil, ErrorNewTxCreate
+		return nil, ErrorNoDBTX
 	} else if tx == nil {
 		tx, err = db.Begin()
 		if err != nil {
