@@ -45,7 +45,7 @@ func (q QueryResult) Exec(autocommit bool) error {
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 		}
 	}()
 
@@ -87,7 +87,7 @@ func (q QueryResult) Rows() (*sql.Rows, error) {
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 		}
 	}()
 

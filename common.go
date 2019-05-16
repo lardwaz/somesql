@@ -39,11 +39,11 @@ func expandValues(val interface{}) []interface{} {
 // - s1 [a, b, c]
 // - s2 [c, d]
 //
-// 1. Say s2 is a new slice of s1, where elements have been added and removed
-//	a) get elements that have been added in s2?
+// 1. Say s2 is a new slice derived from s1, where elements have been added and removed
+//	a) to get elements that have been added in s2
 //		added = getSliceChange(s1, s2)
 //		added = [d]
-//	b) get elements that have been removed from s1
+//	b) to get elements that have been removed from s1
 //		removed = getSliceChange(s2, s1)
 //		removed = [a, b]
 // 2. Remove all elements from s1 that are in s2

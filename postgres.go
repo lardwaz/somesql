@@ -31,7 +31,7 @@ type PQQuery struct {
 	Type       uint8 // Default: UnknownQueryType
 	Lang       string
 	Fields     []string
-	Relations  map[string][]string
+	Relations  map[string][]string // relation => [values...]
 	Conditions []Condition
 	Values     []interface{}
 	Limit      int
@@ -77,6 +77,22 @@ func (q PQQuery) Select(fields ...string) Query {
 	}
 
 	q.Fields = fields
+	return q
+}
+
+func (q PQQuery) SelectRel(fields ...string) Query {
+	q.Type = SelectQueryType
+
+	if len(fields) == 0 {
+		return q
+	}
+
+	r := make(map[string][]string)
+	for _, f := range fields {
+		r[f] = []string{}
+	}
+
+	q.Relations = r
 	return q
 }
 

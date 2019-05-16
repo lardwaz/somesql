@@ -28,6 +28,7 @@ const (
 type Query interface {
 	Insert(FieldValuer) Query
 	Select(fields ...string) Query
+	SelectRel(fields ...string) Query
 	Update(FieldValuer) Query
 	Delete() Query
 	Where(Condition) Query

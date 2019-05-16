@@ -30,6 +30,17 @@ var (
 			{{- if eq (len $.DataFields) (plus $i) }}) "{{ $.FieldData }}"{{ end }}
 		{{- end }}
 		{{- if ne (len $.DataFields) (plus $i) }}, {{end}}
+	{{- end }}
+	{{- if or (and (ne (len .MetaFields) 0) (ne (len .RelFields) 0)) (and (ne (len .DataFields) 0) (ne (len .RelFields) 0)) }}, {{ end -}}
+	{{- range $i, $v := .RelFields -}}
+		{{ if $.Inner -}}
+			"{{ $.FieldRelation }}"->>'{{ $v }}' "{{ $v }}"
+		{{- else -}}
+			{{ if eq $i 0 }}json_build_object({{ end -}}
+			'{{ $v }}', "{{ $.FieldRelation }}"->'{{ $v }}'
+			{{- if eq (len $.RelFields) (plus $i) }}) "{{ $.FieldRelation }}"{{ end }}
+		{{- end }}
+		{{- if ne (len $.RelFields) (plus $i) }}, {{end}}
 	{{- end }} FROM repo
 	{{- if ne (len .Conditions) 0 }} WHERE {{ .Conditions }}{{ end }}
 	{{- if ne (.Query.GetLimit) 0 }} LIMIT {{ .Query.GetLimit }}{{ end }}

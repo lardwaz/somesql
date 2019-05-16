@@ -138,6 +138,12 @@ func TestQuery_AsSQL_Fields(t *testing.T) {
 			query:       somesql.NewQuery().Select("id", "type", "body", "author_id").SetLang(somesql.LangFR),
 			expectedSQL: `SELECT "id", "type", json_build_object('body', "data_fr"->'body', 'author_id', "data_fr"->'author_id') "data" FROM repo LIMIT 10`,
 		},
+		// SELECT relations
+		{
+			name:        "SELECT id, relations->rel",
+			query:       somesql.NewQuery().Select("id").SelectRel("author", "tags"),
+			expectedSQL: `SELECT "id", json_build_object('author', "relations"->'author', 'tags', "relations"->'tags') "relations" FROM repo LIMIT 10`,
+		},
 		// DELETE
 		{
 			name:        "DELETE * NO LIMIT",
@@ -702,8 +708,8 @@ func TestQuery_AsSQL_InQuery(t *testing.T) {
 		},
 		{
 			name:           "AndInQuery INNER NO LIMIT",
-			query:          somesql.NewQuery().Select("data").Where(somesql.AndInQuery(somesql.LangEN, "type", somesql.NewInnerQuery().Select("type", "slug").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")).SetLimit(0))),
-			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", "data_en"->>'slug' "slug" FROM repo WHERE "id"=$1) LIMIT 10`,
+			query:          somesql.NewQuery().Select("data").Where(somesql.AndInQuery(somesql.LangEN, "type", somesql.NewInnerQuery().Select("type", "slug", "brief").Where(somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")).SetLimit(0))),
+			expectedSQL:    `SELECT "data_en" FROM repo WHERE "type" IN (SELECT "type", "data_en"->>'slug' "slug", "data_en"->>'brief' "brief" FROM repo WHERE "id"=$1) LIMIT 10`,
 			expectedValues: []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 		},
 		{
