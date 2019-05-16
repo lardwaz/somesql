@@ -94,9 +94,30 @@ func (f *FieldValue) Set(field string, value interface{}) FieldValuer {
 	return f
 }
 
-// SetRel implements the FieldValuer interface
+// SetRel implements the FieldValuer interface. Replaces value of rel
 func (f *FieldValue) SetRel(rel string, value []string) FieldValuer {
 	f.relations[rel] = value
+	return f
+}
+
+// AddRel implements the FieldValuer interface. Concatenates "value []string" onto existing values
+func (f *FieldValue) AddRel(rel string, value []string) FieldValuer {
+	if relVals, ok := f.relations[rel]; ok {
+		for _, v := range value {
+			relVals = append(relVals, v)
+		}
+		f.relations[rel] = relVals
+	}
+
+	return f
+}
+
+// RemoveRel implements the FieldValuer interface. Removes "value []string" from existing values
+func (f *FieldValue) RemoveRel(rel string, value []string) FieldValuer {
+	if relVals, ok := f.relations[rel]; ok {
+		f.relations[rel] = getSliceChange(value, relVals)
+	}
+
 	return f
 }
 

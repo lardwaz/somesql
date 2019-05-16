@@ -67,6 +67,8 @@ type FieldValuer interface {
 	UseDefaults() FieldValuer
 	Set(field string, value interface{}) FieldValuer
 	SetRel(rel string, value []string) FieldValuer
+	AddRel(rel string, value []string) FieldValuer
+	RemoveRel(rel string, value []string) FieldValuer
 	List() ([]string, []interface{}, map[string][]string)
 }
 
