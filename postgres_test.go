@@ -197,6 +197,18 @@ func TestQuery_AsSQL_Insert(t *testing.T) {
 			expectedSQL:    `INSERT INTO repo ("id", "status") VALUES ($1, $2)`,
 			expectedValues: []interface{}{"1", "published"},
 		},
+		{
+			name:           "INSERT no default + 1 relation",
+			query:          somesql.NewQuery().Insert(somesql.NewFieldValue().Status("published").SetRel("tags", []string{"a", "b", "c"})),
+			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
+			expectedValues: []interface{}{"published", `{"tags":["a","b","c"]}`},
+		},
+		{
+			name:           "INSERT no default + 2 relations",
+			query:          somesql.NewQuery().Insert(somesql.NewFieldValue().Status("published").SetRel("author", []string{"x"}).SetRel("tags", []string{"a", "b", "c"})),
+			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
+			expectedValues: []interface{}{"published", `{"author":["x"],"tags":["a","b","c"]}`},
+		},
 	}
 
 	for i, tt := range tests {
@@ -282,7 +294,7 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 			expectedValues: []interface{}{"published", `["a","b","c"]`},
 		},
 		{
-			name:           "UPDATE relations and meta + data json",
+			name:           "UPDATE relations, meta and data json",
 			query:          somesql.NewQuery(nil).Update(somesql.NewFieldValue().Status("published").Set("author_id", "123").SetRel("tags", []string{"a", "b", "c"})),
 			expectedSQL:    `UPDATE repo SET "status" = $1, "data_en" = "data_en" || {"author_id": $2}, "relations" = "relations" || {"tags": $3}`,
 			expectedValues: []interface{}{"published", "123", `["a","b","c"]`},

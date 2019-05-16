@@ -160,11 +160,21 @@ func (q PQQuery) AsSQL() QueryResulter {
 		}
 	}
 
-	// add relations & values
-	for rel, relVal := range q.Relations {
-		if byt, err := json.Marshal(relVal); err == nil {
-			relFields = append(relFields, rel)
+	// relations & values
+	if q.Type == InsertQueryType && len(q.Relations) > 0 {
+		if byt, err := json.Marshal(q.Relations); err == nil {
+			for rel := range q.Relations {
+				relFields = append(relFields, rel)
+			}
 			values = append(values, string(byt))
+		}
+	}
+	if q.Type == UpdateQueryType {
+		for rel, relVal := range q.Relations {
+			if byt, err := json.Marshal(relVal); err == nil {
+				relFields = append(relFields, rel)
+				values = append(values, string(byt))
+			}
 		}
 	}
 

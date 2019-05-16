@@ -8,11 +8,12 @@ var (
 		"{{ $v }}"
 		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
 	{{- end -}}
+	{{- if gt (len .RelFields) 0 }}, "{{ .FieldRelation }}"{{- end -}}
 	) VALUES (
 	{{- range $i, $v := .MetaFields -}}
-		${{ plus $i }}
-		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
+		?{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
 	{{- end -}}
+	{{- if gt (len .RelFields) 0 }}, ?{{ end -}}
 	)`
 
 	selectTplStr = `SELECT{{ " " -}}
