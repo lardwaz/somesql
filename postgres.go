@@ -144,11 +144,11 @@ func (q PQQuery) AsSQL() QueryResulter {
 		}
 	}
 
-	// add relations values
+	// add relations & values
 	for rel, relVal := range q.Relations {
-		if bytes, err := json.Marshal(relVal); err == nil {
+		if byt, err := json.Marshal(relVal); err == nil {
 			relFields = append(relFields, rel)
-			values = append(values, string(bytes))
+			values = append(values, string(byt))
 		}
 	}
 
