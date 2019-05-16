@@ -35,9 +35,22 @@ func expandValues(val interface{}) []interface{} {
 }
 
 // getSliceChange returns all elements that are present in sliceTwo but NOT in sliceOne
+// it can be used for several purposes. for example if we have 2 slices:
+// - s1 [a, b, c]
+// - s2 [c, d]
+//
+// 1. Say s2 is a new slice of s1, where elements have been added and removed
+//	a) get elements that have been added in s2?
+//		added = getSliceChange(s1, s2)
+//		added = [d]
+//	b) get elements that have been removed from s1
+//		removed = getSliceChange(s2, s1)
+//		removed = [a, b]
+// 2. Remove all elements from s1 that are in s2
+//		s1 = getSliceChange(s2, s1)
+//		s1 = [a, b]
 func getSliceChange(sliceOne, sliceTwo []string) []string {
 	m := make(map[string]bool)
-
 	for _, item := range sliceOne {
 		m[item] = true
 	}
