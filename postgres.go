@@ -169,7 +169,7 @@ func (q PQQuery) AsSQL() QueryResulter {
 			values = append(values, string(byt))
 		}
 	}
-	if q.Type == UpdateQueryType {
+	if q.Type == SelectQueryType || q.Type == UpdateQueryType {
 		for rel, relVal := range q.Relations {
 			if byt, err := json.Marshal(relVal); err == nil {
 				relFields = append(relFields, rel)
