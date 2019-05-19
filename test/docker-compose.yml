@@ -1,7 +1,7 @@
 version: "2"
 
 services:
-  postgres:
+  somesql-postgres:
     container_name: somesql-postgres
     hostname: somesql-postgres-DEV
     image: postgres:10-alpine
