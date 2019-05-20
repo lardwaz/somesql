@@ -14,6 +14,10 @@ func TestConditionIn(t *testing.T) {
 		caseAndNotIn
 		caseOrIn
 		caseOrNotIn
+		caseAndRelIn
+		caseAndRelNotIn
+		caseOrRelIn
+		caseOrRelNotIn
 	)
 
 	type args struct {
@@ -105,11 +109,22 @@ func TestConditionIn(t *testing.T) {
 			args{
 				lang:  somesql.LangEN,
 				field: "name",
-				value: []string{"A", "B", "C"},
+				value: []string{"A", "B"},
 			},
-			`"data_en"->>'name' IN (?,?,?)`,
-			[]interface{}{"A", "B", "C"},
+			`("data_en" @> '{"name":["?"]}'::JSONB OR '{"name":["?"]}'::JSONB)`,
+			[]interface{}{"A", "B"},
 			caseAndIn,
+		},
+		{
+			"AND NOT IN (JSONB)",
+			args{
+				lang:  somesql.LangEN,
+				field: "name",
+				value: []string{"A", "B"},
+			},
+			`NOT("data_en" @> '{"name":["?"]}'::JSONB OR '{"name":["?"]}'::JSONB)`,
+			[]interface{}{"A", "B"},
+			caseAndNotIn,
 		},
 		{
 			"AND IN (JSONB) (with func on field)",
@@ -119,32 +134,67 @@ func TestConditionIn(t *testing.T) {
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
 			},
-			`LOWER("data_en"->>'badge') IN (?,?)`,
+			`("data_en" @> '{"badge":["?"]}'::JSONB OR '{"badge":["?"]}'::JSONB)`,
 			[]interface{}{"video", "audio"},
 			caseAndIn,
-		},
-		{
-			"AND NOT IN (JSONB)",
-			args{
-				lang:  somesql.LangEN,
-				field: "name",
-				value: []string{"A", "B", "C"},
-			},
-			`"data_en"->>'name' NOT IN (?,?,?)`,
-			[]interface{}{"A", "B", "C"},
-			caseAndNotIn,
 		},
 		{
 			"AND NOT IN (JSONB) (with func on field)",
 			args{
 				lang:  somesql.LangEN,
-				field: "name",
+				field: "badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
 			},
-			`LOWER("data_en"->>'name') NOT IN (?,?)`,
+			`NOT("data_en" @> '{"badge":["?"]}'::JSONB OR '{"badge":["?"]}'::JSONB)`,
 			[]interface{}{"video", "audio"},
 			caseAndNotIn,
+		},
+		{
+			"AND IN (JSONB) - relations",
+			args{
+				lang:  somesql.LangEN,
+				field: "name",
+				value: []string{"A", "B"},
+			},
+			`("relations" @> '{"name":["?"]}'::JSONB OR '{"name":["?"]}'::JSONB)`,
+			[]interface{}{"A", "B"},
+			caseAndRelIn,
+		},
+		{
+			"AND NOT IN (JSONB) - relations",
+			args{
+				lang:  somesql.LangEN,
+				field: "name",
+				value: []string{"A", "B"},
+			},
+			`NOT("relations" @> '{"name":["?"]}'::JSONB OR '{"name":["?"]}'::JSONB)`,
+			[]interface{}{"A", "B"},
+			caseAndRelNotIn,
+		},
+		{
+			"AND IN (JSONB) (with func on field) - relations",
+			args{
+				lang:  somesql.LangEN,
+				field: "badge",
+				value: []string{"video", "audio"},
+				funcs: []string{"LOWER"},
+			},
+			`("relations" @> '{"badge":["?"]}'::JSONB OR '{"badge":["?"]}'::JSONB)`,
+			[]interface{}{"video", "audio"},
+			caseAndRelIn,
+		},
+		{
+			"AND NOT IN (JSONB) (with func on field) - relations",
+			args{
+				lang:  somesql.LangEN,
+				field: "badge",
+				value: []string{"video", "audio"},
+				funcs: []string{"LOWER"},
+			},
+			`NOT("relations" @> '{"badge":["?"]}'::JSONB OR '{"badge":["?"]}'::JSONB)`,
+			[]interface{}{"video", "audio"},
+			caseAndRelNotIn,
 		},
 
 		{
@@ -198,11 +248,22 @@ func TestConditionIn(t *testing.T) {
 			args{
 				lang:  somesql.LangEN,
 				field: "name",
-				value: []string{"A", "B", "C"},
+				value: []string{"A", "B"},
 			},
-			`"data_en"->>'name' IN (?,?,?)`,
-			[]interface{}{"A", "B", "C"},
+			`("data_en" @> '{"name":["?"]}'::JSONB OR '{"name":["?"]}'::JSONB)`,
+			[]interface{}{"A", "B"},
 			caseOrIn,
+		},
+		{
+			"OR NOT IN (JSONB)",
+			args{
+				lang:  somesql.LangEN,
+				field: "name",
+				value: []string{"A", "B"},
+			},
+			`NOT("data_en" @> '{"name":["?"]}'::JSONB OR '{"name":["?"]}'::JSONB)`,
+			[]interface{}{"A", "B"},
+			caseOrNotIn,
 		},
 		{
 			"OR IN (JSONB) (with func on field)",
@@ -212,20 +273,9 @@ func TestConditionIn(t *testing.T) {
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
 			},
-			`LOWER("data_en"->>'badge') IN (?,?)`,
+			`("data_en" @> '{"badge":["?"]}'::JSONB OR '{"badge":["?"]}'::JSONB)`,
 			[]interface{}{"video", "audio"},
 			caseOrIn,
-		},
-		{
-			"OR NOT IN (JSONB)",
-			args{
-				lang:  somesql.LangEN,
-				field: "name",
-				value: []string{"A", "B", "C"},
-			},
-			`"data_en"->>'name' NOT IN (?,?,?)`,
-			[]interface{}{"A", "B", "C"},
-			caseOrNotIn,
 		},
 		{
 			"OR NOT IN (JSONB) (with func on field)",
@@ -235,9 +285,55 @@ func TestConditionIn(t *testing.T) {
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
 			},
-			`LOWER("data_en"->>'badge') NOT IN (?,?)`,
+			`NOT("data_en" @> '{"badge":["?"]}'::JSONB OR '{"badge":["?"]}'::JSONB)`,
 			[]interface{}{"video", "audio"},
 			caseOrNotIn,
+		},
+		{
+			"OR IN (JSONB) - relations",
+			args{
+				lang:  somesql.LangEN,
+				field: "name",
+				value: []string{"A", "B"},
+			},
+			`("relations" @> '{"name":["?"]}'::JSONB OR '{"name":["?"]}'::JSONB)`,
+			[]interface{}{"A", "B"},
+			caseOrRelIn,
+		},
+		{
+			"OR NOT IN (JSONB) - relations",
+			args{
+				lang:  somesql.LangEN,
+				field: "name",
+				value: []string{"A", "B"},
+			},
+			`NOT("relations" @> '{"name":["?"]}'::JSONB OR '{"name":["?"]}'::JSONB)`,
+			[]interface{}{"A", "B"},
+			caseOrRelNotIn,
+		},
+		{
+			"OR IN (JSONB) (with func on field) - relations",
+			args{
+				lang:  somesql.LangEN,
+				field: "badge",
+				value: []string{"video", "audio"},
+				funcs: []string{"LOWER"},
+			},
+			`("relations" @> '{"badge":["?"]}'::JSONB OR '{"badge":["?"]}'::JSONB)`,
+			[]interface{}{"video", "audio"},
+			caseOrRelIn,
+		},
+		{
+			"OR NOT IN (JSONB) (with func on field) - relations",
+			args{
+				lang:  somesql.LangEN,
+				field: "badge",
+				value: []string{"video", "audio"},
+				funcs: []string{"LOWER"},
+			},
+			`NOT("relations" @> '{"badge":["?"]}'::JSONB OR '{"badge":["?"]}'::JSONB)`,
+			[]interface{}{"video", "audio"},
+			caseOrRelNotIn,
 		},
 	}
 
@@ -258,6 +354,15 @@ func TestConditionIn(t *testing.T) {
 				sql, values = somesql.AndNotIn(tt.args.lang, tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
 			case caseOrNotIn:
 				sql, values = somesql.OrNotIn(tt.args.lang, tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
+
+			case caseAndRelIn:
+				sql, values = somesql.AndRelIn(tt.args.lang, tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
+			case caseOrRelIn:
+				sql, values = somesql.OrRelIn(tt.args.lang, tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
+			case caseAndRelNotIn:
+				sql, values = somesql.AndRelNotIn(tt.args.lang, tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
+			case caseOrRelNotIn:
+				sql, values = somesql.OrRelNotIn(tt.args.lang, tt.args.field, tt.args.value, tt.args.funcs...).AsSQL()
 			}
 
 			assert.Equal(t, tt.sql, sql, fmt.Sprintf("%d: SQL invalid", i+1))
