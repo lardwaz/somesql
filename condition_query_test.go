@@ -91,6 +91,15 @@ func TestConditionQuery(t *testing.T) {
 			caseType:  caseOrNotIn,
 			lang:      somesql.LangEN,
 		},
+		{
+			name:      "OrNotInQuery",
+			fieldName: "author_id",
+			query:     somesql.NewInnerQuery().Select("author_id").Where(somesql.AndRel(somesql.LangEN, "tags", "", "video")),
+			sql:       `"data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE ("relations" @> '{"tags":?}'::JSONB) LIMIT 10)`,
+			values:    []interface{}{"video"},
+			caseType:  caseOrNotIn,
+			lang:      somesql.LangEN,
+		},
 	}
 
 	for i, tt := range tests {
