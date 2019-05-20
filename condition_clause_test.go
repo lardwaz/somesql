@@ -12,6 +12,8 @@ func TestConditionClause(t *testing.T) {
 	const (
 		caseAnd = iota
 		caseOr
+		caseAndRel
+		caseOrRel
 	)
 
 	type args struct {
@@ -161,6 +163,17 @@ func TestConditionClause(t *testing.T) {
 			[]interface{}{"John Doe"},
 			caseAnd,
 		},
+		{
+			"AND JSONB on relations",
+			args{
+				lang:  somesql.LangEN,
+				field: "name",
+				value: "John Doe",
+			},
+			`("relations" @> '{"name":?}'::JSONB)`,
+			[]interface{}{"John Doe"},
+			caseAndRel,
+		},
 
 		{
 			"OR Normal",
@@ -266,6 +279,17 @@ func TestConditionClause(t *testing.T) {
 			[]interface{}{"John Doe"},
 			caseOr,
 		},
+		{
+			"OR JSONB on relations",
+			args{
+				lang:  somesql.LangEN,
+				field: "name",
+				value: "John Doe",
+			},
+			`("relations" @> '{"name":?}'::JSONB)`,
+			[]interface{}{"John Doe"},
+			caseOrRel,
+		},
 	}
 
 	for i, tt := range tests {
@@ -277,7 +301,11 @@ func TestConditionClause(t *testing.T) {
 				condition somesql.Condition
 			)
 
-			if tt.caseType == caseAnd {
+			if tt.caseType == caseAndRel {
+				condition = somesql.AndRel(tt.args.lang, tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
+			} else if tt.caseType == caseOrRel {
+				condition = somesql.OrRel(tt.args.lang, tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
+			} else if tt.caseType == caseAnd {
 				condition = somesql.And(tt.args.lang, tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
 			} else {
 				condition = somesql.Or(tt.args.lang, tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
@@ -288,7 +316,7 @@ func TestConditionClause(t *testing.T) {
 			assert.Equal(t, tt.sql, sql, fmt.Sprintf("%d: SQL invalid", i+1))
 			assert.Equal(t, tt.values, values, fmt.Sprintf("%d: Values invalid", i+1))
 
-			if tt.caseType == caseAnd {
+			if tt.caseType == caseAndRel || tt.caseType == caseAnd {
 				assert.Equal(t, somesql.AndCondition, condition.ConditionType(), fmt.Sprintf("%d: Condition type must be AND", i+1))
 			} else {
 				assert.Equal(t, somesql.OrCondition, condition.ConditionType(), fmt.Sprintf("%d: Condition type must be OR", i+1))
