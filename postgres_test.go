@@ -396,6 +396,12 @@ func TestQuery_AsSQL_ConditionClause(t *testing.T) {
 			expectedSQL:    `DELETE FROM repo WHERE "data_fr"->>'author_id'=$1 AND "data_fr"->>'category_id'=$2`,
 			expectedValues: []interface{}{"1", "2"},
 		},
+		{
+			name:           `DELETE WHERE "relations"->>'article'`,
+			query:          somesql.NewQuery().Delete().Where(somesql.And("", "type", "=", "category")).Where(somesql.AndRel("", "article", "=", "uuid")),
+			expectedSQL:    `DELETE FROM repo WHERE "type"=$1 AND ("relations" @> '{"article":$2}'::JSONB)`,
+			expectedValues: []interface{}{"category", "uuid"},
+		},
 	}
 
 	for i, tt := range tests {
