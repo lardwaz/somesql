@@ -107,6 +107,8 @@ func (f *FieldValue) AddRel(rel string, value []string) FieldValuer {
 			relVals = append(relVals, v)
 		}
 		f.relations[rel] = relVals
+	} else {
+		f.relations[rel] = value
 	}
 
 	return f
