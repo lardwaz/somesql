@@ -8,10 +8,9 @@ import (
 
 // FieldValue implements the FieldValuer interface
 type FieldValue struct {
-	pos       map[string]int
-	fields    []string
-	values    []interface{}
-	relations map[string][]string
+	pos    map[string]int
+	fields []string
+	values []interface{}
 }
 
 // NewFieldValue returns a new FieldValue
@@ -21,7 +20,6 @@ func NewFieldValue() *FieldValue {
 	f.pos = make(map[string]int, 0)
 	f.fields = make([]string, 0)
 	f.values = make([]interface{}, 0)
-	f.relations = make(map[string][]string, 0)
 
 	return &f
 }
@@ -94,36 +92,7 @@ func (f *FieldValue) Set(field string, value interface{}) FieldValuer {
 	return f
 }
 
-// SetRel implements the FieldValuer interface. Replaces value of rel
-func (f *FieldValue) SetRel(rel string, value []string) FieldValuer {
-	f.relations[rel] = value
-	return f
-}
-
-// AddRel implements the FieldValuer interface. Concatenates "value []string" onto existing values
-func (f *FieldValue) AddRel(rel string, value []string) FieldValuer {
-	if relVals, ok := f.relations[rel]; ok {
-		for _, v := range value {
-			relVals = append(relVals, v)
-		}
-		f.relations[rel] = relVals
-	} else {
-		f.relations[rel] = value
-	}
-
-	return f
-}
-
-// RemoveRel implements the FieldValuer interface. Removes "value []string" from existing values
-func (f *FieldValue) RemoveRel(rel string, value []string) FieldValuer {
-	if relVals, ok := f.relations[rel]; ok {
-		f.relations[rel] = getSliceChange(value, relVals)
-	}
-
-	return f
-}
-
 // List implements the FieldValuer interface
-func (f *FieldValue) List() ([]string, []interface{}, map[string][]string) {
-	return f.fields, f.values, f.relations
+func (f *FieldValue) List() ([]string, []interface{}) {
+	return f.fields, f.values
 }

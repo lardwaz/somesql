@@ -23,12 +23,13 @@ const (
 )
 
 // Query represents a composable query
-// Setters: Select(), Save(), Delete(), Where(), SetLang(), SetLimit(), SetOffset()
-// Getters: GetLang(), GetLimit(), GetOffset(), GetTx(), IsInner(), AsSQL()
+// Setters:  Select(), Save(), Delete(), Where(), SetLang(), SetLimit(), SetOffset(), SetRel()
+// Getters:  GetLang(), GetLimit(), GetOffset(), GetTx(), IsInner(), AsSQL()
+// Mutators: AddRel(), RemoveRel()
 type Query interface {
 	Insert(FieldValuer) Query
 	Select(fields ...string) Query
-	SelectRel(fields ...string) Query
+	SelectRel(rels ...string) Query
 	Update(FieldValuer) Query
 	Delete() Query
 	Where(Condition) Query
@@ -43,6 +44,9 @@ type Query interface {
 	SetInner(inner bool) Query
 	IsInner() bool
 	AsSQL() QueryResulter
+	InsertRel(rel string, values []string) Query
+	AddRel(rel string, values []string) Query
+	RemoveRel(rel string, values []string) Query
 }
 
 // QueryResulter is the result of running AsSQL on Query
@@ -67,10 +71,7 @@ type FieldValuer interface {
 	Data(json string) FieldValuer
 	UseDefaults() FieldValuer
 	Set(field string, value interface{}) FieldValuer
-	SetRel(rel string, value []string) FieldValuer
-	AddRel(rel string, value []string) FieldValuer
-	RemoveRel(rel string, value []string) FieldValuer
-	List() ([]string, []interface{}, map[string][]string)
+	List() ([]string, []interface{} /*, map[string][]string*/)
 }
 
 // Condition represents a conditional clause in a statement
