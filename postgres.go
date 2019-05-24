@@ -26,10 +26,11 @@ const (
 	RelRemoveQueryType
 )
 
-// RelValuer defines a relation
-type RelValuer struct {
-	Relation string
-	Values   []string
+// RelFieldsValues keeps a list of relation keys and their values
+type RelFieldsValues struct {
+	pos       map[string]int
+	relations []string
+	values    []interface{}
 }
 
 // PQQuery represents a query implementation in PostgreSQL database backend
@@ -37,7 +38,7 @@ type PQQuery struct {
 	Type       uint8 // Default: UnknownQueryType
 	Lang       string
 	Fields     []string
-	Relations  map[string]RelValuer
+	RelFldVal  RelFieldsValues
 	Conditions []Condition
 	Values     []interface{}
 	Limit      int
@@ -51,8 +52,11 @@ type PQQuery struct {
 func NewQuery(db ...*sql.DB) Query {
 	var q PQQuery
 	q.Fields = append(ReservedFields, FieldData)
-	q.Relations = make(map[string]RelValuer, 0)
 	q.Limit = 10
+
+	q.RelFldVal.pos = make(map[string]int, 0)
+	q.RelFldVal.relations = make([]string, 0)
+	q.RelFldVal.values = make([]interface{}, 0)
 
 	if len(db) > 0 {
 		q.DB = db[0]
@@ -99,12 +103,7 @@ func (q PQQuery) SelectRel(rels ...string) Query {
 		return q
 	}
 
-	relations := make(map[string]RelValuer)
-	for _, r := range rels {
-		relations[r] = RelValuer{Relation: r} // could be an empty RelValuer{} - we need the key "r" only in a SELECT
-	}
-
-	q.Relations = relations
+	q.RelFldVal.relations = rels
 	return q
 }
 
@@ -176,19 +175,17 @@ func (q PQQuery) AsSQL() QueryResulter {
 		}
 	}
 
-	// relations & values: SELECT
 	if q.Type == SelectQueryType {
-		for rel := range q.Relations {
+		for _, rel := range q.RelFldVal.relations {
 			relFields = append(relFields, rel)
 		}
 	}
 
 	// relations & values: INSERT
-	if q.Type == InsertQueryType && len(q.Relations) > 0 {
-
-		relValues := make(map[string][]string, 0)
-		for _, rel := range q.Relations {
-			relValues[rel.Relation] = rel.Values
+	if q.Type == InsertQueryType && len(q.RelFldVal.relations) > 0 {
+		relValues := make(map[string]interface{}, 0)
+		for rel, pos := range q.RelFldVal.pos {
+			relValues[rel] = q.RelFldVal.values[pos]
 		}
 
 		if byt, err := json.Marshal(relValues); err == nil {
@@ -199,14 +196,19 @@ func (q PQQuery) AsSQL() QueryResulter {
 
 	// relations & values: UPDATE add relation
 	if q.Type == RelAddQueryType {
-		for _, rel := range q.Relations {
-			if byt, err := json.Marshal(rel.Values); err == nil {
-				relFields = append(relFields, rel.Relation)
+		for _, rel := range q.RelFldVal.relations {
+			relFields = append(relFields, rel)
+		}
+
+		for _, val := range q.RelFldVal.values {
+			if byt, err := json.Marshal(val); err == nil {
 				values = append(values, string(byt))
+			} else {
+				values = append(values, val)
 			}
 		}
 
-		if len(q.Relations) > 0 {
+		if len(q.RelFldVal.relations) > 0 {
 			for _, cond := range q.Conditions {
 				_, v := cond.AsSQL()
 				values = append(values, v...)
@@ -216,17 +218,22 @@ func (q PQQuery) AsSQL() QueryResulter {
 
 	// relations & values: UPDATE remove relation
 	if q.Type == RelRemoveQueryType {
-		if len(q.Relations) > 0 {
+		if len(q.RelFldVal.relations) > 0 {
 			for _, cond := range q.Conditions {
 				_, v := cond.AsSQL()
 				values = append(values, v...)
 			}
 		}
 
-		for _, rel := range q.Relations {
-			if byt, err := json.Marshal(rel.Values); err == nil {
-				relFields = append(relFields, rel.Relation)
+		for _, rel := range q.RelFldVal.relations {
+			relFields = append(relFields, rel)
+		}
+
+		for _, val := range q.RelFldVal.values {
+			if byt, err := json.Marshal(val); err == nil {
 				values = append(values, string(byt))
+			} else {
+				values = append(values, val)
 			}
 		}
 	}
@@ -360,32 +367,30 @@ func (q PQQuery) IsInner() bool {
 // InsertRel: relation[rel] = values
 func (q PQQuery) InsertRel(rel string, values []string) Query {
 	q.Type = InsertQueryType
-	q.Relations[rel] = RelValuer{
-		Relation: rel,
-		Values:   values,
-	}
-
-	return q
+	return addRelFieldsValues(q, rel, values)
 }
 
 // AddRel: relation[rel] = relation[rel] + values
 func (q PQQuery) AddRel(rel string, values []string) Query {
 	q.Type = RelAddQueryType
-	q.Relations[rel] = RelValuer{
-		Relation: rel,
-		Values:   values,
-	}
-
-	return q
+	return addRelFieldsValues(q, rel, values)
 }
 
 // RemoveRel: relation[rel] = relation[rel] - values
 func (q PQQuery) RemoveRel(rel string, values []string) Query {
 	q.Type = RelRemoveQueryType
-	q.Relations[rel] = RelValuer{
-		Relation: rel,
-		Values:   values,
+	return addRelFieldsValues(q, rel, values)
+}
+
+func addRelFieldsValues(q PQQuery, rel string, values []string) PQQuery {
+	if pos, ok := q.RelFldVal.pos[rel]; ok {
+		q.RelFldVal.values[pos] = values
+		return q
 	}
+
+	q.RelFldVal.relations = append(q.RelFldVal.relations, rel)
+	q.RelFldVal.values = append(q.RelFldVal.values, values)
+	q.RelFldVal.pos[rel] = len(q.RelFldVal.relations) - 1
 
 	return q
 }
