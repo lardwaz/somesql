@@ -67,24 +67,24 @@ func (s *Insert) ToSQL() {
 	fields, values := s.fields.List()
 
 	// Processing fields and values
-	tmpValues := make([]string, len(fields))
+	placeholders := make([]string, len(fields))
 	for i, f := range fields {
 		if f == FieldData || f == FieldRelations {
+			if f == FieldData {
+				f = GetFieldData(s.GetLang())
+			}
 			if json, err := json.Marshal(values[i]); err == nil {
 				values[i] = string(json)
 			}
 		}
-		if f == FieldData {
-			f = GetFieldData(s.GetLang())
-		}
 		fields[i] = fmt.Sprintf(`"%s"`, f)
-		tmpValues[i] = fmt.Sprintf(`$%d`, i+1)
+		placeholders[i] = fmt.Sprintf(`$%d`, i+1)
 	}
 
 	fieldsStr := strings.Join(fields, ", ")
-	valuesStr := strings.Join(tmpValues, ", ")
+	placesholdersStr := strings.Join(placeholders, ", ")
 
-	fmt.Fprintf(&sb, `INSERT INTO %s (%s) VALUES (%s)`, Table, fieldsStr, valuesStr)
+	fmt.Fprintf(&sb, `INSERT INTO %s (%s) VALUES (%s)`, Table, fieldsStr, placesholdersStr)
 
 	s.sql = sb.String()
 	s.values = values
