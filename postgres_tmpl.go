@@ -4,22 +4,22 @@ import "text/template"
 
 var (
 	insertTplStr = `INSERT INTO repo (
-	{{- range $i, $v := .MetaFields -}}
+	{{- range $i, $v := .MetaFieldsList -}}
 		"{{ $v }}"
-		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
+		{{- if ne (len $.MetaFieldsList) (plus $i) }}, {{ end }}
 	{{- end -}}
 	) VALUES (
-	{{- range $i, $v := .MetaFields -}}
-		?{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
+	{{- range $i, $v := .MetaFieldsList -}}
+		?{{- if ne (len $.MetaFieldsList) (plus $i) }}, {{ end }}
 	{{- end -}}
 	)`
 
 	selectTplStr = `SELECT{{ " " -}}
-	{{- range $i, $v := .MetaFields -}}
+	{{- range $i, $v := .MetaFieldsList -}}
 		"{{ $v }}"
-		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
+		{{- if ne (len $.MetaFieldsList) (plus $i) }}, {{ end }}
 	{{- end -}}
-	{{- if and (ne (len .MetaFields) 0) (ne (len .DataFields) 0) }}, {{ end -}}
+	{{- if and (ne (len .MetaFieldsList) 0) (ne (len .DataFields) 0) }}, {{ end -}}
 	{{- range $i, $v := .DataFields -}}
 		{{ if $.Inner -}}
 			"{{ $.FieldDataLang }}"->>'{{ $v }}' "{{ $v }}"
@@ -30,7 +30,7 @@ var (
 		{{- end }}
 		{{- if ne (len $.DataFields) (plus $i) }}, {{end}}
 	{{- end }}
-	{{- if or (and (ne (len .MetaFields) 0) (ne (len .RelFields) 0)) (and (ne (len .DataFields) 0) (ne (len .RelFields) 0)) }}, {{ end -}}
+	{{- if or (and (ne (len .MetaFieldsList) 0) (ne (len .RelFields) 0)) (and (ne (len .DataFields) 0) (ne (len .RelFields) 0)) }}, {{ end -}}
 	{{- range $i, $v := .RelFields -}}
 		{{ if $.Inner -}}
 			"{{ $.FieldRelation }}"->>'{{ $v }}' "{{ $v }}"
@@ -46,11 +46,11 @@ var (
 	{{- if ne (.Query.GetOffset) 0 }} OFFSET {{ .Query.GetOffset }}{{ end -}}`
 
 	updateTplStr = `UPDATE repo SET{{ " " -}}
-	{{- range $i, $v := .MetaFields -}}
+	{{- range $i, $v := .MetaFieldsList -}}
 		"{{ $v }}" = ?
-		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
+		{{- if ne (len $.MetaFieldsList) (plus $i) }}, {{ end }}
 	{{- end -}}
-	{{- if and (ne (len .MetaFields) 0) (ne (len .DataFields) 0) }}, {{ end -}}
+	{{- if and (ne (len .MetaFieldsList) 0) (ne (len .DataFields) 0) }}, {{ end -}}
 	{{- range $i, $v := .DataFields -}}
 		{{ if eq $i 0 }}"{{ $.FieldDataLang }}" = "{{ $.FieldDataLang }}" || { {{- end -}}
 		"{{ $v }}": ?
@@ -60,18 +60,18 @@ var (
 	{{- if ne (len .Conditions) 0 }} WHERE {{ .Conditions }}{{ end }}`
 
 	relAddTplStr = `UPDATE repo SET{{ " " -}}
-	{{- range $i, $v := .MetaFields -}}
+	{{- range $i, $v := .MetaFieldsList -}}
 		"{{ $v }}" = ?
-		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
+		{{- if ne (len $.MetaFieldsList) (plus $i) }}, {{ end }}
 	{{- end -}}
-	{{- if and (ne (len .MetaFields) 0) (ne (len .DataFields) 0) }}, {{ end -}}
+	{{- if and (ne (len .MetaFieldsList) 0) (ne (len .DataFields) 0) }}, {{ end -}}
 	{{- range $i, $v := .DataFields -}}
 		{{ if eq $i 0 }}"{{ $.FieldDataLang }}" = "{{ $.FieldDataLang }}" || { {{- end -}}
 		"{{ $v }}": ?
 		{{- if ne (len $.DataFields) (plus $i) }}, {{ end }}
 		{{- if eq (len $.DataFields) (plus $i) -}} } {{- end }}
 	{{- end }}
-	{{- if or (and (ne (len .MetaFields) 0) (ne (len .RelFields) 0)) (and (ne (len .DataFields) 0) (ne (len .RelFields) 0)) }}, {{ end -}}
+	{{- if or (and (ne (len .MetaFieldsList) 0) (ne (len .RelFields) 0)) (and (ne (len .DataFields) 0) (ne (len .RelFields) 0)) }}, {{ end -}}
 	{{- if ne (len .RelFields) 0 }}"{{ $.FieldRelation }}" = relAdd.relations FROM (SELECT (
 		{{- range $i, $v := .RelFields -}}
 			("{{ $.FieldRelation }}" - '{{ $v }}') {{- if ne (len $.RelFields) (plus $i) }} || {{ end -}}
@@ -85,18 +85,18 @@ var (
 	{{- if ne (len .Conditions) 0 }} WHERE {{ .Conditions }}{{ end }}`
 
 	relRemoveTplStr = `UPDATE repo SET{{ " " -}}
-	{{- range $i, $v := .MetaFields -}}
+	{{- range $i, $v := .MetaFieldsList -}}
 		"{{ $v }}" = ?
-		{{- if ne (len $.MetaFields) (plus $i) }}, {{ end }}
+		{{- if ne (len $.MetaFieldsList) (plus $i) }}, {{ end }}
 	{{- end -}}
-	{{- if and (ne (len .MetaFields) 0) (ne (len .DataFields) 0) }}, {{ end -}}
+	{{- if and (ne (len .MetaFieldsList) 0) (ne (len .DataFields) 0) }}, {{ end -}}
 	{{- range $i, $v := .DataFields -}}
 		{{ if eq $i 0 }}"{{ $.FieldDataLang }}" = "{{ $.FieldDataLang }}" || { {{- end -}}
 		"{{ $v }}": ?
 		{{- if ne (len $.DataFields) (plus $i) }}, {{ end }}
 		{{- if eq (len $.DataFields) (plus $i) -}} } {{- end }}
 	{{- end }}
-	{{- if or (and (ne (len .MetaFields) 0) (ne (len .RelFields) 0)) (and (ne (len .DataFields) 0) (ne (len .RelFields) 0)) }}, {{ end -}}
+	{{- if or (and (ne (len .MetaFieldsList) 0) (ne (len .RelFields) 0)) (and (ne (len .DataFields) 0) (ne (len .RelFields) 0)) }}, {{ end -}}
 	{{- if ne (len .RelFields) 0 }}"{{ $.FieldRelation }}" = updates.updRel FROM (SELECT (
 		{{- range $i, $v := .RelFields -}}
 			("{{ $.FieldRelation }}" - '{{ $v }}') {{- if ne (len $.RelFields) (plus $i) }} || {{ end -}}

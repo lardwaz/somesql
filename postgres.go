@@ -51,7 +51,7 @@ type PQQuery struct {
 // NewQuery declares a new query
 func NewQuery(db ...*sql.DB) Query {
 	var q PQQuery
-	q.Fields = append(ReservedFields, FieldData)
+	q.Fields = append(MetaFieldsList, FieldData)
 	q.Limit = 10
 
 	q.RelFldVal.pos = make(map[string]int, 0)
@@ -132,11 +132,11 @@ func (q PQQuery) Where(c Condition) Query {
 // AsSQL returns the result for the query
 func (q PQQuery) AsSQL() QueryResulter {
 	var (
-		err        error
-		sqlStmt    string
-		dataFields []string
-		metaFields []string
-		relFields  []string
+		err            error
+		sqlStmt        string
+		dataFields     []string
+		MetaFieldsList []string
+		relFields      []string
 
 		values    = q.Values
 		lang      = q.GetLang()
@@ -167,9 +167,9 @@ func (q PQQuery) AsSQL() QueryResulter {
 
 	for _, field := range q.Fields {
 		if IsFieldMeta(field) {
-			metaFields = append(metaFields, field)
+			MetaFieldsList = append(MetaFieldsList, field)
 		} else if field == "data" {
-			metaFields = append(metaFields, fieldData)
+			MetaFieldsList = append(MetaFieldsList, fieldData)
 		} else {
 			dataFields = append(dataFields, field)
 		}
@@ -189,7 +189,7 @@ func (q PQQuery) AsSQL() QueryResulter {
 		}
 
 		if byt, err := json.Marshal(relValues); err == nil {
-			metaFields = append(metaFields, FieldRelations)
+			MetaFieldsList = append(MetaFieldsList, FieldRelations)
 			values = append(values, string(byt))
 		}
 	}
@@ -258,23 +258,23 @@ func (q PQQuery) AsSQL() QueryResulter {
 
 	var buf bytes.Buffer
 	err = t.Execute(&buf, struct {
-		Query         PQQuery
-		MetaFields    []string
-		DataFields    []string
-		FieldData     string
-		FieldDataLang string
-		Conditions    string
-		Inner         bool
-		FieldRelation string
-		RelFields     []string
+		Query          PQQuery
+		MetaFieldsList []string
+		DataFields     []string
+		FieldData      string
+		FieldDataLang  string
+		Conditions     string
+		Inner          bool
+		FieldRelation  string
+		RelFields      []string
 	}{
-		Query:         q,
-		MetaFields:    metaFields,
-		DataFields:    dataFields,
-		FieldData:     FieldData,
-		FieldDataLang: fieldData,
-		Conditions:    conditions,
-		Inner:         isInner,
+		Query:          q,
+		MetaFieldsList: MetaFieldsList,
+		DataFields:     dataFields,
+		FieldData:      FieldData,
+		FieldDataLang:  fieldData,
+		Conditions:     conditions,
+		Inner:          isInner,
 
 		FieldRelation: FieldRelations,
 		RelFields:     relFields,

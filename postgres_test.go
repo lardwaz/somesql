@@ -224,7 +224,7 @@ func TestQuery_AsSQL_Fields(t *testing.T) {
 func TestQuery_AsSQL_Insert(t *testing.T) {
 	type testCase struct {
 		name           string
-		query          somesql.Query
+		query          *somesql.Insert
 		expectedSQL    string
 		expectedValues []interface{}
 	}
@@ -233,25 +233,25 @@ func TestQuery_AsSQL_Insert(t *testing.T) {
 		// Insert
 		{
 			name:           "INSERT defaults",
-			query:          somesql.NewQuery().Insert(somesql.NewFieldValue().UseDefaults().ID("1").CreatedAt(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)).UpdatedAt(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)).Status("published")),
-			expectedSQL:    `INSERT INTO repo ("id", "created_at", "updated_at", "owner_id", "status", "type", "data_en") VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-			expectedValues: []interface{}{"1", time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC), time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC), uuid.Nil.String(), "published", "", "{}"},
+			query:          somesql.NewInsert(somesql.LangEN).Fields(somesql.NewFields().UseDefaults().ID("1").CreatedAt(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)).UpdatedAt(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)).Status("published")),
+			expectedSQL:    `INSERT INTO repo ("id", "created_at", "updated_at", "owner_id", "status", "type", "data_en", "relations") VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+			expectedValues: []interface{}{"1", time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC), time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC), uuid.Nil.String(), "published", "", "{}", "{}"},
 		},
 		{
 			name:           "INSERT no defaults",
-			query:          somesql.NewQuery().Insert(somesql.NewFieldValue().ID("1").Status("published")),
+			query:          somesql.NewInsert(somesql.LangEN).Fields(somesql.NewFields().ID("1").Status("published")),
 			expectedSQL:    `INSERT INTO repo ("id", "status") VALUES ($1, $2)`,
 			expectedValues: []interface{}{"1", "published"},
 		},
 		{
 			name:           "INSERT no default + 1 relation",
-			query:          somesql.NewQuery().Insert(somesql.NewFieldValue().Status("published")).InsertRel("tags", []string{"a", "b", "c"}),
+			query:          somesql.NewInsert(somesql.LangEN).Fields(somesql.NewFields().Status("published").Set("relations.tags", []string{"a", "b", "c"})),
 			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
 			expectedValues: []interface{}{"published", `{"tags":["a","b","c"]}`},
 		},
 		{
 			name:           "INSERT no default + 2 relations",
-			query:          somesql.NewQuery().Insert(somesql.NewFieldValue().Status("published")).InsertRel("author", []string{"x"}).InsertRel("tags", []string{"a", "b", "c"}),
+			query:          somesql.NewInsert(somesql.LangEN).Fields(somesql.NewFields().Status("published").Set("relations.author", []string{"x"}).Set("relations.tags", []string{"a", "b", "c"})),
 			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
 			expectedValues: []interface{}{"published", `{"author":["x"],"tags":["a","b","c"]}`},
 		},
@@ -259,8 +259,8 @@ func TestQuery_AsSQL_Insert(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queryResult := tt.query.AsSQL()
-			gotSQL, gotValues := queryResult.GetSQL(), queryResult.GetValues()
+			tt.query.ToSQL()
+			gotSQL, gotValues := tt.query.GetSQL(), tt.query.GetValues()
 
 			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
 			assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
