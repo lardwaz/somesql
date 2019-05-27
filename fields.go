@@ -97,14 +97,14 @@ func (f Fields) Type(s string) Fields {
 // Dot-seperated field name is treated as inner field of JSONB field (1 level only)
 // i.e data.author = data->>author
 func (f Fields) Set(field string, value interface{}) Fields {
-	if innerField := GetInnerDataFields(field); innerField != "" {
+	if innerField := GetInnerDataField(field); innerField != "" {
 		innerValue, ok := f[FieldData].(map[string]interface{})
 		if !ok {
 			f[FieldData] = make(map[string]interface{})
 			innerValue = f[FieldData].(map[string]interface{})
 		}
 		innerValue[innerField] = value
-	} else if innerField := GetInnerRelationsFields(field); innerField != "" {
+	} else if innerField := GetInnerRelationsField(field); innerField != "" {
 		innerValue, ok := f[FieldRelations].(map[string]interface{})
 		if !ok {
 			f[FieldRelations] = make(map[string]interface{})
@@ -168,8 +168,8 @@ func IsFieldData(field string) bool {
 	return field == FieldData
 }
 
-// GetInnerDataFields returns the inner data field
-func GetInnerDataFields(field string) string {
+// GetInnerDataField returns the inner data field
+func GetInnerDataField(field string) string {
 	if strings.Count(field, ".") == 1 {
 		parts := strings.Split(field, ".")
 		if IsFieldData(parts[0]) {
@@ -184,8 +184,8 @@ func IsFieldRelations(field string) bool {
 	return field == FieldRelations
 }
 
-// GetInnerRelationsFields returns the inner relations field
-func GetInnerRelationsFields(field string) string {
+// GetInnerRelationsField returns the inner relations field
+func GetInnerRelationsField(field string) string {
 	if strings.Count(field, ".") == 1 {
 		parts := strings.Split(field, ".")
 		if IsFieldRelations(parts[0]) {
