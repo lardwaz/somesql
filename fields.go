@@ -97,18 +97,14 @@ func (f Fields) Type(s string) Fields {
 // Dot-seperated field name is treated as inner field of JSONB field (1 level only)
 // i.e data.author = data->>author
 func (f Fields) Set(field string, value interface{}) Fields {
-	if IsInnerFieldData(field) {
-		parts := strings.Split(field, ".")
-		innerField := parts[1]
+	if innerField := GetInnerDataFields(field); innerField != "" {
 		innerValue, ok := f[FieldData].(map[string]interface{})
 		if !ok {
 			f[FieldData] = make(map[string]interface{})
 			innerValue = f[FieldData].(map[string]interface{})
 		}
 		innerValue[innerField] = value
-	} else if IsInnerFieldRelations(field) {
-		parts := strings.Split(field, ".")
-		innerField := parts[1]
+	} else if innerField := GetInnerRelationsFields(field); innerField != "" {
 		innerValue, ok := f[FieldRelations].(map[string]interface{})
 		if !ok {
 			f[FieldRelations] = make(map[string]interface{})
@@ -172,13 +168,15 @@ func IsFieldData(field string) bool {
 	return field == FieldData
 }
 
-// IsInnerFieldData returns true if field is an inner data field
-func IsInnerFieldData(field string) bool {
+// GetInnerDataFields returns the inner data field
+func GetInnerDataFields(field string) string {
 	if strings.Count(field, ".") == 1 {
 		parts := strings.Split(field, ".")
-		return parts[0] == FieldData
+		if IsFieldData(parts[0]) {
+			return parts[1]
+		}
 	}
-	return false
+	return ""
 }
 
 // IsFieldRelations returns true if field is a data field
@@ -186,13 +184,15 @@ func IsFieldRelations(field string) bool {
 	return field == FieldRelations
 }
 
-// IsInnerFieldRelations returns true if field is an inner relations field
-func IsInnerFieldRelations(field string) bool {
+// GetInnerRelationsFields returns the inner relations field
+func GetInnerRelationsFields(field string) string {
 	if strings.Count(field, ".") == 1 {
 		parts := strings.Split(field, ".")
-		return parts[0] == FieldRelations
+		if IsFieldRelations(parts[0]) {
+			return parts[1]
+		}
 	}
-	return false
+	return ""
 }
 
 // GetFieldData returns data field with lang

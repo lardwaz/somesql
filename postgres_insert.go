@@ -69,8 +69,8 @@ func (s *Insert) ToSQL() {
 	// Processing fields and values
 	placeholders := make([]string, len(fields))
 	for i, f := range fields {
-		if f == FieldData || f == FieldRelations {
-			if f == FieldData {
+		if IsFieldData(f) || IsFieldRelations(f) {
+			if IsFieldData(f) {
 				f = GetFieldData(s.GetLang())
 			}
 			if json, err := json.Marshal(values[i]); err == nil {
