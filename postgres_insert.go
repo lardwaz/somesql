@@ -63,7 +63,6 @@ func (s Insert) GetValues() []interface{} {
 
 // ToSQL implements Statement
 func (s *Insert) ToSQL() {
-	var sb strings.Builder
 	fields, values := s.fields.List()
 
 	// Processing fields and values
@@ -84,9 +83,7 @@ func (s *Insert) ToSQL() {
 	fieldsStr := strings.Join(fields, ", ")
 	placesholdersStr := strings.Join(placeholders, ", ")
 
-	fmt.Fprintf(&sb, `INSERT INTO %s (%s) VALUES (%s)`, Table, fieldsStr, placesholdersStr)
-
-	s.sql = sb.String()
+	s.sql = fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s)`, Table, fieldsStr, placesholdersStr)
 	s.values = values
 }
 
