@@ -4,12 +4,12 @@ import (
 	"database/sql"
 )
 
-func exec(sql string, values []interface{}, db *sql.DB, autocommit bool) error {
+func rows(sql string, values []interface{}, db *sql.DB) (*sql.Rows, error) {
 	// TODO: implement
-	return nil
+	return nil, nil
 }
 
-func execTx(sql string, values []interface{}, tx *sql.Tx, autocommit bool) error {
+func rowsTx(sql string, values []interface{}, tx *sql.Tx) (*sql.Rows, error) {
 	// TODO: implement
-	return nil
+	return nil, nil
 }
