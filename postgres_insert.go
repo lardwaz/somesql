@@ -83,7 +83,9 @@ func (s *Insert) ToSQL() {
 	fieldsStr := strings.Join(fields, ", ")
 	placesholdersStr := strings.Join(placeholders, ", ")
 
-	s.sql = fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s)`, Table, fieldsStr, placesholdersStr)
+	sql := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s)`, Table, fieldsStr, placesholdersStr)
+
+	s.sql = cleanStatement(sql)
 	s.values = values
 }
 
