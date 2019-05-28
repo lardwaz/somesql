@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"text/template"
 )
@@ -393,4 +394,9 @@ func addRelFieldsValues(q PQQuery, rel string, values []string) PQQuery {
 	q.RelFldVal.pos[rel] = len(q.RelFldVal.relations) - 1
 
 	return q
+}
+
+func cleanStatement(sql string) string {
+	space := regexp.MustCompile(`\s+`)
+	return strings.TrimSpace(space.ReplaceAllString(sql, " "))
 }
