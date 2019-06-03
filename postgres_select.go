@@ -7,7 +7,7 @@ import (
 )
 
 // Select generates Postgres SELECT statement
-// Implements: Mutator
+// Implements: Accessor
 type Select struct {
 	fields     []string
 	conditions []Condition
