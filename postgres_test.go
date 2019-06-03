@@ -169,41 +169,6 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
 		},
-		// DELETE
-		// {
-		// 	name:        "DELETE * NO LIMIT",
-		// 	query:       somesql.NewQuery().Delete(),
-		// 	expectedSQL: `DELETE FROM repo`,
-		// },
-		// {
-		// 	name:        "DELETE * LIMIT",
-		// 	query:       somesql.NewQuery().Delete().SetLimit(20),
-		// 	expectedSQL: `DELETE FROM repo LIMIT 20`,
-		// },
-		// {
-		// 	name:        "DELETE * OFFSET 10",
-		// 	query:       somesql.NewQuery().Delete().SetOffset(10),
-		// 	expectedSQL: `DELETE FROM repo OFFSET 10`,
-		// },
-		// {
-		// 	name:        "DELETE * LIMIT 20 OFFSET 10",
-		// 	query:       somesql.NewQuery().Delete().SetLimit(20).SetOffset(10),
-		// 	expectedSQL: `DELETE FROM repo LIMIT 20 OFFSET 10`,
-		// },
-		// {
-		// 	name:           "DELETE with condition",
-		// 	query:          somesql.NewQuery().Delete().Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
-		// 	expectedSQL:    `DELETE FROM repo WHERE "id"=$1`,
-		// 	checkValues:    true,
-		// 	expectedValues: []interface{}{"uuid"},
-		// },
-		// {
-		// 	name:           "DELETE with conditions + relations",
-		// 	query:          somesql.NewQuery().Delete().Where(somesql.AndRel("", "article", "=", "uuid")),
-		// 	expectedSQL:    `DELETE FROM repo WHERE ("relations" @> '{"article":$1}'::JSONB)`,
-		// 	checkValues:    true,
-		// 	expectedValues: []interface{}{"uuid"},
-		// },
 	}
 
 	for i, tt := range tests {
@@ -372,6 +337,65 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 
 			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
 			assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
+		})
+	}
+}
+
+func TestQuery_AsSQL_Delete(t *testing.T) {
+	type testCase struct {
+		name           string
+		query          *somesql.Delete
+		expectedSQL    string
+		checkValues    bool
+		expectedValues []interface{}
+	}
+
+	tests := []testCase{
+		{
+			name:        "DELETE * NO LIMIT",
+			query:       somesql.NewDelete(somesql.LangEN),
+			expectedSQL: `DELETE FROM repo`,
+		},
+		{
+			name:        "DELETE * LIMIT",
+			query:       somesql.NewDelete(somesql.LangEN).Limit(20),
+			expectedSQL: `DELETE FROM repo LIMIT 20`,
+		},
+		{
+			name:        "DELETE * OFFSET 10",
+			query:       somesql.NewDelete(somesql.LangEN).Offset(10),
+			expectedSQL: `DELETE FROM repo OFFSET 10`,
+		},
+		{
+			name:        "DELETE * LIMIT 20 OFFSET 10",
+			query:       somesql.NewDelete(somesql.LangEN).Limit(20).Offset(10),
+			expectedSQL: `DELETE FROM repo LIMIT 20 OFFSET 10`,
+		},
+		{
+			name:           "DELETE with condition",
+			query:          somesql.NewDelete(somesql.LangEN).Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
+			expectedSQL:    `DELETE FROM repo WHERE "id"=$1`,
+			checkValues:    true,
+			expectedValues: []interface{}{"uuid"},
+		},
+		{
+			name:           "DELETE with conditions + relations",
+			query:          somesql.NewDelete(somesql.LangEN).Where(somesql.AndRel("", "article", "=", "uuid")),
+			expectedSQL:    `DELETE FROM repo WHERE ("relations" @> '{"article":$1}'::JSONB)`,
+			checkValues:    true,
+			expectedValues: []interface{}{"uuid"},
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.query.ToSQL()
+			gotSQL, gotValues := tt.query.GetSQL(), tt.query.GetValues()
+
+			assert.Equal(t, tt.expectedSQL, gotSQL, fmt.Sprintf("Fields %03d :: invalid sql :: %s", i+1, tt.name))
+			if tt.checkValues {
+				assert.Equal(t, tt.expectedValues, gotValues, fmt.Sprintf("Fields %03d :: invalid values :: %s", i+1, tt.name))
+			}
 		})
 	}
 }
