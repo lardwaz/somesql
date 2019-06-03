@@ -26,6 +26,7 @@ func NewSelect(lang string, inner bool, db ...*sql.DB) *Select {
 
 	s.lang = lang
 	s.fields = FieldsList
+	s.limit = 10
 
 	if len(db) > 0 {
 		s.db = db[0]
@@ -66,66 +67,84 @@ func (s Select) GetValues() []interface{} {
 
 // ToSQL implements Statement
 func (s *Select) ToSQL() {
-	// fields, values := s.fields.List()
-
-	// // Processing fields and values
-	// placeholders := make([]string, len(fields))
-	// for i, f := range fields {
-	// 	if IsFieldData(f) || IsFieldRelations(f) {
-	// 		if IsFieldData(f) {
-	// 			f = GetFieldData(s.GetLang())
-	// 		}
-	// 		if json, err := json.Marshal(values[i]); err == nil {
-	// 			values[i] = string(json)
-	// 		}
-	// 	}
-	// 	fields[i] = fmt.Sprintf(`"%s"`, f)
-	// 	placeholders[i] = fmt.Sprintf(`$%d`, i+1)
-	// }
-
 	var (
+		fieldsStr     string
 		conditionsStr string
 		offsetStr     string
 		limitStr      string
+		isInnerQuery  = s.IsInner()
+		dataFieldLang = GetFieldData(s.GetLang())
 	)
 
-	// TODO: Processing fields and values
-
-	var conditions string
-	for i, cond := range s.conditions {
-		if i != 0 {
-			switch cond.ConditionType() {
-			case AndCondition:
-				conditions += ` AND `
-			case OrCondition:
-				conditions += ` OR `
-			default:
-				continue
+	metaFields := make([]string, 0)
+	dataFields := make([]string, 0)
+	relFields := make([]string, 0)
+	for _, f := range s.fields {
+		if innerField := GetInnerDataField(f); innerField != "" {
+			if isInnerQuery {
+				dataFields = append(dataFields, fmt.Sprintf(`"%s"->>'%s' "%s"`, dataFieldLang, innerField, innerField))
+			} else {
+				dataFields = append(dataFields, fmt.Sprintf(`'%s', "%s"->'%s'`, innerField, dataFieldLang, innerField))
 			}
+		} else if innerField := GetInnerRelationsField(f); innerField != "" {
+			if isInnerQuery {
+				relFields = append(relFields, fmt.Sprintf(`"%s"->>'%s' "%s"`, FieldRelations, innerField, innerField))
+			} else {
+				relFields = append(relFields, fmt.Sprintf(`'%s', "%s"->'%s'`, innerField, FieldRelations, innerField))
+			}
+		} else if IsFieldMeta(f) {
+			if f == FieldData {
+				f = dataFieldLang
+			}
+			metaFields = append(metaFields, fmt.Sprintf(`"%s"`, f))
 		}
-
-		c, v := cond.AsSQL()
-		conditions += c
-		s.values = append(s.values, v...)
 	}
 
-	fieldsStr := strings.Join(s.fields, ", ")
+	fields := make([]string, 0)
+	if len(metaFields) > 0 {
+		fields = append(fields, strings.Join(metaFields, ", "))
+	}
+
+	if len(dataFields) > 0 {
+		if isInnerQuery {
+			fields = append(fields, strings.Join(dataFields, ", "))
+		} else {
+			fields = append(fields, fmt.Sprintf(`json_build_object(%s) "%s"`, strings.Join(dataFields, ", "), FieldData))
+		}
+	}
+
+	if len(relFields) > 0 {
+		if isInnerQuery {
+			fields = append(fields, strings.Join(relFields, ", "))
+		} else {
+			fields = append(fields, fmt.Sprintf(`json_build_object(%s) "%s"`, strings.Join(relFields, ", "), FieldRelations))
+		}
+	}
+
+	fieldsStr = strings.Join(fields, ", ")
+
+	conditions, values := processConditions(s.conditions)
+	s.values = values
 
 	if len(conditions) > 0 {
 		conditionsStr = fmt.Sprintf("WHERE %s", conditions)
-	}
-
-	if s.offset > 0 {
-		offsetStr = fmt.Sprintf("OFFSET %d", s.offset)
 	}
 
 	if s.limit > 0 {
 		limitStr = fmt.Sprintf("LIMIT %d", s.limit)
 	}
 
-	sql := fmt.Sprintf(`SELECT %s FROM %s %s %s %s`, fieldsStr, Table, conditionsStr, offsetStr, limitStr)
+	if s.offset > 0 {
+		offsetStr = fmt.Sprintf("OFFSET %d", s.offset)
+	}
 
-	s.sql = cleanStatement(sql)
+	sql := fmt.Sprintf(`SELECT %s FROM %s %s %s %s`, fieldsStr, Table, conditionsStr, limitStr, offsetStr)
+
+	if !isInnerQuery {
+		s.sql = processPlaceholders(sql)
+	}
+
+	s.sql = cleanStatement(s.sql)
 }
 
 // SetInner implements Accessor
@@ -150,7 +169,16 @@ func (s Select) RowsTx(tx *sql.Tx) (*sql.Rows, error) {
 
 // Fields sets the fields for Select
 func (s *Select) Fields(fields ...string) *Select {
+	if len(fields) == 0 {
+		return s
+	}
 	s.fields = fields
+	return s
+}
+
+// Where adds a condition clause to the Query
+func (s *Select) Where(c Condition) *Select {
+	s.conditions = append(s.conditions, c)
 	return s
 }
 
