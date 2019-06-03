@@ -63,6 +63,7 @@ func (s Insert) GetValues() []interface{} {
 
 // ToSQL implements Statement
 func (s *Insert) ToSQL() {
+	var dataFieldLang = GetFieldData(s.GetLang())
 	fields, values := s.fields.List()
 
 	// Processing fields and values
@@ -70,7 +71,7 @@ func (s *Insert) ToSQL() {
 	for i, f := range fields {
 		if IsFieldData(f) || IsFieldRelations(f) {
 			if IsFieldData(f) {
-				f = GetFieldData(s.GetLang())
+				f = dataFieldLang
 			}
 			if json, err := json.Marshal(values[i]); err == nil {
 				values[i] = string(json)
