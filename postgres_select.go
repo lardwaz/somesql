@@ -25,6 +25,7 @@ func NewSelect(lang string, inner bool, db ...*sql.DB) *Select {
 	var s Select
 
 	s.lang = lang
+	s.inner = inner
 	s.fields = FieldsList
 	s.limit = 10
 
