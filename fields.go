@@ -155,7 +155,7 @@ func (f Fields) List() ([]string, []interface{}) {
 
 // IsFieldMeta returns true if field is a meta field
 func IsFieldMeta(field string) bool {
-	for _, f := range MetaFieldsList {
+	for _, f := range FieldsList {
 		if f == field {
 			return true
 		}
