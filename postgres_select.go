@@ -93,7 +93,7 @@ func (s *Select) ToSQL() {
 			} else {
 				relFields = append(relFields, fmt.Sprintf(`'%s', "%s"->'%s'`, innerField, FieldRelations, innerField))
 			}
-		} else if IsFieldMeta(f) {
+		} else if IsFieldMeta(f) || IsFieldData(f) || IsFieldRelations(f) {
 			if f == FieldData {
 				f = dataFieldLang
 			}

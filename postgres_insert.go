@@ -63,31 +63,78 @@ func (s Insert) GetValues() []interface{} {
 
 // ToSQL implements Statement
 func (s *Insert) ToSQL() {
-	var dataFieldLang = GetFieldData(s.GetLang())
+	var (
+		placeholderIndex int
+		dataFieldLang    = GetFieldData(s.GetLang())
+	)
 	fields, values := s.fields.List()
 
 	// Processing fields and values
-	placeholders := make([]string, len(fields))
+	metaFields := make([]string, 0)
+	dataFields := make([]string, 0)
+	relFields := make([]string, 0)
+	metaValues := make([]interface{}, 0)
+	dataValues := make(map[string]interface{})
+	relValues := make(map[string]interface{})
 	for i, f := range fields {
-		if IsFieldData(f) || IsFieldRelations(f) {
-			if IsFieldData(f) {
-				f = dataFieldLang
+		if innerField := GetInnerDataField(f); innerField != "" { // Check if Inner Data + Relations fields
+			dataFields = append(dataFields, fmt.Sprintf(`"%s"`, innerField))
+			dataValues[innerField] = values[i]
+		} else if innerField := GetInnerRelationsField(f); innerField != "" {
+			relFields = append(relFields, fmt.Sprintf(`"%s"`, innerField))
+			relValues[innerField] = values[i]
+		} else if IsFieldData(f) { // Check if Outer Data + Relations fields
+			placeholderIndex++
+			metaFields = append(metaFields, fmt.Sprintf(`"%s"`, dataFieldLang))
+			if vals, err := json.Marshal(values[i]); err == nil {
+				metaValues = append(metaValues, string(vals))
 			}
-			if json, err := json.Marshal(values[i]); err == nil {
-				values[i] = string(json)
+		} else if IsFieldRelations(f) {
+			placeholderIndex++
+			metaFields = append(metaFields, fmt.Sprintf(`"%s"`, f))
+			if vals, err := json.Marshal(values[i]); err == nil {
+				metaValues = append(metaValues, string(vals))
 			}
+		} else if IsFieldMeta(f) { // Check if Meta fields
+			placeholderIndex++
+			metaFields = append(metaFields, fmt.Sprintf(`"%s"`, f))
+			metaValues = append(metaValues, values[i])
 		}
-		fields[i] = fmt.Sprintf(`"%s"`, f)
-		placeholders[i] = fmt.Sprintf(`$%d`, i+1)
 	}
 
-	fieldsStr := strings.Join(fields, ", ")
+	fieldsJoined := make([]string, 0)
+	if len(metaFields) > 0 {
+		fieldsJoined = append(fieldsJoined, strings.Join(metaFields, ", "))
+		s.values = append(s.values, metaValues...)
+	}
+
+	if len(dataFields) > 0 {
+		placeholderIndex++
+		fieldsJoined = append(fieldsJoined, fmt.Sprintf(`"%s"`, dataFieldLang))
+		if vals, err := json.Marshal(dataValues); err == nil {
+			s.values = append(s.values, string(vals))
+		}
+	}
+
+	if len(relFields) > 0 {
+		placeholderIndex++
+		fieldsJoined = append(fieldsJoined, fmt.Sprintf(`"%s"`, FieldRelations))
+		if vals, err := json.Marshal(relValues); err == nil {
+			s.values = append(s.values, string(vals))
+		}
+	}
+
+	fieldsStr := strings.Join(fieldsJoined, ", ")
+
+	placeholders := make([]string, 0)
+	for i := 1; i <= placeholderIndex; i++ {
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+	}
 	placesholdersStr := strings.Join(placeholders, ", ")
 
 	sql := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s)`, Table, fieldsStr, placesholdersStr)
 
 	s.sql = cleanStatement(sql)
-	s.values = values
 }
 
 // Exec implements Mutator

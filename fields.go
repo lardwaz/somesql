@@ -1,7 +1,7 @@
 package somesql
 
 import (
-	"sort"
+	"fmt"
 	"strings"
 	"time"
 
@@ -127,26 +127,35 @@ func (f Fields) List() ([]string, []interface{}) {
 	fields := make([]string, 0)
 	values := make([]interface{}, 0)
 
-	// Sort the map by keys first
-	var keys []string
-	for k := range f {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
 	// First add top level fields in order of FieldsList
-	for _, field := range FieldsList {
+	for _, field := range MetaFieldsList {
 		if v, ok := f[field]; ok {
 			fields = append(fields, field)
 			values = append(values, v)
 		}
 	}
 
-	// Then add inner fields
-	for field := range f {
-		if strings.Contains(field, ".") {
-			fields = append(fields, field)
-			values = append(values, f[field])
+	// Data Fields
+	if dataField, ok := f[FieldData].(map[string]interface{}); ok {
+		if len(dataField) == 0 {
+			fields = append(fields, FieldData)
+			values = append(values, dataField)
+		}
+		for innerField, innerValue := range dataField {
+			fields = append(fields, fmt.Sprintf("%s.%s", FieldData, innerField))
+			values = append(values, innerValue)
+		}
+	}
+
+	// Relations Fields
+	if relationsField, ok := f[FieldRelations].(map[string]interface{}); ok {
+		if len(relationsField) == 0 {
+			fields = append(fields, FieldRelations)
+			values = append(values, relationsField)
+		}
+		for innerField, innerValue := range relationsField {
+			fields = append(fields, fmt.Sprintf("%s.%s", FieldRelations, innerField))
+			values = append(values, innerValue)
 		}
 	}
 
@@ -155,7 +164,7 @@ func (f Fields) List() ([]string, []interface{}) {
 
 // IsFieldMeta returns true if field is a meta field
 func IsFieldMeta(field string) bool {
-	for _, f := range FieldsList {
+	for _, f := range MetaFieldsList {
 		if f == field {
 			return true
 		}
