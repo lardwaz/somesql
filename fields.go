@@ -154,7 +154,7 @@ func (f Fields) Type(s string) Fields {
 // Dot-seperated field name is treated as inner field of JSONB field (1 level only)
 // i.e data.author = data->>author
 func (f Fields) Set(field string, value interface{}) Fields {
-	if IsFieldMeta(field) || IsWholeFieldData(field) || IsWholeFieldRelations(field) {
+	if IsFieldMeta(field) || IsFieldData(field) || IsFieldRelations(field) {
 		f[field] = value
 	} else if innerField, ok := GetInnerField(FieldData, field); ok {
 		jsonbFields, ok := f[FieldData].(JSONBFields)
@@ -255,13 +255,13 @@ func IsFieldMeta(field string) bool {
 	return false
 }
 
-// IsWholeFieldData returns true if field is a data field
-func IsWholeFieldData(field string) bool {
+// IsFieldData returns true if field is a data field
+func IsFieldData(field string) bool {
 	return field == FieldData
 }
 
-// IsWholeFieldRelations returns true if field is a data field
-func IsWholeFieldRelations(field string) bool {
+// IsFieldRelations returns true if field is a data field
+func IsFieldRelations(field string) bool {
 	return field == FieldRelations
 }
 

@@ -96,7 +96,7 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 
 	vals = expandValues(c.Values)
 
-	if IsFieldMeta(c.Field) || IsWholeFieldData(c.Field) {
+	if IsFieldMeta(c.Field) || IsFieldData(c.Field) {
 		field := fmt.Sprintf(`"%s"`, c.Field)
 
 		if c.FieldFunction == None {

@@ -93,7 +93,7 @@ func (s *Select) ToSQL() {
 			} else {
 				relFields = append(relFields, fmt.Sprintf(`'%s', "%s"->'%s'`, innerField, FieldRelations, innerField))
 			}
-		} else if IsFieldMeta(f) || IsWholeFieldData(f) || IsWholeFieldRelations(f) {
+		} else if IsFieldMeta(f) || IsFieldData(f) || IsFieldRelations(f) {
 			if f == FieldData {
 				f = dataFieldLang
 			}
@@ -101,31 +101,36 @@ func (s *Select) ToSQL() {
 		}
 	}
 
-	fields := make([]string, 0)
+	fieldsJoined := make([]string, 0)
+	// Meta fields
 	if len(metaFields) > 0 {
-		fields = append(fields, strings.Join(metaFields, ", "))
+		fieldsJoined = append(fieldsJoined, strings.Join(metaFields, ", "))
 	}
 
+	// Data fields
 	if len(dataFields) > 0 {
+		dataFieldsJoined := strings.Join(dataFields, ", ")
 		if isInnerQuery {
-			fields = append(fields, strings.Join(dataFields, ", "))
+			fieldsJoined = append(fieldsJoined, dataFieldsJoined)
 		} else {
-			fields = append(fields, fmt.Sprintf(`json_build_object(%s) "%s"`, strings.Join(dataFields, ", "), FieldData))
+			fieldsJoined = append(fieldsJoined, fmt.Sprintf(`json_build_object(%s) "%s"`, dataFieldsJoined, FieldData))
 		}
 	}
 
+	// Relationship fields
 	if len(relFields) > 0 {
+		relFieldsJoined := strings.Join(relFields, ", ")
 		if isInnerQuery {
-			fields = append(fields, strings.Join(relFields, ", "))
+			fieldsJoined = append(fieldsJoined, relFieldsJoined)
 		} else {
-			fields = append(fields, fmt.Sprintf(`json_build_object(%s) "%s"`, strings.Join(relFields, ", "), FieldRelations))
+			fieldsJoined = append(fieldsJoined, fmt.Sprintf(`json_build_object(%s) "%s"`, relFieldsJoined, FieldRelations))
 		}
 	}
 
-	fieldsStr = strings.Join(fields, ", ")
+	fieldsStr = strings.Join(fieldsJoined, ", ")
 
-	conditions, values := processConditions(s.conditions)
-	s.values = values
+	conditions, condValues := processConditions(s.conditions)
+	s.values = condValues
 
 	if len(conditions) > 0 {
 		conditionsStr = fmt.Sprintf("WHERE %s", conditions)

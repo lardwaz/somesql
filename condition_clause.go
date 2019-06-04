@@ -74,7 +74,7 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 		lhs, rhs, field string
 	)
 
-	if IsFieldMeta(c.Field) || IsWholeFieldData(c.Field) {
+	if IsFieldMeta(c.Field) || IsFieldData(c.Field) {
 		field = fmt.Sprintf(`"%s"`, c.Field)
 	} else if c.Relations {
 		field = fmt.Sprintf(`"%s"`, FieldRelations)

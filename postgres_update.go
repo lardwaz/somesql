@@ -77,9 +77,9 @@ func (s *Update) ToSQL() {
 	dataFields := make([]string, 0)
 	dataValues := make([]interface{}, 0)
 	relFields := make([]string, 0)
+	relValues := make([]interface{}, 0)
 	relFieldsAdd := make([]string, 0)
 	relFieldsAdd2 := make([]string, 0)
-	relValues := make([]interface{}, 0)
 	relValuesAdd := make([]interface{}, 0)
 	relFieldsRemove := make([]string, 0)
 	relFieldsRemove2 := make([]string, 0)
@@ -87,7 +87,7 @@ func (s *Update) ToSQL() {
 	relFieldsRemove4 := make([]string, 0)
 	relValuesRemove := make([]interface{}, 0)
 	for i, f := range fields {
-		if IsWholeFieldData(f) {
+		if IsFieldData(f) {
 			if jsonbFields, ok := values[i].(JSONBFields); ok {
 				innerFields, innerValues, _ := jsonbFields.GetOrderedList()
 				for _, innerField := range innerFields {
@@ -95,7 +95,7 @@ func (s *Update) ToSQL() {
 				}
 				dataValues = innerValues
 			}
-		} else if IsWholeFieldRelations(f) {
+		} else if IsFieldRelations(f) {
 			if jsonbFields, ok := values[i].(JSONBFields); ok {
 				innerFields, innerValues, innerActions := jsonbFields.GetOrderedList()
 				for idx, innerField := range innerFields {
@@ -128,16 +128,19 @@ func (s *Update) ToSQL() {
 
 	s.values = make([]interface{}, 0)
 	fieldsJoined := make([]string, 0)
+	// Set meta fields
 	if len(metaFields) > 0 {
 		fieldsJoined = append(fieldsJoined, strings.Join(metaFields, ", "))
 		s.values = append(s.values, metaValues...)
 	}
 
+	// Set data fields
 	if len(dataFields) > 0 {
 		fieldsJoined = append(fieldsJoined, fmt.Sprintf(`"%s" = "%s" || {%s}`, dataFieldLang, dataFieldLang, strings.Join(dataFields, ", ")))
 		s.values = append(s.values, dataValues...)
 	}
 
+	// Set relationship fields
 	if len(relFields) > 0 {
 		fieldsJoined = append(fieldsJoined, fmt.Sprintf(`"%s" = "%s" || {%s}`, dataFieldLang, dataFieldLang, strings.Join(dataFields, ", ")))
 		s.values = append(s.values, relValues...)
@@ -148,6 +151,7 @@ func (s *Update) ToSQL() {
 		conditionsStr = fmt.Sprintf(" WHERE %s", conditions)
 	}
 
+	// Add relationship fields
 	if len(relFieldsAdd) > 0 {
 		relFieldsAddStr := strings.Join(relFieldsAdd, " || ")
 		relFieldsAddStr2 := strings.Join(relFieldsAdd2, ", ")
@@ -159,6 +163,7 @@ func (s *Update) ToSQL() {
 		s.values = append(s.values, condValues...)
 	}
 
+	// Remove relationship fields
 	if len(relFieldsRemove) > 0 {
 		relFieldsRemoveStr := strings.Join(relFieldsRemove, " || ")
 		relFieldsRemoveStr2 := strings.Join(relFieldsRemove2, ", ")

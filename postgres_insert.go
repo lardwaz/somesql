@@ -64,6 +64,8 @@ func (s Insert) GetValues() []interface{} {
 // ToSQL implements Statement
 func (s *Insert) ToSQL() {
 	var (
+		fieldsStr        string
+		placesholdersStr string
 		placeholderIndex int
 		dataFieldLang    = GetLangFieldData(s.GetLang())
 	)
@@ -72,7 +74,10 @@ func (s *Insert) ToSQL() {
 	// Processing fields and values
 	s.values = make([]interface{}, len(fields))
 	for i, f := range fields {
-		if IsWholeFieldData(f) {
+		if IsFieldMeta(f) {
+			s.values[i] = values[i]
+			placeholderIndex++
+		} else if IsFieldData(f) {
 			if jsonbFields, ok := values[i].(JSONBFields); ok {
 				if jsonBytes, err := json.Marshal(jsonbFields.Values()); err == nil {
 					s.values[i] = string(jsonBytes)
@@ -80,29 +85,26 @@ func (s *Insert) ToSQL() {
 				f = dataFieldLang // data => data_<lang>
 				placeholderIndex++
 			}
-		} else if IsWholeFieldRelations(f) {
+		} else if IsFieldRelations(f) {
 			if jsonbFields, ok := values[i].(JSONBFields); ok {
 				if jsonBytes, err := json.Marshal(jsonbFields.Values()); err == nil {
 					s.values[i] = string(jsonBytes)
 				}
 				placeholderIndex++
 			}
-		} else if IsFieldMeta(f) { // Check if Meta fields
-			s.values[i] = values[i]
-			placeholderIndex++
 		}
 
 		// Double quote the field name
 		fields[i] = fmt.Sprintf(`"%s"`, f)
 	}
 
-	fieldsStr := strings.Join(fields, ", ")
+	fieldsStr = strings.Join(fields, ", ")
 
 	placeholders := make([]string, 0)
 	for i := 1; i <= placeholderIndex; i++ {
 		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
 	}
-	placesholdersStr := strings.Join(placeholders, ", ")
+	placesholdersStr = strings.Join(placeholders, ", ")
 
 	sql := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s)`, Table, fieldsStr, placesholdersStr)
 
