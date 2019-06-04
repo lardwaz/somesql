@@ -19,16 +19,24 @@ type Update struct {
 }
 
 // NewUpdate returns a new Update
-func NewUpdate(lang string, db ...*sql.DB) *Update {
+func NewUpdate(db ...*sql.DB) *Update {
 	var s Update
 
-	s.lang = lang
+	s.lang = LangEN
 
 	if len(db) > 0 {
 		s.db = db[0]
 	}
 
 	return &s
+}
+
+// NewUpdateLang returns a new Update with specific lang
+func NewUpdateLang(lang string, db ...*sql.DB) *Update {
+	s := NewUpdate(db...)
+	s.SetLang(lang)
+
+	return s
 }
 
 // SetDB implements Statement

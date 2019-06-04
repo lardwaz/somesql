@@ -21,11 +21,10 @@ type Select struct {
 }
 
 // NewSelect returns a new Select
-func NewSelect(lang string, inner bool, db ...*sql.DB) *Select {
+func NewSelect(db ...*sql.DB) *Select {
 	var s Select
 
-	s.lang = lang
-	s.inner = inner
+	s.lang = LangEN
 	s.fields = FieldsList
 	s.limit = 10
 
@@ -34,6 +33,30 @@ func NewSelect(lang string, inner bool, db ...*sql.DB) *Select {
 	}
 
 	return &s
+}
+
+// NewSelectInner returns a new inner Select
+func NewSelectInner(db ...*sql.DB) *Select {
+	s := NewSelect(db...)
+	s.SetInner(true)
+
+	return s
+}
+
+// NewSelectLang returns a new Delete with specific lang
+func NewSelectLang(lang string, db ...*sql.DB) *Select {
+	s := NewSelect(db...)
+	s.SetLang(lang)
+
+	return s
+}
+
+// NewSelectLangInner returns a new Delete with specific lang
+func NewSelectLangInner(lang string, db ...*sql.DB) *Select {
+	s := NewSelectInner(db...)
+	s.SetLang(lang)
+
+	return s
 }
 
 // SetDB implements Statement

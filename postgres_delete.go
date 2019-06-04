@@ -18,16 +18,24 @@ type Delete struct {
 }
 
 // NewDelete returns a new Delete
-func NewDelete(lang string, db ...*sql.DB) *Delete {
+func NewDelete(db ...*sql.DB) *Delete {
 	var s Delete
 
-	s.lang = lang
+	s.lang = LangEN
 
 	if len(db) > 0 {
 		s.db = db[0]
 	}
 
 	return &s
+}
+
+// NewDeleteLang returns a new Delete with specific lang
+func NewDeleteLang(lang string, db ...*sql.DB) *Delete {
+	s := NewDelete(db...)
+	s.SetLang(lang)
+
+	return s
 }
 
 // SetDB implements Statement
