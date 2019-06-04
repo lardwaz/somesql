@@ -18,7 +18,7 @@ const (
 	FieldData      string = "data"
 	FieldRelations string = "relations"
 
-	JSONBArrSet uint8 = iota 
+	JSONBArrSet uint8 = iota
 	JSONBArrAdd
 	JSONBArrRemove
 )
@@ -31,7 +31,7 @@ var (
 
 // JSONBField represents information about a single JSONB field
 type JSONBField struct {
-	Value interface{}
+	Value  interface{}
 	Action uint8
 }
 
@@ -62,7 +62,7 @@ func (j *JSONBFields) Add(field string, value interface{}, action ...uint8) {
 // GetOrderedList returns ordered list of fields name and value in insertion order
 func (j JSONBFields) GetOrderedList() ([]string, []interface{}, []uint8) {
 	var (
-		values []interface{}
+		values  []interface{}
 		actions []uint8
 	)
 	for _, k := range j.keys {
@@ -175,12 +175,54 @@ func (f Fields) Set(field string, value interface{}) Fields {
 	return f
 }
 
+// AddToArray adds data to an array jsonb field
+func (f Fields) AddToArray(field string, value interface{}) Fields {
+	if innerField, ok := GetInnerField(FieldData, field); ok {
+		jsonbFields, ok := f[FieldData].(JSONBFields)
+		if !ok { // if not jsonbfields, make it
+			jsonbFields = NewJSONBFields()
+		}
+		jsonbFields.Add(innerField, value, JSONBArrAdd)
+		f[FieldData] = jsonbFields
+	} else if innerField, ok := GetInnerField(FieldRelations, field); ok {
+		jsonbFields, ok := f[FieldRelations].(JSONBFields)
+		if !ok {
+			jsonbFields = NewJSONBFields()
+		}
+		jsonbFields.Add(innerField, value, JSONBArrAdd)
+		f[FieldRelations] = jsonbFields
+	}
+
+	return f
+}
+
+// RemoveFromArray remove data from an array jsonb field
+func (f Fields) RemoveFromArray(field string, value interface{}) Fields {
+	if innerField, ok := GetInnerField(FieldData, field); ok {
+		jsonbFields, ok := f[FieldData].(JSONBFields)
+		if !ok { // if not jsonbfields, make it
+			jsonbFields = NewJSONBFields()
+		}
+		jsonbFields.Add(innerField, value, JSONBArrRemove)
+		f[FieldData] = jsonbFields
+	} else if innerField, ok := GetInnerField(FieldRelations, field); ok {
+		jsonbFields, ok := f[FieldRelations].(JSONBFields)
+		if !ok {
+			jsonbFields = NewJSONBFields()
+		}
+		jsonbFields.Add(innerField, value, JSONBArrRemove)
+		f[FieldRelations] = jsonbFields
+	}
+
+	return f
+}
+
 // List returns fields and values
 func (f Fields) List() ([]string, []interface{}) {
 	fields := make([]string, 0)
 	values := make([]interface{}, 0)
 
-	// First add top level fields in order of MetaFieldsList
+	// Meta Fields
 	for _, field := range MetaFieldsList {
 		if v, ok := f[field]; ok {
 			fields = append(fields, field)

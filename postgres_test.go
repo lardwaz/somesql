@@ -285,43 +285,43 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 			expectedValues: []interface{}{"1", "published", "body value", "123", "234"},
 		},
 		// Update relations : add
-		// {
-		// 	name:           "UPDATE add 1 relation only",
-		// 	query:          somesql.NewQuery(nil).Update(somesql.NewFieldValue()).AddRel("tags", []string{"a", "b"}),
-		// 	expectedSQL:    `UPDATE repo SET "relations" = relAdd.relations FROM (SELECT (("relations" - 'tags') || JSONB_BUILD_OBJECT('tags', "relations"->'tags' || '$1'::JSONB)) "relations" FROM repo) relAdd`,
-		// 	expectedValues: []interface{}{`["a","b"]`},
-		// },
-		// {
-		// 	name:           "UPDATE add 1 or more relations only",
-		// 	query:          somesql.NewQuery(nil).Update(somesql.NewFieldValue()).AddRel("tags", []string{"a", "b"}).AddRel("author", []string{"x"}),
-		// 	expectedSQL:    `UPDATE repo SET "relations" = relAdd.relations FROM (SELECT (("relations" - 'tags') || ("relations" - 'author') || JSONB_BUILD_OBJECT('tags', "relations"->'tags' || '$1'::JSONB, 'author', "relations"->'author' || '$2'::JSONB)) "relations" FROM repo) relAdd`,
-		// 	expectedValues: []interface{}{`["a","b"]`, `["x"]`},
-		// },
-		// {
-		// 	name:           "UPDATE add 1 relation only + conditions",
-		// 	query:          somesql.NewQuery(nil).Update(somesql.NewFieldValue()).AddRel("author", []string{"x"}).Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
-		// 	expectedSQL:    `UPDATE repo SET "relations" = relAdd.relations FROM (SELECT (("relations" - 'author') || JSONB_BUILD_OBJECT('author', "relations"->'author' || '$1'::JSONB)) "relations" FROM repo WHERE "id"=$2) relAdd WHERE "id"=$3`,
-		// 	expectedValues: []interface{}{`["x"]`, "uuid", "uuid"},
-		// },
+		{
+			name:           "UPDATE add 1 relation only",
+			query:          somesql.NewUpdate(somesql.LangEN).Fields(somesql.NewFields().AddToArray("relations.tags", []string{"a", "b"})),
+			expectedSQL:    `UPDATE repo SET "relations" = relAdd.relations FROM (SELECT (("relations" - 'tags') || JSONB_BUILD_OBJECT('tags', "relations"->'tags' || '$1'::JSONB)) "relations" FROM repo) relAdd`,
+			expectedValues: []interface{}{`["a","b"]`},
+		},
+		{
+			name:           "UPDATE add 1 or more relations only",
+			query:          somesql.NewUpdate(somesql.LangEN).Fields(somesql.NewFields().AddToArray("relations.tags", []string{"a", "b"}).AddToArray("relations.author", []string{"x"})),
+			expectedSQL:    `UPDATE repo SET "relations" = relAdd.relations FROM (SELECT (("relations" - 'tags') || ("relations" - 'author') || JSONB_BUILD_OBJECT('tags', "relations"->'tags' || '$1'::JSONB, 'author', "relations"->'author' || '$2'::JSONB)) "relations" FROM repo) relAdd`,
+			expectedValues: []interface{}{`["a","b"]`, `["x"]`},
+		},
+		{
+			name:           "UPDATE add 1 relation only + conditions",
+			query:          somesql.NewUpdate(somesql.LangEN).Fields(somesql.NewFields().AddToArray("relations.author", []string{"x"})).Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
+			expectedSQL:    `UPDATE repo SET "relations" = relAdd.relations FROM (SELECT (("relations" - 'author') || JSONB_BUILD_OBJECT('author', "relations"->'author' || '$1'::JSONB)) "relations" FROM repo WHERE "id"=$2) relAdd WHERE "id"=$3`,
+			expectedValues: []interface{}{`["x"]`, "uuid", "uuid"},
+		},
 		// // Update relations : remove
-		// {
-		// 	name:           "UPDATE remove 1 relation only",
-		// 	query:          somesql.NewQuery(nil).Update(somesql.NewFieldValue()).RemoveRel("tags", []string{"a", "b"}),
-		// 	expectedSQL:    `UPDATE repo SET "relations" = updates.updRel FROM (SELECT (("relations" - 'tags') || JSONB_BUILD_OBJECT('tags', JSONB_AGG(tagsUpd))) "updatedRel" FROM (SELECT "relations", JSONB_ARRAY_ELEMENTS_TEXT("relations"->'tags') tagsUpd FROM repo) expandedValues WHERE tagsUpd NOT IN ($1) GROUP BY "relations") updates`,
-		// 	expectedValues: []interface{}{`["a","b"]`},
-		// },
-		// {
-		// 	name:           "UPDATE remove 1 or more relations only",
-		// 	query:          somesql.NewQuery(nil).Update(somesql.NewFieldValue()).RemoveRel("tags", []string{"a", "b"}).RemoveRel("author", []string{"x"}),
-		// 	expectedSQL:    `UPDATE repo SET "relations" = updates.updRel FROM (SELECT (("relations" - 'tags') || ("relations" - 'author') || JSONB_BUILD_OBJECT('tags', JSONB_AGG(tagsUpd), 'author', JSONB_AGG(authorUpd))) "updatedRel" FROM (SELECT "relations", JSONB_ARRAY_ELEMENTS_TEXT("relations"->'tags') tagsUpd, JSONB_ARRAY_ELEMENTS_TEXT("relations"->'author') authorUpd FROM repo) expandedValues WHERE tagsUpd NOT IN ($1) AND authorUpd NOT IN ($2) GROUP BY "relations") updates`,
-		// 	expectedValues: []interface{}{`["a","b"]`, `["x"]`},
-		// },
-		// {
-		// 	name:           "UPDATE remove 1 relation only + conditions",
-		// 	query:          somesql.NewQuery(nil).Update(somesql.NewFieldValue()).RemoveRel("author", []string{"x"}).Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
-		// 	expectedSQL:    `UPDATE repo SET "relations" = updates.updRel FROM (SELECT (("relations" - 'author') || JSONB_BUILD_OBJECT('author', JSONB_AGG(authorUpd))) "updatedRel" FROM (SELECT "relations", JSONB_ARRAY_ELEMENTS_TEXT("relations"->'author') authorUpd FROM repo WHERE "id"=$1) expandedValues WHERE authorUpd NOT IN ($2) GROUP BY "relations") updates WHERE "id"=$3`,
-		// 	expectedValues: []interface{}{"uuid", `["x"]`, "uuid"},
-		// },
+		{
+			name:           "UPDATE remove 1 relation only",
+			query:          somesql.NewUpdate(somesql.LangEN).Fields(somesql.NewFields().RemoveFromArray("relations.tags", []string{"a", "b"})),
+			expectedSQL:    `UPDATE repo SET "relations" = updates.updRel FROM (SELECT (("relations" - 'tags') || JSONB_BUILD_OBJECT('tags', JSONB_AGG(tagsUpd))) "updatedRel" FROM (SELECT "relations", JSONB_ARRAY_ELEMENTS_TEXT("relations"->'tags') tagsUpd FROM repo) expandedValues WHERE tagsUpd NOT IN ($1) GROUP BY "relations") updates`,
+			expectedValues: []interface{}{`["a","b"]`},
+		},
+		{
+			name:           "UPDATE remove 1 or more relations only",
+			query:          somesql.NewUpdate(somesql.LangEN).Fields(somesql.NewFields().RemoveFromArray("relations.tags", []string{"a", "b"}).RemoveFromArray("relations.author", []string{"x"})),
+			expectedSQL:    `UPDATE repo SET "relations" = updates.updRel FROM (SELECT (("relations" - 'tags') || ("relations" - 'author') || JSONB_BUILD_OBJECT('tags', JSONB_AGG(tagsUpd), 'author', JSONB_AGG(authorUpd))) "updatedRel" FROM (SELECT "relations", JSONB_ARRAY_ELEMENTS_TEXT("relations"->'tags') tagsUpd, JSONB_ARRAY_ELEMENTS_TEXT("relations"->'author') authorUpd FROM repo) expandedValues WHERE tagsUpd NOT IN ($1) AND authorUpd NOT IN ($2) GROUP BY "relations") updates`,
+			expectedValues: []interface{}{`["a","b"]`, `["x"]`},
+		},
+		{
+			name:           "UPDATE remove 1 relation only + conditions",
+			query:          somesql.NewUpdate(somesql.LangEN).Fields(somesql.NewFields().RemoveFromArray("relations.author", []string{"x"})).Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
+			expectedSQL:    `UPDATE repo SET "relations" = updates.updRel FROM (SELECT (("relations" - 'author') || JSONB_BUILD_OBJECT('author', JSONB_AGG(authorUpd))) "updatedRel" FROM (SELECT "relations", JSONB_ARRAY_ELEMENTS_TEXT("relations"->'author') authorUpd FROM repo WHERE "id"=$1) expandedValues WHERE authorUpd NOT IN ($2) GROUP BY "relations") updates WHERE "id"=$3`,
+			expectedValues: []interface{}{"uuid", `["x"]`, "uuid"},
+		},
 	}
 
 	for i, tt := range tests {
