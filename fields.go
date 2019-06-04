@@ -154,6 +154,26 @@ func (f Fields) Type(s string) Fields {
 // Dot-seperated field name is treated as inner field of JSONB field (1 level only)
 // i.e data.author = data->>author
 func (f Fields) Set(field string, value interface{}) Fields {
+	f.set(field, value, JSONBArrSet)
+
+	return f
+}
+
+// Add adds data to an array jsonb field
+func (f Fields) Add(field string, value interface{}) Fields {
+	f.set(field, value, JSONBArrAdd)
+
+	return f
+}
+
+// Remove removes data from an array jsonb field
+func (f Fields) Remove(field string, value interface{}) Fields {
+	f.set(field, value, JSONBArrRemove)
+
+	return f
+}
+
+func (f Fields) set(field string, value interface{}, action uint8) {
 	if IsFieldMeta(field) || IsFieldData(field) || IsFieldRelations(field) {
 		f[field] = value
 	} else if innerField, ok := GetInnerField(FieldData, field); ok {
@@ -161,60 +181,16 @@ func (f Fields) Set(field string, value interface{}) Fields {
 		if !ok { // if not jsonbfields, make it
 			jsonbFields = NewJSONBFields()
 		}
-		jsonbFields.Add(innerField, value)
+		jsonbFields.Add(innerField, value, action)
 		f[FieldData] = jsonbFields
 	} else if innerField, ok := GetInnerField(FieldRelations, field); ok {
 		jsonbFields, ok := f[FieldRelations].(JSONBFields)
 		if !ok { // if not jsonbfields, make it
 			jsonbFields = NewJSONBFields()
 		}
-		jsonbFields.Add(innerField, value)
+		jsonbFields.Add(innerField, value, action)
 		f[FieldRelations] = jsonbFields
 	}
-
-	return f
-}
-
-// AddToArray adds data to an array jsonb field
-func (f Fields) AddToArray(field string, value interface{}) Fields {
-	if innerField, ok := GetInnerField(FieldData, field); ok {
-		jsonbFields, ok := f[FieldData].(JSONBFields)
-		if !ok { // if not jsonbfields, make it
-			jsonbFields = NewJSONBFields()
-		}
-		jsonbFields.Add(innerField, value, JSONBArrAdd)
-		f[FieldData] = jsonbFields
-	} else if innerField, ok := GetInnerField(FieldRelations, field); ok {
-		jsonbFields, ok := f[FieldRelations].(JSONBFields)
-		if !ok {
-			jsonbFields = NewJSONBFields()
-		}
-		jsonbFields.Add(innerField, value, JSONBArrAdd)
-		f[FieldRelations] = jsonbFields
-	}
-
-	return f
-}
-
-// RemoveFromArray remove data from an array jsonb field
-func (f Fields) RemoveFromArray(field string, value interface{}) Fields {
-	if innerField, ok := GetInnerField(FieldData, field); ok {
-		jsonbFields, ok := f[FieldData].(JSONBFields)
-		if !ok { // if not jsonbfields, make it
-			jsonbFields = NewJSONBFields()
-		}
-		jsonbFields.Add(innerField, value, JSONBArrRemove)
-		f[FieldData] = jsonbFields
-	} else if innerField, ok := GetInnerField(FieldRelations, field); ok {
-		jsonbFields, ok := f[FieldRelations].(JSONBFields)
-		if !ok {
-			jsonbFields = NewJSONBFields()
-		}
-		jsonbFields.Add(innerField, value, JSONBArrRemove)
-		f[FieldRelations] = jsonbFields
-	}
-
-	return f
 }
 
 // List returns fields and values
