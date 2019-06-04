@@ -16,12 +16,12 @@ type ConditionQuery struct {
 	Type     uint8
 	Field    string
 	Operator string
-	Query    Query
+	Query    Accessor
 	Lang     string
 }
 
-func andOrInQuery(conditionType uint8, operator string) func(lang, field string, query Query) ConditionQuery {
-	return func(lang, field string, query Query) ConditionQuery {
+func andOrInQuery(conditionType uint8, operator string) func(lang, field string, query Accessor) ConditionQuery {
+	return func(lang, field string, query Accessor) ConditionQuery {
 		return ConditionQuery{
 			Type:     conditionType,
 			Field:    field,
@@ -33,22 +33,22 @@ func andOrInQuery(conditionType uint8, operator string) func(lang, field string,
 }
 
 // AndInQuery returns a condition in the format IN(?,?,?) adjoined with AND
-func AndInQuery(lang, field string, query Query) ConditionQuery {
+func AndInQuery(lang, field string, query Accessor) ConditionQuery {
 	return andInQuery(lang, field, query)
 }
 
 // OrInQuery returns a condition in the format IN(?,?,?) adjoined with OR
-func OrInQuery(lang, field string, query Query) ConditionQuery {
+func OrInQuery(lang, field string, query Accessor) ConditionQuery {
 	return orInQuery(lang, field, query)
 }
 
 // AndNotInQuery returns a condition in the format NOT IN(?,?,?) adjoined with AND
-func AndNotInQuery(lang, field string, query Query) ConditionQuery {
+func AndNotInQuery(lang, field string, query Accessor) ConditionQuery {
 	return andNotInQuery(lang, field, query)
 }
 
 // OrNotInQuery returns a condition in the format NOT IN(?,?,?) adjoined with OR
-func OrNotInQuery(lang, field string, query Query) ConditionQuery {
+func OrNotInQuery(lang, field string, query Accessor) ConditionQuery {
 	return orNotInQuery(lang, field, query)
 }
 
@@ -69,9 +69,9 @@ func (c ConditionQuery) AsSQL(in ...bool) (string, []interface{}) {
 		field = fmt.Sprintf(`"%s"->>'%s'`, GetLangFieldData(c.Lang), c.Field)
 	}
 
-	queryResult := c.Query.AsSQL()
+	c.Query.ToSQL()
 
-	innerSQL, innerVals := queryResult.GetSQL(), queryResult.GetValues()
+	innerSQL, innerVals := c.Query.GetSQL(), c.Query.GetValues()
 
 	sql := fmt.Sprintf(`%s %s (%s)`, field, c.Operator, innerSQL)
 

@@ -142,10 +142,10 @@ func (s *Select) ToSQL() {
 	sql := fmt.Sprintf(`SELECT %s FROM %s %s %s %s`, fieldsStr, Table, conditionsStr, limitStr, offsetStr)
 
 	if !isInnerQuery {
-		s.sql = processPlaceholders(sql)
+		sql = processPlaceholders(sql)
 	}
 
-	s.sql = cleanStatement(s.sql)
+	s.sql = cleanStatement(sql)
 }
 
 // SetInner implements Accessor
