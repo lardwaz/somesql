@@ -151,8 +151,8 @@ func (s *Update) ToSQL() {
 	if len(relFieldsAdd) > 0 {
 		relFieldsAddStr := strings.Join(relFieldsAdd, " || ")
 		relFieldsAddStr2 := strings.Join(relFieldsAdd2, ", ")
-		relAddStr := fmt.Sprintf(`"%s" = relAdd.%s FROM (SELECT (%s || JSONB_BUILD_OBJECT(%s)) "%s" FROM repo%s) relAdd`,
-			FieldRelations, FieldRelations, relFieldsAddStr, relFieldsAddStr2, FieldRelations, conditionsStr,
+		relAddStr := fmt.Sprintf(`"%s" = relAdd.%s FROM (SELECT (%s || JSONB_BUILD_OBJECT(%s)) "%s" FROM %s%s) relAdd`,
+			FieldRelations, FieldRelations, relFieldsAddStr, relFieldsAddStr2, FieldRelations, Table, conditionsStr,
 		)
 		fieldsJoined = append(fieldsJoined, relAddStr)
 		s.values = append(s.values, relValuesAdd...)
@@ -164,8 +164,8 @@ func (s *Update) ToSQL() {
 		relFieldsRemoveStr2 := strings.Join(relFieldsRemove2, ", ")
 		relFieldsRemoveStr3 := strings.Join(relFieldsRemove3, ", ")
 		relFieldsRemoveStr4 := strings.Join(relFieldsRemove4, " AND ")
-		relRemoveStr := fmt.Sprintf(`"%s" = updates.updRel FROM (SELECT (%s || JSONB_BUILD_OBJECT(%s)) "updatedRel" FROM (SELECT "%s", %s FROM repo%s) expandedValues WHERE %s GROUP BY "%s") updates`,
-			FieldRelations, relFieldsRemoveStr, relFieldsRemoveStr2, FieldRelations, relFieldsRemoveStr3, conditionsStr, relFieldsRemoveStr4, FieldRelations,
+		relRemoveStr := fmt.Sprintf(`"%s" = updates.updRel FROM (SELECT (%s || JSONB_BUILD_OBJECT(%s)) "updatedRel" FROM (SELECT "%s", %s FROM %s%s) expandedValues WHERE %s GROUP BY "%s") updates`,
+			FieldRelations, relFieldsRemoveStr, relFieldsRemoveStr2, FieldRelations, relFieldsRemoveStr3, Table, conditionsStr, relFieldsRemoveStr4, FieldRelations,
 		)
 		fieldsJoined = append(fieldsJoined, relRemoveStr)
 		s.values = append(s.values, condValues...)
