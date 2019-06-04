@@ -65,66 +65,38 @@ func (s Insert) GetValues() []interface{} {
 func (s *Insert) ToSQL() {
 	var (
 		placeholderIndex int
-		dataFieldLang    = GetFieldData(s.GetLang())
+		dataFieldLang    = GetLangFieldData(s.GetLang())
 	)
 	fields, values := s.fields.List()
 
 	// Processing fields and values
-	metaFields := make([]string, 0)
-	dataFields := make([]string, 0)
-	relFields := make([]string, 0)
-	metaValues := make([]interface{}, 0)
-	dataValues := make(map[string]interface{})
-	relValues := make(map[string]interface{})
+	s.values = make([]interface{}, len(fields))
 	for i, f := range fields {
-		if innerField := GetInnerDataField(f); innerField != "" { // Check if Inner Data + Relations fields
-			dataFields = append(dataFields, fmt.Sprintf(`"%s"`, innerField))
-			dataValues[innerField] = values[i]
-		} else if innerField := GetInnerRelationsField(f); innerField != "" {
-			relFields = append(relFields, fmt.Sprintf(`"%s"`, innerField))
-			relValues[innerField] = values[i]
-		} else if IsFieldData(f) { // Check if Outer Data + Relations fields
-			placeholderIndex++
-			metaFields = append(metaFields, fmt.Sprintf(`"%s"`, dataFieldLang))
-			if vals, err := json.Marshal(values[i]); err == nil {
-				metaValues = append(metaValues, string(vals))
+		if IsWholeFieldData(f) {
+			if jsonbFields, ok := values[i].(JSONBFields); ok {
+				if jsonBytes, err := json.Marshal(jsonbFields.Values()); err == nil {
+					s.values[i] = string(jsonBytes)
+				}
+				f = dataFieldLang // data => data_<lang>
+				placeholderIndex++
 			}
-		} else if IsFieldRelations(f) {
-			placeholderIndex++
-			metaFields = append(metaFields, fmt.Sprintf(`"%s"`, f))
-			if vals, err := json.Marshal(values[i]); err == nil {
-				metaValues = append(metaValues, string(vals))
+		} else if IsWholeFieldRelations(f) {
+			if jsonbFields, ok := values[i].(JSONBFields); ok {
+				if jsonBytes, err := json.Marshal(jsonbFields.Values()); err == nil {
+					s.values[i] = string(jsonBytes)
+				}
+				placeholderIndex++
 			}
 		} else if IsFieldMeta(f) { // Check if Meta fields
+			s.values[i] = values[i]
 			placeholderIndex++
-			metaFields = append(metaFields, fmt.Sprintf(`"%s"`, f))
-			metaValues = append(metaValues, values[i])
 		}
+
+		// Double quote the field name
+		fields[i] = fmt.Sprintf(`"%s"`, f)
 	}
 
-	fieldsJoined := make([]string, 0)
-	if len(metaFields) > 0 {
-		fieldsJoined = append(fieldsJoined, strings.Join(metaFields, ", "))
-		s.values = append(s.values, metaValues...)
-	}
-
-	if len(dataFields) > 0 {
-		placeholderIndex++
-		fieldsJoined = append(fieldsJoined, fmt.Sprintf(`"%s"`, dataFieldLang))
-		if vals, err := json.Marshal(dataValues); err == nil {
-			s.values = append(s.values, string(vals))
-		}
-	}
-
-	if len(relFields) > 0 {
-		placeholderIndex++
-		fieldsJoined = append(fieldsJoined, fmt.Sprintf(`"%s"`, FieldRelations))
-		if vals, err := json.Marshal(relValues); err == nil {
-			s.values = append(s.values, string(vals))
-		}
-	}
-
-	fieldsStr := strings.Join(fieldsJoined, ", ")
+	fieldsStr := strings.Join(fields, ", ")
 
 	placeholders := make([]string, 0)
 	for i := 1; i <= placeholderIndex; i++ {

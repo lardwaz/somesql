@@ -141,7 +141,7 @@ func (q PQQuery) AsSQL() QueryResulter {
 
 		values    = q.Values
 		lang      = q.GetLang()
-		fieldData = GetFieldData(lang)
+		fieldData = GetLangFieldData(lang)
 		isInner   = q.IsInner()
 		t         = template.New("queries").Funcs(funcMap)
 	)

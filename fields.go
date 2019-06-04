@@ -1,7 +1,6 @@
 package somesql
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -18,6 +17,10 @@ const (
 	FieldType      string = "type"
 	FieldData      string = "data"
 	FieldRelations string = "relations"
+
+	JSONBArrSet uint8 = iota 
+	JSONBArrAdd
+	JSONBArrRemove
 )
 
 // Fields variables
@@ -25,6 +28,60 @@ var (
 	MetaFieldsList = []string{FieldID, FieldCreatedAt, FieldUpdatedAt, FieldOwnerID, FieldStatus, FieldType}
 	FieldsList     = append(MetaFieldsList, FieldData, FieldRelations)
 )
+
+// JSONBField represents information about a single JSONB field
+type JSONBField struct {
+	Value interface{}
+	Action uint8
+}
+
+// JSONBFields represents multiple jsonb fields
+type JSONBFields struct {
+	data map[string]JSONBField
+	keys []string // track order of insertion TODO: check other patterns?
+}
+
+// NewJSONBFields returns a new JSONBFields
+func NewJSONBFields() JSONBFields {
+	return JSONBFields{
+		data: make(map[string]JSONBField),
+		keys: make([]string, 0),
+	}
+}
+
+// Add adds a new key-value to data
+func (j *JSONBFields) Add(field string, value interface{}, action ...uint8) {
+	act := JSONBArrSet
+	if len(action) == 1 {
+		act = action[0]
+	}
+	j.data[field] = JSONBField{Value: value, Action: act}
+	j.keys = append(j.keys, field)
+}
+
+// GetOrderedList returns ordered list of fields name and value in insertion order
+func (j JSONBFields) GetOrderedList() ([]string, []interface{}, []uint8) {
+	var (
+		values []interface{}
+		actions []uint8
+	)
+	for _, k := range j.keys {
+		jsonbField := j.data[k]
+		values = append(values, jsonbField.Value)
+		actions = append(actions, jsonbField.Action)
+	}
+
+	return j.keys, values, actions
+}
+
+// Values returns the inner map
+func (j JSONBFields) Values() map[string]interface{} {
+	values := make(map[string]interface{})
+	for f, v := range j.data {
+		values[f] = v.Value
+	}
+	return values
+}
 
 // Fields represents Top Level Fields
 type Fields map[string]interface{}
@@ -45,8 +102,8 @@ func (f Fields) UseDefaults() Fields {
 	f[FieldOwnerID] = uuid.Nil.String()
 	f[FieldStatus] = ""
 	f[FieldType] = ""
-	f[FieldData] = make(map[string]interface{})
-	f[FieldRelations] = make(map[string]interface{})
+	f[FieldData] = NewJSONBFields()
+	f[FieldRelations] = NewJSONBFields()
 
 	return f
 }
@@ -97,26 +154,22 @@ func (f Fields) Type(s string) Fields {
 // Dot-seperated field name is treated as inner field of JSONB field (1 level only)
 // i.e data.author = data->>author
 func (f Fields) Set(field string, value interface{}) Fields {
-	if innerField := GetInnerDataField(field); innerField != "" {
-		innerValue, ok := f[FieldData].(map[string]interface{})
-		if !ok {
-			f[FieldData] = make(map[string]interface{})
-			innerValue = f[FieldData].(map[string]interface{})
+	if IsFieldMeta(field) || IsWholeFieldData(field) || IsWholeFieldRelations(field) {
+		f[field] = value
+	} else if innerField, ok := GetInnerField(FieldData, field); ok {
+		jsonbFields, ok := f[FieldData].(JSONBFields)
+		if !ok { // if not jsonbfields, make it
+			jsonbFields = NewJSONBFields()
 		}
-		innerValue[innerField] = value
-	} else if innerField := GetInnerRelationsField(field); innerField != "" {
-		innerValue, ok := f[FieldRelations].(map[string]interface{})
-		if !ok {
-			f[FieldRelations] = make(map[string]interface{})
-			innerValue = f[FieldRelations].(map[string]interface{})
+		jsonbFields.Add(innerField, value)
+		f[FieldData] = jsonbFields
+	} else if innerField, ok := GetInnerField(FieldRelations, field); ok {
+		jsonbFields, ok := f[FieldRelations].(JSONBFields)
+		if !ok { // if not jsonbfields, make it
+			jsonbFields = NewJSONBFields()
 		}
-		innerValue[innerField] = value
-	}
-
-	for _, ff := range FieldsList {
-		if ff == field {
-			f[field] = value
-		}
+		jsonbFields.Add(innerField, value)
+		f[FieldRelations] = jsonbFields
 	}
 
 	return f
@@ -127,7 +180,7 @@ func (f Fields) List() ([]string, []interface{}) {
 	fields := make([]string, 0)
 	values := make([]interface{}, 0)
 
-	// First add top level fields in order of FieldsList
+	// First add top level fields in order of MetaFieldsList
 	for _, field := range MetaFieldsList {
 		if v, ok := f[field]; ok {
 			fields = append(fields, field)
@@ -136,27 +189,15 @@ func (f Fields) List() ([]string, []interface{}) {
 	}
 
 	// Data Fields
-	if dataField, ok := f[FieldData].(map[string]interface{}); ok {
-		if len(dataField) == 0 {
-			fields = append(fields, FieldData)
-			values = append(values, dataField)
-		}
-		for innerField, innerValue := range dataField {
-			fields = append(fields, fmt.Sprintf("%s.%s", FieldData, innerField))
-			values = append(values, innerValue)
-		}
+	if dataField, ok := f[FieldData].(JSONBFields); ok {
+		fields = append(fields, FieldData)
+		values = append(values, dataField)
 	}
 
 	// Relations Fields
-	if relationsField, ok := f[FieldRelations].(map[string]interface{}); ok {
-		if len(relationsField) == 0 {
-			fields = append(fields, FieldRelations)
-			values = append(values, relationsField)
-		}
-		for innerField, innerValue := range relationsField {
-			fields = append(fields, fmt.Sprintf("%s.%s", FieldRelations, innerField))
-			values = append(values, innerValue)
-		}
+	if relationsField, ok := f[FieldRelations].(JSONBFields); ok {
+		fields = append(fields, FieldRelations)
+		values = append(values, relationsField)
 	}
 
 	return fields, values
@@ -172,39 +213,30 @@ func IsFieldMeta(field string) bool {
 	return false
 }
 
-// IsFieldData returns true if field is a data field
-func IsFieldData(field string) bool {
+// IsWholeFieldData returns true if field is a data field
+func IsWholeFieldData(field string) bool {
 	return field == FieldData
 }
 
-// GetInnerDataField returns the inner data field
-func GetInnerDataField(field string) string {
-	if strings.Count(field, ".") == 1 {
-		parts := strings.Split(field, ".")
-		if IsFieldData(parts[0]) {
-			return parts[1]
-		}
-	}
-	return ""
-}
-
-// IsFieldRelations returns true if field is a data field
-func IsFieldRelations(field string) bool {
+// IsWholeFieldRelations returns true if field is a data field
+func IsWholeFieldRelations(field string) bool {
 	return field == FieldRelations
 }
 
-// GetInnerRelationsField returns the inner relations field
-func GetInnerRelationsField(field string) string {
-	if strings.Count(field, ".") == 1 {
-		parts := strings.Split(field, ".")
-		if IsFieldRelations(parts[0]) {
-			return parts[1]
-		}
-	}
-	return ""
+// GetLangFieldData returns data field with lang
+func GetLangFieldData(lang string) string {
+	return FieldData + "_" + lang
 }
 
-// GetFieldData returns data field with lang
-func GetFieldData(lang string) string {
-	return FieldData + "_" + lang
+// GetInnerField returns the inner data field
+func GetInnerField(parent, field string) (string, bool) {
+	if strings.Count(field, ".") == 1 {
+		parts := strings.Split(field, ".")
+		if parts[0] != parent && parts[1] != "" {
+			return "", false
+		}
+		return parts[1], true
+	}
+
+	return "", false
 }

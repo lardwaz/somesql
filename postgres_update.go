@@ -65,7 +65,7 @@ func (s *Update) ToSQL() {
 	var (
 		fieldsStr     string
 		conditionsStr string
-		dataFieldLang = GetFieldData(s.GetLang())
+		dataFieldLang = GetLangFieldData(s.GetLang())
 	)
 	fields, values := s.fields.List()
 
@@ -87,25 +87,37 @@ func (s *Update) ToSQL() {
 
 	// Processing fields and values
 	metaFields := make([]string, 0)
+	metaValues := make([]interface{}, 0)
 	dataFields := make([]string, 0)
+	dataValues := make([]interface{}, 0)
 	// relFields := make([]string, 0)
-	for _, f := range fields {
-		if innerField := GetInnerDataField(f); innerField != "" {
-			dataFields = append(dataFields, fmt.Sprintf(`"%s": ?`, innerField))
-		} else if innerField := GetInnerRelationsField(f); innerField != "" {
+	for i, f := range fields {
+		if IsWholeFieldData(f) {
+			if jsonbFields, ok := values[i].(JSONBFields); ok {
+				innerFields, innerValues, _ := jsonbFields.GetOrderedList()
+				for _, innerField := range innerFields {
+					dataFields = append(dataFields, fmt.Sprintf(`"%s": ?`, innerField))
+				}
+				dataValues = append(dataValues, innerValues...)
+			}
+		} else if IsWholeFieldRelations(f) {
 			// Le WIP
-		} else if IsFieldMeta(f) {
+		} else if IsFieldMeta(f) { // Check if Meta fields
 			metaFields = append(metaFields, fmt.Sprintf(`"%s" = ?`, f))
+			metaValues = append(metaValues, values[i])
 		}
 	}
 
+	s.values = make([]interface{}, 0)
 	fieldsJoined := make([]string, 0)
 	if len(metaFields) > 0 {
 		fieldsJoined = append(fieldsJoined, strings.Join(metaFields, ", "))
+		s.values = append(s.values, metaValues...)
 	}
 
 	if len(dataFields) > 0 {
 		fieldsJoined = append(fieldsJoined, fmt.Sprintf(`"%s" = "%s" || {%s}`, dataFieldLang, dataFieldLang, strings.Join(dataFields, ", ")))
+		s.values = append(s.values, dataValues...)
 	}
 
 	// Le WIP
@@ -120,7 +132,7 @@ func (s *Update) ToSQL() {
 	fieldsStr = strings.Join(fieldsJoined, ", ")
 
 	conditions, condValues := processConditions(s.conditions)
-	s.values = append(values, condValues...)
+	s.values = append(s.values, condValues...)
 
 	if len(conditions) > 0 {
 		conditionsStr = fmt.Sprintf("WHERE %s", conditions)

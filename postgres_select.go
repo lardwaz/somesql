@@ -74,26 +74,26 @@ func (s *Select) ToSQL() {
 		offsetStr     string
 		limitStr      string
 		isInnerQuery  = s.IsInner()
-		dataFieldLang = GetFieldData(s.GetLang())
+		dataFieldLang = GetLangFieldData(s.GetLang())
 	)
 
 	metaFields := make([]string, 0)
 	dataFields := make([]string, 0)
 	relFields := make([]string, 0)
 	for _, f := range s.fields {
-		if innerField := GetInnerDataField(f); innerField != "" {
+		if innerField, ok := GetInnerField(FieldData, f); ok {
 			if isInnerQuery {
 				dataFields = append(dataFields, fmt.Sprintf(`"%s"->>'%s' "%s"`, dataFieldLang, innerField, innerField))
 			} else {
 				dataFields = append(dataFields, fmt.Sprintf(`'%s', "%s"->'%s'`, innerField, dataFieldLang, innerField))
 			}
-		} else if innerField := GetInnerRelationsField(f); innerField != "" {
+		} else if innerField, ok := GetInnerField(FieldRelations, f); ok {
 			if isInnerQuery {
 				relFields = append(relFields, fmt.Sprintf(`"%s"->>'%s' "%s"`, FieldRelations, innerField, innerField))
 			} else {
 				relFields = append(relFields, fmt.Sprintf(`'%s', "%s"->'%s'`, innerField, FieldRelations, innerField))
 			}
-		} else if IsFieldMeta(f) || IsFieldData(f) || IsFieldRelations(f) {
+		} else if IsFieldMeta(f) || IsWholeFieldData(f) || IsWholeFieldRelations(f) {
 			if f == FieldData {
 				f = dataFieldLang
 			}

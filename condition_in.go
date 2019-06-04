@@ -96,7 +96,7 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 
 	vals = expandValues(c.Values)
 
-	if IsFieldMeta(c.Field) || IsFieldData(c.Field) {
+	if IsFieldMeta(c.Field) || IsWholeFieldData(c.Field) {
 		field := fmt.Sprintf(`"%s"`, c.Field)
 
 		if c.FieldFunction == None {
@@ -114,7 +114,7 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 		if c.Relations {
 			lhs = fmt.Sprintf(`("%s" @> `, FieldRelations)
 		} else {
-			lhs = fmt.Sprintf(`("%s" @> `, GetFieldData(c.Lang))
+			lhs = fmt.Sprintf(`("%s" @> `, GetLangFieldData(c.Lang))
 		}
 		rhs = ")"
 
