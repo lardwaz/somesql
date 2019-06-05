@@ -1,9 +1,5 @@
 package somesql
 
-import (
-	"fmt"
-)
-
 var (
 	andInQuery    = andOrInQuery(AndCondition, "IN")
 	orInQuery     = andOrInQuery(OrCondition, "IN")
@@ -64,16 +60,16 @@ func (c ConditionQuery) AsSQL(in ...bool) (string, []interface{}) {
 	)
 
 	if IsFieldMeta(c.Field) || IsFieldData(c.Field) {
-		field = fmt.Sprintf(`"%s"`, c.Field)
+		field = `"` + c.Field + `"`
 	} else {
-		field = fmt.Sprintf(`"%s"->>'%s'`, GetLangFieldData(c.Lang), c.Field)
+		field = `"` + GetLangFieldData(c.Lang) + `"->>'` + c.Field + `'`
 	}
 
 	c.Query.ToSQL()
 
 	innerSQL, innerVals := c.Query.GetSQL(), c.Query.GetValues()
 
-	sql := fmt.Sprintf(`%s %s (%s)`, field, c.Operator, innerSQL)
+	sql := field + " " + c.Operator + " (" + innerSQL + ")"
 
 	return sql, innerVals
 }

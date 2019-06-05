@@ -1,9 +1,5 @@
 package somesql
 
-import (
-	"fmt"
-)
-
 //ConditionGroup represents a group of condition (within same pair brackets)
 type ConditionGroup struct {
 	Type       uint8
@@ -46,14 +42,14 @@ func (c ConditionGroup) AsSQL(in ...bool) (string, []interface{}) {
 			continue
 		}
 		if cond.ConditionType() == AndCondition {
-			sqls = fmt.Sprintf("%s AND %s", sqls, sql)
+			sqls = sqls + " AND " + sql
 		} else {
-			sqls = fmt.Sprintf("%s OR %s", sqls, sql)
+			sqls = sqls + " OR " + sql
 		}
 	}
 
 	if len(c.Conditions) > 0 {
-		sqls = fmt.Sprintf("(%s)", sqls)
+		sqls = "(" + sqls + ")"
 	}
 
 	return sqls, values

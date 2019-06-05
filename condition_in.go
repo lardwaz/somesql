@@ -1,7 +1,6 @@
 package somesql
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -92,41 +91,48 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		lhs, rhs string
 		vals     []interface{}
+
+		pathStr  string
+		pathBuff strings.Builder
 	)
 
 	vals = expandValues(c.Values)
 
 	if IsFieldMeta(c.Field) || IsFieldData(c.Field) {
-		field := fmt.Sprintf(`"%s"`, c.Field)
+		field := `"` + c.Field + `"`
 
 		if c.FieldFunction == None {
 			lhs = field
 		} else {
-			lhs = fmt.Sprintf("%s(%s)", c.FieldFunction, field)
+			lhs = c.FieldFunction + "(" + field + ")"
 		}
 
 		if l := len(vals); l != 0 {
 			rhs = " (" + strings.TrimSuffix(strings.Repeat("?,", l), ",") + ")"
 		}
 		return lhs + " " + c.Operator + rhs, vals
-
-	} else { // fields of type JSONB
-		if c.Relations {
-			lhs = fmt.Sprintf(`("%s" @> `, FieldRelations)
-		} else {
-			lhs = fmt.Sprintf(`("%s" @> `, GetLangFieldData(c.Lang))
-		}
-		rhs = ")"
-
-		var pathValue []string
-		for range vals {
-			pathValue = append(pathValue, fmt.Sprintf(`'{"%s":["?"]}'::JSONB`, c.Field))
-		}
-
-		if c.Operator == "NOT IN" {
-			return "NOT" + lhs + strings.Join(pathValue, " OR ") + rhs, vals
-		}
-
-		return lhs + strings.Join(pathValue, " OR ") + rhs, vals
 	}
+
+	// fields of type JSONB
+	if c.Relations {
+		lhs = `("` + FieldRelations + `" @> `
+	} else {
+		lhs = `("` + GetLangFieldData(c.Lang) + `" @> `
+	}
+	rhs = ")"
+
+	for range vals {
+		pathBuff.WriteString(`'{"` + c.Field + `":["?"]}'::JSONB OR `)
+	}
+
+	if pathBuff.Len() > 0 {
+		pathStr = pathBuff.String()[:pathBuff.Len()-4] // trim " OR "
+	}
+
+	if c.Operator == "NOT IN" {
+		return "NOT" + lhs + pathStr + rhs, vals
+	}
+
+	return lhs + pathStr + rhs, vals
+
 }

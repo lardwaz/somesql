@@ -1,7 +1,5 @@
 package somesql
 
-import "fmt"
-
 var (
 	and = andor(AndCondition)
 	or  = andor(OrCondition)
@@ -75,31 +73,31 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 	)
 
 	if IsFieldMeta(c.Field) || IsFieldData(c.Field) {
-		field = fmt.Sprintf(`"%s"`, c.Field)
+		field = `"` + c.Field + `"`
 	} else if c.Relations {
-		field = fmt.Sprintf(`"%s"`, FieldRelations)
+		field = `"` + FieldRelations + `"`
 	} else {
-		field = fmt.Sprintf(`"%s"->>'%s'`, GetLangFieldData(c.Lang), c.Field)
+		field = `"` + GetLangFieldData(c.Lang) + `"->>'` + c.Field + `'`
 	}
 
 	if c.FieldFunction == None || c.Relations {
 		lhs = field
 	} else {
-		lhs = fmt.Sprintf("%s(%s)", c.FieldFunction, field)
+		lhs = c.FieldFunction + "(" + field + ")"
 	}
 
 	switch c.Value.(type) {
 	case bool:
-		lhs = fmt.Sprintf("(%s)::BOOLEAN", lhs)
+		lhs = "(" + lhs + ")::BOOLEAN"
 	}
 
 	if c.Relations {
 		c.Operator = " @> "
-		rhs = fmt.Sprintf(`'{"%s":?}'::JSONB`, c.Field)
+		rhs = `'{"` + c.Field + `":?}'::JSONB`
 	} else if c.ValueFunction == None {
 		rhs = "?"
 	} else {
-		rhs = fmt.Sprintf("%s(?)", c.ValueFunction)
+		rhs = c.ValueFunction + "(?)"
 	}
 
 	if c.Relations {
