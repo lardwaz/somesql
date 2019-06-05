@@ -3,7 +3,6 @@ package somesql
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"strings"
 )
 
@@ -75,31 +74,33 @@ func (s *Update) ToSQL() {
 		fieldsStr     string
 		conditionsStr string
 		dataFieldLang = GetLangFieldData(s.GetLang())
+
+		fieldsBuff           strings.Builder
+		metaFieldsBuff       strings.Builder
+		dataFieldsBuff       strings.Builder
+		relFieldsBuff        strings.Builder
+		relFieldsAddBuff     strings.Builder
+		relFieldsAddBuff2    strings.Builder
+		relFieldsRemoveBuff  strings.Builder
+		relFieldsRemoveBuff2 strings.Builder
+		relFieldsRemoveBuff3 strings.Builder
+		relFieldsRemoveBuff4 strings.Builder
+
+		metaValues      []interface{}
+		dataValues      []interface{}
+		relValues       []interface{}
+		relValuesAdd    []interface{}
+		relValuesRemove []interface{}
 	)
 	fields, values := s.fields.List()
 
 	// Processing fields and values
-	// TODO: this is fugly!!! (concat on the spot?)
-	metaFields := make([]string, 0)
-	metaValues := make([]interface{}, 0)
-	dataFields := make([]string, 0)
-	dataValues := make([]interface{}, 0)
-	relFields := make([]string, 0)
-	relValues := make([]interface{}, 0)
-	relFieldsAdd := make([]string, 0)
-	relFieldsAdd2 := make([]string, 0)
-	relValuesAdd := make([]interface{}, 0)
-	relFieldsRemove := make([]string, 0)
-	relFieldsRemove2 := make([]string, 0)
-	relFieldsRemove3 := make([]string, 0)
-	relFieldsRemove4 := make([]string, 0)
-	relValuesRemove := make([]interface{}, 0)
 	for i, f := range fields {
 		if IsFieldData(f) {
 			if jsonbFields, ok := values[i].(JSONBFields); ok {
 				innerFields, innerValues, _ := jsonbFields.GetOrderedList()
 				for _, innerField := range innerFields {
-					dataFields = append(dataFields, fmt.Sprintf(`"%s": ?`, innerField))
+					dataFieldsBuff.WriteString(`"` + innerField + `": ?, `)
 				}
 				dataValues = innerValues
 			}
@@ -109,19 +110,19 @@ func (s *Update) ToSQL() {
 				for idx, innerField := range innerFields {
 					switch innerActions[idx] {
 					case JSONBArrSet:
-						relFields = append(relFields, fmt.Sprintf(`"%s": ?`, innerField))
+						relFieldsBuff.WriteString(`"` + innerField + `": ?`)
 						relValues = append(relValues, innerValues[idx])
 					case JSONBArrAdd:
-						relFieldsAdd = append(relFieldsAdd, fmt.Sprintf(`("%s" - '%s')`, FieldRelations, innerField))
-						relFieldsAdd2 = append(relFieldsAdd2, fmt.Sprintf(`'%s', "%s"->'%s' || '?'::JSONB`, innerField, FieldRelations, innerField))
+						relFieldsAddBuff.WriteString(`("` + FieldRelations + `" - '` + innerField + `') || `)
+						relFieldsAddBuff2.WriteString(`'` + innerField + `', "` + FieldRelations + `"->'` + innerField + `' || '?'::JSONB, `)
 						if jsonBytes, err := json.Marshal(innerValues[idx]); err == nil {
 							relValuesAdd = append(relValuesAdd, string(jsonBytes))
 						}
 					case JSONBArrRemove:
-						relFieldsRemove = append(relFieldsRemove, fmt.Sprintf(`("%s" - '%s')`, FieldRelations, innerField))
-						relFieldsRemove2 = append(relFieldsRemove2, fmt.Sprintf(`'%s', JSONB_AGG(%sUpd)`, innerField, innerField))
-						relFieldsRemove3 = append(relFieldsRemove3, fmt.Sprintf(`JSONB_ARRAY_ELEMENTS_TEXT("%s"->'%s') %sUpd`, FieldRelations, innerField, innerField))
-						relFieldsRemove4 = append(relFieldsRemove4, fmt.Sprintf(`%sUpd NOT IN (?)`, innerField))
+						relFieldsRemoveBuff.WriteString(`("` + FieldRelations + `" - '` + innerField + `') || `)
+						relFieldsRemoveBuff2.WriteString(`'` + innerField + `', JSONB_AGG(` + innerField + `Upd), `)
+						relFieldsRemoveBuff3.WriteString(`JSONB_ARRAY_ELEMENTS_TEXT("` + FieldRelations + `"->'` + innerField + `') ` + innerField + `Upd, `)
+						relFieldsRemoveBuff4.WriteString(innerField + `Upd NOT IN (?) AND `)
 						if jsonBytes, err := json.Marshal(innerValues[idx]); err == nil {
 							relValuesRemove = append(relValuesRemove, string(jsonBytes))
 						}
@@ -129,67 +130,71 @@ func (s *Update) ToSQL() {
 				}
 			}
 		} else if IsFieldMeta(f) { // Check if Meta fields
-			metaFields = append(metaFields, fmt.Sprintf(`"%s" = ?`, f))
+			metaFieldsBuff.WriteString(`"` + f + `" = ?, `)
 			metaValues = append(metaValues, values[i])
 		}
 	}
 
 	s.values = make([]interface{}, 0)
-	fieldsJoined := make([]string, 0)
+
+	// Put everything back in order
 	// Set meta fields
-	if len(metaFields) > 0 {
-		fieldsJoined = append(fieldsJoined, strings.Join(metaFields, ", "))
+	if metaFieldsBuff.Len() > 0 {
+		metaFieldsStr := metaFieldsBuff.String()[:metaFieldsBuff.Len()-2] // trim ", "
+		fieldsBuff.WriteString(metaFieldsStr + `, `)
 		s.values = append(s.values, metaValues...)
 	}
 
 	// Set data fields
-	if len(dataFields) > 0 {
-		fieldsJoined = append(fieldsJoined, fmt.Sprintf(`"%s" = "%s" || {%s}`, dataFieldLang, dataFieldLang, strings.Join(dataFields, ", ")))
+	if dataFieldsBuff.Len() > 0 {
+		dataFieldsStr := dataFieldsBuff.String()[:dataFieldsBuff.Len()-2] // trim ", "
+		fieldsBuff.WriteString(`"` + dataFieldLang + `" = "` + dataFieldLang + `" || {` + dataFieldsStr + `}, `)
 		s.values = append(s.values, dataValues...)
 	}
 
 	// Set relationship fields
-	if len(relFields) > 0 {
-		fieldsJoined = append(fieldsJoined, fmt.Sprintf(`"%s" = "%s" || {%s}`, dataFieldLang, dataFieldLang, strings.Join(dataFields, ", ")))
+	if relFieldsBuff.Len() > 0 {
+		relFieldsStr := relFieldsBuff.String()[:relFieldsBuff.Len()-2] // trim ", "
+		fieldsBuff.WriteString(`"` + FieldRelations + `" = "` + FieldRelations + `" || {` + relFieldsStr + `}, `)
 		s.values = append(s.values, relValues...)
 	}
 
 	conditions, condValues := processConditions(s.conditions)
 	if len(conditions) > 0 {
-		conditionsStr = fmt.Sprintf(" WHERE %s", conditions)
+		conditionsStr = " WHERE " + conditions
 	}
 
 	// Add relationship fields
-	if len(relFieldsAdd) > 0 {
-		relFieldsAddStr := strings.Join(relFieldsAdd, " || ")
-		relFieldsAddStr2 := strings.Join(relFieldsAdd2, ", ")
-		relAddStr := fmt.Sprintf(`"%s" = relAdd.%s FROM (SELECT (%s || JSONB_BUILD_OBJECT(%s)) "%s" FROM %s%s) relAdd`,
-			FieldRelations, FieldRelations, relFieldsAddStr, relFieldsAddStr2, FieldRelations, Table, conditionsStr,
-		)
-		fieldsJoined = append(fieldsJoined, relAddStr)
+	if relFieldsAddBuff.Len() > 0 {
+		relFieldsAddStr := relFieldsAddBuff.String()[:relFieldsAddBuff.Len()-4]    // trim " || "
+		relFieldsAddStr2 := relFieldsAddBuff2.String()[:relFieldsAddBuff2.Len()-2] // trim ", "
+		fieldsBuff.WriteString(`"` + FieldRelations + `" = relAdd.` + FieldRelations + ` FROM `)
+		fieldsBuff.WriteString(`(SELECT (` + relFieldsAddStr + ` || JSONB_BUILD_OBJECT(` + relFieldsAddStr2 + `))`)
+		fieldsBuff.WriteString(` "` + FieldRelations + `" FROM ` + Table + conditionsStr + `) relAdd, `)
 		s.values = append(s.values, relValuesAdd...)
 		s.values = append(s.values, condValues...)
 	}
 
 	// Remove relationship fields
-	if len(relFieldsRemove) > 0 {
-		relFieldsRemoveStr := strings.Join(relFieldsRemove, " || ")
-		relFieldsRemoveStr2 := strings.Join(relFieldsRemove2, ", ")
-		relFieldsRemoveStr3 := strings.Join(relFieldsRemove3, ", ")
-		relFieldsRemoveStr4 := strings.Join(relFieldsRemove4, " AND ")
-		relRemoveStr := fmt.Sprintf(`"%s" = updates.updRel FROM (SELECT (%s || JSONB_BUILD_OBJECT(%s)) "updatedRel" FROM (SELECT "%s", %s FROM %s%s) expandedValues WHERE %s GROUP BY "%s") updates`,
-			FieldRelations, relFieldsRemoveStr, relFieldsRemoveStr2, FieldRelations, relFieldsRemoveStr3, Table, conditionsStr, relFieldsRemoveStr4, FieldRelations,
-		)
-		fieldsJoined = append(fieldsJoined, relRemoveStr)
+	if relFieldsRemoveBuff.Len() > 0 {
+		relFieldsRemoveStr := relFieldsRemoveBuff.String()[:relFieldsRemoveBuff.Len()-4]    // trim " || "
+		relFieldsRemoveStr2 := relFieldsRemoveBuff2.String()[:relFieldsRemoveBuff2.Len()-2] // trim ", "
+		relFieldsRemoveStr3 := relFieldsRemoveBuff3.String()[:relFieldsRemoveBuff3.Len()-2] // trim ", "
+		relFieldsRemoveStr4 := relFieldsRemoveBuff4.String()[:relFieldsRemoveBuff4.Len()-5] // trim " AND "
+		fieldsBuff.WriteString(`"` + FieldRelations + `" = updates.updRel FROM (SELECT (` + relFieldsRemoveStr + ` || JSONB_BUILD_OBJECT(` + relFieldsRemoveStr2 + `))`)
+		fieldsBuff.WriteString(` "updatedRel" FROM (SELECT "` + FieldRelations + `", ` + relFieldsRemoveStr3 + ` FROM ` + Table + conditionsStr + `)`)
+		fieldsBuff.WriteString(` expandedValues WHERE ` + relFieldsRemoveStr4 + ` GROUP BY "` + FieldRelations + `") updates, `)
 		s.values = append(s.values, condValues...)
 		s.values = append(s.values, relValuesRemove...)
 	}
 
-	fieldsStr = strings.Join(fieldsJoined, ", ")
+	if fieldsBuff.Len() > 0 {
+		fieldsStr = fieldsBuff.String()[:fieldsBuff.Len()-2] // trim ", "
+	}
 
 	s.values = append(s.values, condValues...)
 
-	sql := fmt.Sprintf(`UPDATE %s SET %s %s`, Table, fieldsStr, conditionsStr)
+	sql := "UPDATE " + Table + " SET " + fieldsStr + " " + conditionsStr
 
 	s.sql = cleanStatement(processPlaceholders(sql))
 }
