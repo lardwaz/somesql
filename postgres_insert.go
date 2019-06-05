@@ -3,7 +3,7 @@ package somesql
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -76,6 +76,9 @@ func (s *Insert) ToSQL() {
 		placesholdersStr string
 		placeholderIndex int
 		dataFieldLang    = GetLangFieldData(s.GetLang())
+
+		fieldsBuff       strings.Builder
+		placeholdersBuff strings.Builder
 	)
 	fields, values := s.fields.List()
 
@@ -84,37 +87,41 @@ func (s *Insert) ToSQL() {
 	for i, f := range fields {
 		if IsFieldMeta(f) {
 			s.values[i] = values[i]
-			placeholderIndex++
 		} else if IsFieldData(f) {
 			if jsonbFields, ok := values[i].(JSONBFields); ok {
 				if jsonBytes, err := json.Marshal(jsonbFields.Values()); err == nil {
 					s.values[i] = string(jsonBytes)
 				}
-				f = dataFieldLang // data => data_<lang>
-				placeholderIndex++
 			}
 		} else if IsFieldRelations(f) {
 			if jsonbFields, ok := values[i].(JSONBFields); ok {
 				if jsonBytes, err := json.Marshal(jsonbFields.Values()); err == nil {
 					s.values[i] = string(jsonBytes)
 				}
-				placeholderIndex++
 			}
 		}
 
 		// Double quote the field name
-		fields[i] = fmt.Sprintf(`"%s"`, f)
+		// Placeholders
+		if IsFieldMeta(f) || IsFieldData(f) || IsFieldRelations(f) {
+			if IsFieldData(f) {
+				f = dataFieldLang // data => data_<lang>
+			}
+			fieldsBuff.WriteString(`"` + f + `", `)
+			placeholderIndex++
+			placeholdersBuff.WriteString(`$` + strconv.Itoa(placeholderIndex) + `, `)
+		}
 	}
 
-	fieldsStr = strings.Join(fields, ", ")
-
-	placeholders := make([]string, 0)
-	for i := 1; i <= placeholderIndex; i++ {
-		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+	if fieldsBuff.Len() > 0 {
+		fieldsStr = fieldsBuff.String()[:fieldsBuff.Len()-2] // trim ", "
 	}
-	placesholdersStr = strings.Join(placeholders, ", ")
 
-	sql := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s)`, Table, fieldsStr, placesholdersStr)
+	if placeholdersBuff.Len() > 0 {
+		placesholdersStr = placeholdersBuff.String()[:placeholdersBuff.Len()-2] // trim ", "
+	}
+
+	sql := "INSERT INTO " + Table + " (" + fieldsStr + ") VALUES (" + placesholdersStr + ")"
 
 	s.sql = cleanStatement(sql)
 }
