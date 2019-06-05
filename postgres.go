@@ -1,8 +1,8 @@
 package somesql
 
 import (
-	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -16,7 +16,7 @@ func processPlaceholders(sql string) string {
 	for _, r := range sql {
 		if r == '?' {
 			i++
-			sql = strings.Replace(sql, "?", fmt.Sprintf("$%d", i), 1)
+			sql = strings.Replace(sql, "?", "$"+strconv.Itoa(i), 1)
 		}
 	}
 
@@ -24,24 +24,27 @@ func processPlaceholders(sql string) string {
 }
 
 func processConditions(conds []Condition) (string, []interface{}) {
-	var conditions string
-	values := make([]interface{}, 0)
+	var (
+		conditionsBuff strings.Builder
+		values         []interface{}
+	)
+
 	for i, cond := range conds {
 		if i != 0 {
 			switch cond.ConditionType() {
 			case AndCondition:
-				conditions += ` AND `
+				conditionsBuff.WriteString(` AND `)
 			case OrCondition:
-				conditions += ` OR `
+				conditionsBuff.WriteString(` OR `)
 			default:
 				continue
 			}
 		}
 
 		c, v := cond.AsSQL()
-		conditions += c
+		conditionsBuff.WriteString(c)
 		values = append(values, v...)
 	}
 
-	return conditions, values
+	return conditionsBuff.String(), values
 }
