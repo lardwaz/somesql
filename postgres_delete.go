@@ -2,7 +2,7 @@ package somesql
 
 import (
 	"database/sql"
-	"fmt"
+	"strconv"
 )
 
 // Delete generates Postgres DELETE statement
@@ -80,18 +80,18 @@ func (s *Delete) ToSQL() {
 	s.values = values
 
 	if len(conditions) > 0 {
-		conditionsStr = fmt.Sprintf("WHERE %s", conditions)
+		conditionsStr = "WHERE " + conditions
 	}
 
 	if s.limit > 0 {
-		limitStr = fmt.Sprintf("LIMIT %d", s.limit)
+		limitStr = "LIMIT " + strconv.Itoa(s.limit)
 	}
 
 	if s.offset > 0 {
-		offsetStr = fmt.Sprintf("OFFSET %d", s.offset)
+		offsetStr = "OFFSET " + strconv.Itoa(s.offset)
 	}
 
-	sql := fmt.Sprintf(`DELETE FROM %s %s %s %s`, Table, conditionsStr, limitStr, offsetStr)
+	sql := "DELETE FROM " + Table + " " + conditionsStr + " " + limitStr + " " + offsetStr
 
 	s.sql = cleanStatement(processPlaceholders(sql))
 }
