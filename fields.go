@@ -27,7 +27,19 @@ const (
 var (
 	MetaFieldsList = []string{FieldID, FieldCreatedAt, FieldUpdatedAt, FieldOwnerID, FieldStatus, FieldType}
 	FieldsList     = append(MetaFieldsList, FieldData, FieldRelations)
+
+	MetaFieldsMap = make(map[string]struct{})
 )
+
+func init() {
+	// Easier and faster presence check
+	MetaFieldsMap[FieldID] = struct{}{}
+	MetaFieldsMap[FieldCreatedAt] = struct{}{}
+	MetaFieldsMap[FieldUpdatedAt] = struct{}{}
+	MetaFieldsMap[FieldOwnerID] = struct{}{}
+	MetaFieldsMap[FieldStatus] = struct{}{}
+	MetaFieldsMap[FieldType] = struct{}{}
+}
 
 // JSONBField represents information about a single JSONB field
 type JSONBField struct {
@@ -223,12 +235,8 @@ func (f Fields) List() ([]string, []interface{}) {
 
 // IsFieldMeta returns true if field is a meta field
 func IsFieldMeta(field string) bool {
-	for _, f := range MetaFieldsList {
-		if f == field {
-			return true
-		}
-	}
-	return false
+	_, ok := MetaFieldsMap[field]
+	return ok
 }
 
 // IsFieldData returns true if field is a data field
