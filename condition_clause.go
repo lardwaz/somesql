@@ -56,7 +56,7 @@ func (c ConditionClause) ConditionType() uint8 {
 func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		lhs, rhs, field string
-		isRel           bool
+		isInnerRel      bool
 		dataFieldLang   = GetLangFieldData(c.Lang)
 	)
 
@@ -72,10 +72,10 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 		field = `"` + FieldRelations + `"`
 		c.Operator = " @> "
 		rhs = `'{"` + innerField + `":?}'::JSONB`
-		isRel = true
+		isInnerRel = true
 	}
 
-	if c.FieldFunction == None || isRel {
+	if c.FieldFunction == None || isInnerRel {
 		lhs = field
 	} else {
 		lhs = c.FieldFunction + "(" + field + ")"
@@ -86,7 +86,7 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 		lhs = "(" + lhs + ")::BOOLEAN"
 	}
 
-	if isRel {
+	if isInnerRel {
 		// Do nothing
 	} else if c.ValueFunction == None {
 		rhs = "?"
@@ -94,7 +94,7 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 		rhs = c.ValueFunction + "(?)"
 	}
 
-	if isRel {
+	if isInnerRel {
 		return "(" + lhs + c.Operator + rhs + ")", expandValues(c.Value)
 	}
 

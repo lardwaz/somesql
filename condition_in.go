@@ -67,10 +67,10 @@ func (c ConditionIn) ConditionType() uint8 {
 // AsSQL to satisfy interface Condition
 func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 	var (
-		lhs, rhs, field string
-		isData, isRel   bool
-		vals            []interface{}
-		dataFieldLang   = GetLangFieldData(c.Lang)
+		lhs, rhs, field         string
+		isInnerData, isInnerRel bool
+		vals                    []interface{}
+		dataFieldLang           = GetLangFieldData(c.Lang)
 
 		rhsBuff strings.Builder
 	)
@@ -90,15 +90,15 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 	} else if innerField, ok := GetInnerField(FieldData, c.Field); ok {
 		field = `"` + innerField + `"`
 		lhs = `("` + dataFieldLang + `" @> `
-		isData = true
+		isInnerData = true
 	} else if innerField, ok := GetInnerField(FieldRelations, c.Field); ok {
 		field = `"` + innerField + `"`
 		lhs = `("` + FieldRelations + `" @> `
-		isRel = true
+		isInnerRel = true
 	}
 
 	for range vals {
-		if isData || isRel {
+		if isInnerData || isInnerRel {
 			rhsBuff.WriteString(`'{` + field + `:["?"]}'::JSONB OR `)
 		} else {
 			rhsBuff.WriteString(`?,`)
@@ -106,14 +106,14 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 	}
 
 	if rhsBuff.Len() > 0 {
-		if isData || isRel {
+		if isInnerData || isInnerRel {
 			rhs = rhsBuff.String()[:rhsBuff.Len()-4] + ")" // trim " OR "
 		} else {
 			rhs = " (" + rhsBuff.String()[:rhsBuff.Len()-1] + ")" // trim ", "
 		}
 	}
 
-	if c.Operator == "NOT IN" && (isData || isRel) {
+	if c.Operator == "NOT IN" && (isInnerData || isInnerRel) {
 		return "NOT" + lhs + rhs, vals
 	}
 
