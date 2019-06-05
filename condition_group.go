@@ -1,5 +1,7 @@
 package somesql
 
+import "strings"
+
 //ConditionGroup represents a group of condition (within same pair brackets)
 type ConditionGroup struct {
 	Type       uint8
@@ -30,27 +32,26 @@ func (c ConditionGroup) ConditionType() uint8 {
 //AsSQL to satisfy interface Condition
 func (c ConditionGroup) AsSQL(in ...bool) (string, []interface{}) {
 	var (
-		sqls   string
-		values []interface{}
+		sqlStr  string
+		sqlBuff strings.Builder
+		values  []interface{}
 	)
 	for i, cond := range c.Conditions {
 		sql, val := cond.AsSQL()
 		values = append(values, val...)
 
 		if i == 0 {
-			sqls = sql
-			continue
-		}
-		if cond.ConditionType() == AndCondition {
-			sqls = sqls + " AND " + sql
+			sqlBuff.WriteString(sql)
+		} else if cond.ConditionType() == AndCondition {
+			sqlBuff.WriteString(" AND " + sql)
 		} else {
-			sqls = sqls + " OR " + sql
+			sqlBuff.WriteString(" OR " + sql)
 		}
 	}
 
-	if len(c.Conditions) > 0 {
-		sqls = "(" + sqls + ")"
+	if sqlBuff.Len() > 0 {
+		sqlStr = "(" + sqlBuff.String() + ")"
 	}
 
-	return sqls, values
+	return sqlStr, values
 }
