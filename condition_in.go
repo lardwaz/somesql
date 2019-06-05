@@ -109,7 +109,7 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 		if isInnerData || isInnerRel {
 			rhs = rhsBuff.String()[:rhsBuff.Len()-4] + ")" // trim " OR "
 		} else {
-			rhs = " (" + rhsBuff.String()[:rhsBuff.Len()-1] + ")" // trim ", "
+			rhs = " (" + rhsBuff.String()[:rhsBuff.Len()-1] + ")" // trim ","
 		}
 	}
 
