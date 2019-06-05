@@ -86,8 +86,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"AND JSONB (fields in 'data' only)",
 			[]somesql.Condition{
-				somesql.And(somesql.LangEN, "badge", "=", "video"),
-				somesql.And(somesql.LangEN, "has_video", "=", true),
+				somesql.And(somesql.LangEN, "data.badge", "=", "video"),
+				somesql.And(somesql.LangEN, "data.has_video", "=", true),
 			},
 			`("data_en"->>'badge'=? AND ("data_en"->>'has_video')::BOOLEAN=?)`,
 			[]interface{}{"video", true},
@@ -98,8 +98,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"AND JSONB with relations",
 			[]somesql.Condition{
-				somesql.AndRel(somesql.LangEN, "tags", "=", "video"),
-				somesql.And(somesql.LangEN, "has_video", "=", true),
+				somesql.And(somesql.LangEN, "relations.tags", "=", "video"),
+				somesql.And(somesql.LangEN, "data.has_video", "=", true),
 			},
 			`(("relations" @> '{"tags":?}'::JSONB) AND ("data_en"->>'has_video')::BOOLEAN=?)`,
 			[]interface{}{"video", true},

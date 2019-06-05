@@ -12,8 +12,6 @@ func TestConditionClause(t *testing.T) {
 	const (
 		caseAnd = iota
 		caseOr
-		caseAndRel
-		caseOrRel
 	)
 
 	type args struct {
@@ -89,7 +87,7 @@ func TestConditionClause(t *testing.T) {
 			"AND with func on field and value",
 			args{
 				lang:     somesql.LangEN,
-				field:    "slug",
+				field:    "data.slug",
 				operator: "=",
 				value:    "Summertime-Beat-the-heat-and-stay-active",
 				funcs:    []string{"LOWER", "LOWER"},
@@ -102,7 +100,7 @@ func TestConditionClause(t *testing.T) {
 			"AND JSONB",
 			args{
 				lang:     somesql.LangEN,
-				field:    "name",
+				field:    "data.name",
 				operator: "=",
 				value:    "John Doe",
 				funcs:    []string{},
@@ -115,7 +113,7 @@ func TestConditionClause(t *testing.T) {
 			"AND JSONB (boolean)",
 			args{
 				lang:     somesql.LangEN,
-				field:    "has_video",
+				field:    "data.has_video",
 				operator: "=",
 				value:    true,
 				funcs:    []string{},
@@ -128,7 +126,7 @@ func TestConditionClause(t *testing.T) {
 			"AND JSONB with func on value",
 			args{
 				lang:     somesql.LangEN,
-				field:    "name",
+				field:    "data.name",
 				operator: "=",
 				value:    "John Doe",
 				funcs:    []string{"", "LOWER"},
@@ -141,7 +139,7 @@ func TestConditionClause(t *testing.T) {
 			"AND JSONB with func on field",
 			args{
 				lang:     somesql.LangEN,
-				field:    "name",
+				field:    "data.name",
 				operator: "=",
 				value:    "John Doe",
 				funcs:    []string{"LOWER"},
@@ -154,7 +152,7 @@ func TestConditionClause(t *testing.T) {
 			"AND JSONB with func on field and value",
 			args{
 				lang:     somesql.LangEN,
-				field:    "name",
+				field:    "data.name",
 				operator: "=",
 				value:    "John Doe",
 				funcs:    []string{"LOWER", "LOWER"},
@@ -167,12 +165,12 @@ func TestConditionClause(t *testing.T) {
 			"AND JSONB on relations",
 			args{
 				lang:  somesql.LangEN,
-				field: "name",
+				field: "relations.name",
 				value: "John Doe",
 			},
 			`("relations" @> '{"name":?}'::JSONB)`,
 			[]interface{}{"John Doe"},
-			caseAndRel,
+			caseAnd,
 		},
 
 		{
@@ -218,7 +216,7 @@ func TestConditionClause(t *testing.T) {
 			"OR with func on field and value",
 			args{
 				lang:     somesql.LangEN,
-				field:    "slug",
+				field:    "data.slug",
 				operator: "=",
 				value:    "Summertime-Beat-the-heat-and-stay-active",
 				funcs:    []string{"LOWER", "LOWER"},
@@ -231,7 +229,7 @@ func TestConditionClause(t *testing.T) {
 			"OR JSONB",
 			args{
 				lang:     somesql.LangEN,
-				field:    "name",
+				field:    "data.name",
 				operator: "=",
 				value:    "John Doe",
 				funcs:    []string{},
@@ -244,7 +242,7 @@ func TestConditionClause(t *testing.T) {
 			"OR JSONB with func on value",
 			args{
 				lang:     somesql.LangEN,
-				field:    "name",
+				field:    "data.name",
 				operator: "=",
 				value:    "John Doe",
 				funcs:    []string{"", "LOWER"},
@@ -257,7 +255,7 @@ func TestConditionClause(t *testing.T) {
 			"OR JSONB with func on field",
 			args{
 				lang:     somesql.LangEN,
-				field:    "name",
+				field:    "data.name",
 				operator: "=",
 				value:    "John Doe",
 				funcs:    []string{"LOWER"},
@@ -270,7 +268,7 @@ func TestConditionClause(t *testing.T) {
 			"OR JSONB with func on field and value",
 			args{
 				lang:     somesql.LangEN,
-				field:    "name",
+				field:    "data.name",
 				operator: "=",
 				value:    "John Doe",
 				funcs:    []string{"LOWER", "LOWER"},
@@ -283,12 +281,12 @@ func TestConditionClause(t *testing.T) {
 			"OR JSONB on relations",
 			args{
 				lang:  somesql.LangEN,
-				field: "name",
+				field: "relations.name",
 				value: "John Doe",
 			},
 			`("relations" @> '{"name":?}'::JSONB)`,
 			[]interface{}{"John Doe"},
-			caseOrRel,
+			caseOr,
 		},
 	}
 
@@ -301,11 +299,7 @@ func TestConditionClause(t *testing.T) {
 				condition somesql.Condition
 			)
 
-			if tt.caseType == caseAndRel {
-				condition = somesql.AndRel(tt.args.lang, tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
-			} else if tt.caseType == caseOrRel {
-				condition = somesql.OrRel(tt.args.lang, tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
-			} else if tt.caseType == caseAnd {
+			if tt.caseType == caseAnd {
 				condition = somesql.And(tt.args.lang, tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
 			} else {
 				condition = somesql.Or(tt.args.lang, tt.args.field, tt.args.operator, tt.args.value, tt.args.funcs...)
@@ -316,7 +310,7 @@ func TestConditionClause(t *testing.T) {
 			assert.Equal(t, tt.sql, sql, fmt.Sprintf("%d: SQL invalid", i+1))
 			assert.Equal(t, tt.values, values, fmt.Sprintf("%d: Values invalid", i+1))
 
-			if tt.caseType == caseAndRel || tt.caseType == caseAnd {
+			if tt.caseType == caseAnd {
 				assert.Equal(t, somesql.AndCondition, condition.ConditionType(), fmt.Sprintf("%d: Condition type must be AND", i+1))
 			} else {
 				assert.Equal(t, somesql.OrCondition, condition.ConditionType(), fmt.Sprintf("%d: Condition type must be OR", i+1))

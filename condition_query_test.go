@@ -94,7 +94,7 @@ func TestConditionQuery(t *testing.T) {
 		{
 			name:      "OrNotInQuery",
 			fieldName: "author_id",
-			query:     somesql.NewSelectInner().Fields("data.author_id").Where(somesql.AndRel(somesql.LangEN, "tags", "", "video")),
+			query:     somesql.NewSelectInner().Fields("data.author_id").Where(somesql.And(somesql.LangEN, "relations.tags", "", "video")),
 			sql:       `"data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE ("relations" @> '{"tags":?}'::JSONB) LIMIT 10)`,
 			values:    []interface{}{"video"},
 			caseType:  caseOrNotIn,

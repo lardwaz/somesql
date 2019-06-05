@@ -10,7 +10,6 @@ type ConditionClause struct {
 	Type          uint8
 	Field         string
 	FieldFunction string
-	Relations     bool
 	Operator      string
 	ValueFunction string
 	Value         interface{}
@@ -20,15 +19,14 @@ type ConditionClause struct {
 // andor is a factory function
 // it generates And + Or functions which are identical except for the conditionType.
 // one instance of each at runtime
-func andor(conditionType uint8) func(lang, field, operator string, value interface{}, isRel bool, funcs ...string) ConditionClause {
-	return func(lang, field, operator string, value interface{}, isRel bool, funcs ...string) ConditionClause {
+func andor(conditionType uint8) func(lang, field, operator string, value interface{}, funcs ...string) ConditionClause {
+	return func(lang, field, operator string, value interface{}, funcs ...string) ConditionClause {
 		fieldFunction, valueFunction := getFieldValueFunctions(funcs)
 
 		return ConditionClause{
 			Type:          conditionType,
 			Field:         field,
 			FieldFunction: fieldFunction,
-			Relations:     isRel,
 			Operator:      operator,
 			Value:         value,
 			ValueFunction: valueFunction,
@@ -40,25 +38,13 @@ func andor(conditionType uint8) func(lang, field, operator string, value interfa
 // And creates an AND conditional clause
 // And("field", "=", "val", "FOO", "BAR") yields: AND FOO(field) = BAR(val)
 func And(lang, field, operator string, value interface{}, funcs ...string) ConditionClause {
-	return and(lang, field, operator, value, false, funcs...)
+	return and(lang, field, operator, value, funcs...)
 }
 
 // Or creates an AND conditional clause
 // Or("field", "=", "val", "FOO", "BAR") yields: OR FOO(field) = BAR(val)
 func Or(lang, field, operator string, value interface{}, funcs ...string) ConditionClause {
-	return or(lang, field, operator, value, false, funcs...)
-}
-
-// AndRel creates an AND conditional clause
-// AndRel("field", "=", "val") yields: AND "relations" @> '{"field":[?]}'::JSONB
-func AndRel(lang, field, operator string, value interface{}, funcs ...string) ConditionClause {
-	return and(lang, field, operator, value, true, funcs...)
-}
-
-// OrRel creates an AND conditional clause
-// OrRel("field", "=", "val") yields: OR "relations" @> '{"field":[?]}'::JSONB
-func OrRel(lang, field, operator string, value interface{}, funcs ...string) ConditionClause {
-	return or(lang, field, operator, value, true, funcs...)
+	return or(lang, field, operator, value, funcs...)
 }
 
 // ConditionType to satisfy interface Condition
@@ -70,17 +56,26 @@ func (c ConditionClause) ConditionType() uint8 {
 func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		lhs, rhs, field string
+		isRel           bool
+		dataFieldLang   = GetLangFieldData(c.Lang)
 	)
 
-	if IsFieldMeta(c.Field) || IsFieldData(c.Field) {
-		field = `"` + c.Field + `"`
-	} else if c.Relations {
+	if IsFieldMeta(c.Field) || IsFieldData(c.Field) || IsFieldRelations(c.Field) {
+		if IsFieldData(c.Field) {
+			field = `"` + dataFieldLang + `"`
+		} else {
+			field = `"` + c.Field + `"`
+		}
+	} else if innerField, ok := GetInnerField(FieldData, c.Field); ok {
+		field = `"` + dataFieldLang + `"->>'` + innerField + `'`
+	} else if innerField, ok := GetInnerField(FieldRelations, c.Field); ok {
 		field = `"` + FieldRelations + `"`
-	} else {
-		field = `"` + GetLangFieldData(c.Lang) + `"->>'` + c.Field + `'`
+		c.Operator = " @> "
+		rhs = `'{"` + innerField + `":?}'::JSONB`
+		isRel = true
 	}
 
-	if c.FieldFunction == None || c.Relations {
+	if c.FieldFunction == None || isRel {
 		lhs = field
 	} else {
 		lhs = c.FieldFunction + "(" + field + ")"
@@ -91,16 +86,15 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 		lhs = "(" + lhs + ")::BOOLEAN"
 	}
 
-	if c.Relations {
-		c.Operator = " @> "
-		rhs = `'{"` + c.Field + `":?}'::JSONB`
+	if isRel {
+		// Do nothing
 	} else if c.ValueFunction == None {
 		rhs = "?"
 	} else {
 		rhs = c.ValueFunction + "(?)"
 	}
 
-	if c.Relations {
+	if isRel {
 		return "(" + lhs + c.Operator + rhs + ")", expandValues(c.Value)
 	}
 

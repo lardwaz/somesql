@@ -280,7 +280,7 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 		},
 		{
 			name:           "UPDATE meta + data fields conditions 2",
-			query:          somesql.NewUpdate().Fields(somesql.NewFields().ID("1").Status("published").Set("data.body", "body value").Set("data.author_id", "123")).Where(somesql.And(somesql.LangEN, "author_id", "=", "234")),
+			query:          somesql.NewUpdate().Fields(somesql.NewFields().ID("1").Status("published").Set("data.body", "body value").Set("data.author_id", "123")).Where(somesql.And(somesql.LangEN, "data.author_id", "=", "234")),
 			expectedSQL:    `UPDATE repo SET "id" = $1, "status" = $2, "data_en" = "data_en" || {"body": $3, "author_id": $4} WHERE "data_en"->>'author_id'=$5`,
 			expectedValues: []interface{}{"1", "published", "body value", "123", "234"},
 		},
@@ -374,7 +374,7 @@ func TestQuery_AsSQL_Delete(t *testing.T) {
 		},
 		{
 			name:           "DELETE with conditions + relations",
-			query:          somesql.NewDelete().Where(somesql.AndRel("", "article", "=", "uuid")),
+			query:          somesql.NewDelete().Where(somesql.And("", "relations.article", "=", "uuid")),
 			expectedSQL:    `DELETE FROM repo WHERE ("relations" @> '{"article":$1}'::JSONB)`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
