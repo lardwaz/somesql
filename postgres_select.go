@@ -2,7 +2,7 @@ package somesql
 
 import (
 	"database/sql"
-	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -98,76 +98,82 @@ func (s *Select) ToSQL() {
 		limitStr      string
 		isInnerQuery  = s.IsInner()
 		dataFieldLang = GetLangFieldData(s.GetLang())
+
+		fieldsBuff     strings.Builder
+		metaFieldsBuff strings.Builder
+		dataFieldsBuff strings.Builder
+		relFieldsBuff  strings.Builder
 	)
 
-	metaFields := make([]string, 0)
-	dataFields := make([]string, 0)
-	relFields := make([]string, 0)
+	// Processing fields
 	for _, f := range s.fields {
-		if innerField, ok := GetInnerField(FieldData, f); ok {
-			if isInnerQuery {
-				dataFields = append(dataFields, fmt.Sprintf(`"%s"->>'%s' "%s"`, dataFieldLang, innerField, innerField))
-			} else {
-				dataFields = append(dataFields, fmt.Sprintf(`'%s', "%s"->'%s'`, innerField, dataFieldLang, innerField))
-			}
-		} else if innerField, ok := GetInnerField(FieldRelations, f); ok {
-			if isInnerQuery {
-				relFields = append(relFields, fmt.Sprintf(`"%s"->>'%s' "%s"`, FieldRelations, innerField, innerField))
-			} else {
-				relFields = append(relFields, fmt.Sprintf(`'%s', "%s"->'%s'`, innerField, FieldRelations, innerField))
-			}
-		} else if IsFieldMeta(f) || IsFieldData(f) || IsFieldRelations(f) {
+		if IsFieldMeta(f) || IsFieldData(f) || IsFieldRelations(f) {
 			if f == FieldData {
 				f = dataFieldLang
 			}
-			metaFields = append(metaFields, fmt.Sprintf(`"%s"`, f))
+			metaFieldsBuff.WriteString(`"` + f + `", `)
+		} else if innerField, ok := GetInnerField(FieldData, f); ok {
+			if isInnerQuery {
+				dataFieldsBuff.WriteString(`"` + dataFieldLang + `"->>'` + innerField + `' "` + innerField + `", `)
+			} else {
+				dataFieldsBuff.WriteString(`'` + innerField + `', "` + dataFieldLang + `"->'` + innerField + `', `)
+			}
+		} else if innerField, ok := GetInnerField(FieldRelations, f); ok {
+			if isInnerQuery {
+				relFieldsBuff.WriteString(`"` + FieldRelations + `"->>'` + innerField + `' "` + innerField + `", `)
+			} else {
+				relFieldsBuff.WriteString(`'` + innerField + `', "` + FieldRelations + `"->'` + innerField + `', `)
+			}
 		}
 	}
 
-	fieldsJoined := make([]string, 0)
+	// Put everything back in order
 	// Meta fields
-	if len(metaFields) > 0 {
-		fieldsJoined = append(fieldsJoined, strings.Join(metaFields, ", "))
+	if metaFieldsBuff.Len() > 0 {
+		metaFieldsStr := metaFieldsBuff.String()[:metaFieldsBuff.Len()-2] // trim ", "
+		fieldsBuff.WriteString(metaFieldsStr + `, `)
 	}
 
 	// Data fields
-	if len(dataFields) > 0 {
-		dataFieldsJoined := strings.Join(dataFields, ", ")
+	if dataFieldsBuff.Len() > 0 {
+		dataFieldsStr := dataFieldsBuff.String()[:dataFieldsBuff.Len()-2] // trim ", "
 		if isInnerQuery {
-			fieldsJoined = append(fieldsJoined, dataFieldsJoined)
+			fieldsBuff.WriteString(dataFieldsStr + `, `)
 		} else {
-			fieldsJoined = append(fieldsJoined, fmt.Sprintf(`json_build_object(%s) "%s"`, dataFieldsJoined, FieldData))
+			fieldsBuff.WriteString(`json_build_object(` + dataFieldsStr + `) "` + FieldData + `", `)
 		}
 	}
 
 	// Relationship fields
-	if len(relFields) > 0 {
-		relFieldsJoined := strings.Join(relFields, ", ")
+	if relFieldsBuff.Len() > 0 {
+		relFieldsStr := relFieldsBuff.String()[:relFieldsBuff.Len()-2] // trim ", "
 		if isInnerQuery {
-			fieldsJoined = append(fieldsJoined, relFieldsJoined)
+			fieldsBuff.WriteString(relFieldsStr + `, `)
 		} else {
-			fieldsJoined = append(fieldsJoined, fmt.Sprintf(`json_build_object(%s) "%s"`, relFieldsJoined, FieldRelations))
+			fieldsBuff.WriteString(`json_build_object(` + relFieldsStr + `) "` + FieldRelations + `", `)
 		}
 	}
 
-	fieldsStr = strings.Join(fieldsJoined, ", ")
+	if fieldsBuff.Len() > 0 {
+		fieldsStr = fieldsBuff.String()[:fieldsBuff.Len()-2] // trim ", "
+	}
 
 	conditions, condValues := processConditions(s.conditions)
 	s.values = condValues
 
 	if len(conditions) > 0 {
-		conditionsStr = fmt.Sprintf("WHERE %s", conditions)
+		conditionsStr = "WHERE " + conditions
 	}
 
 	if s.limit > 0 {
-		limitStr = fmt.Sprintf("LIMIT %d", s.limit)
+		limitStr = "LIMIT " + strconv.Itoa(s.limit)
 	}
 
 	if s.offset > 0 {
-		offsetStr = fmt.Sprintf("OFFSET %d", s.offset)
+		offsetStr = "OFFSET " + strconv.Itoa(s.offset)
 	}
 
-	sql := fmt.Sprintf(`SELECT %s FROM %s %s %s %s`, fieldsStr, Table, conditionsStr, limitStr, offsetStr)
+	sql := "SELECT " + fieldsStr + " FROM " + Table + " " + conditionsStr + " " + limitStr + " " + offsetStr
 
 	if !isInnerQuery {
 		sql = processPlaceholders(sql)
