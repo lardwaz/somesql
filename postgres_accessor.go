@@ -2,6 +2,7 @@ package somesql
 
 import (
 	"database/sql"
+	"errors"
 )
 
 func rows(sql string, values []interface{}, db *sql.DB) (*sql.Rows, error) {
@@ -19,6 +20,10 @@ func rows(sql string, values []interface{}, db *sql.DB) (*sql.Rows, error) {
 }
 
 func rowsTx(sql string, values []interface{}, tx *sql.Tx) (*sql.Rows, error) {
+	if sql == "" || len(values) == 0 {
+		return nil, errors.New("invalid sql or values")
+	}
+
 	rows, err := tx.Query(sql, values...)
 	if err != nil {
 		return nil, err

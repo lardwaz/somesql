@@ -128,11 +128,19 @@ func (s *Insert) ToSQL() {
 
 // Exec implements Mutator
 func (s Insert) Exec(autocommit bool) error {
+	if s.GetSQL() == "" || len(s.GetValues()) == 0 {
+		s.ToSQL()
+	}
+
 	return exec(s.GetSQL(), s.GetValues(), s.GetDB(), autocommit)
 }
 
 // ExecTx implements Mutator
 func (s Insert) ExecTx(tx *sql.Tx, autocommit bool) error {
+	if s.GetSQL() == "" || len(s.GetValues()) == 0 {
+		s.ToSQL()
+	}
+
 	return execTx(s.GetSQL(), s.GetValues(), tx, autocommit)
 }
 

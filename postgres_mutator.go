@@ -2,6 +2,7 @@ package somesql
 
 import (
 	"database/sql"
+	"errors"
 )
 
 func exec(sql string, values []interface{}, db *sql.DB, autocommit bool) error {
@@ -19,6 +20,10 @@ func exec(sql string, values []interface{}, db *sql.DB, autocommit bool) error {
 }
 
 func execTx(sql string, values []interface{}, tx *sql.Tx, autocommit bool) error {
+	if sql == "" || len(values) == 0 {
+		return errors.New("invalid sql or values")
+	}
+
 	stmt, err := tx.Prepare(sql)
 	if err != nil {
 		return err
