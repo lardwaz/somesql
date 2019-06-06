@@ -94,9 +94,11 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 		rhs = c.ValueFunction + "(?)"
 	}
 
+	vals, _ := expandValues(c.Value)
+
 	if isInnerRel {
-		return "(" + lhs + c.Operator + rhs + ")", expandValues(c.Value)
+		return "(" + lhs + c.Operator + rhs + ")", vals
 	}
 
-	return lhs + c.Operator + rhs, expandValues(c.Value)
+	return lhs + c.Operator + rhs, vals
 }

@@ -219,6 +219,24 @@ func TestQuery_AsSQL_Insert(t *testing.T) {
 			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
 			expectedValues: []interface{}{"published", `{"author":["x"],"tags":["a","b","c"]}`},
 		},
+		{
+			name:           "INSERT no default + 1 relation one value",
+			query:          somesql.NewInsert().Fields(somesql.NewFields().Status("published").Set("relations.tags", "a")),
+			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
+			expectedValues: []interface{}{"published", `{"tags":["a"]}`},
+		},
+		{
+			name:           "INSERT no default + 1 relation multiple seperate values",
+			query:          somesql.NewInsert().Fields(somesql.NewFields().Status("published").Set("relations.tags", "a").Set("relations.tags", "b").Set("relations.tags", []string{"c"})),
+			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
+			expectedValues: []interface{}{"published", `{"tags":["a","b","c"]}`},
+		},
+		{
+			name:           "INSERT no default + 1 relation multiple seperate values 2",
+			query:          somesql.NewInsert().Fields(somesql.NewFields().Status("published").Set("relations.tags", []string{"a"}).Set("relations.tags", "b").Set("relations.tags", []string{"c"})),
+			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
+			expectedValues: []interface{}{"published", `{"tags":["a","b","c"]}`},
+		},
 	}
 
 	for i, tt := range tests {

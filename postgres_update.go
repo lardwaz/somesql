@@ -109,7 +109,7 @@ func (s *Update) ToSQL() {
 				innerFields, innerValues, innerActions := jsonbFields.GetOrderedList()
 				for idx, innerField := range innerFields {
 					switch innerActions[idx] {
-					case JSONBArrSet:
+					case NoneJSONBArr:
 						relFieldsBuff.WriteString(`"` + innerField + `": ?`)
 						relValues = append(relValues, innerValues[idx])
 					case JSONBArrAdd:

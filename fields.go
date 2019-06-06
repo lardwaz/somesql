@@ -18,7 +18,7 @@ const (
 	FieldData      string = "data"
 	FieldRelations string = "relations"
 
-	JSONBArrSet uint8 = iota
+	NoneJSONBArr uint8 = iota
 	JSONBArrAdd
 	JSONBArrRemove
 )
@@ -51,12 +51,37 @@ func NewJSONBFields() JSONBFields {
 
 // Add adds a new key-value to data
 func (j *JSONBFields) Add(field string, value interface{}, action ...uint8) {
-	act := JSONBArrSet
+	act := NoneJSONBArr
 	if len(action) == 1 {
 		act = action[0]
 	}
-	j.data[field] = JSONBField{Value: value, Action: act}
-	j.keys = append(j.keys, field)
+
+	// if key already exist append to previous value
+	var newVal []interface{}
+	newValSlice, wasNewValAsserted := expandValues(value)
+	jsonbField, exist := j.data[field]
+	if exist {
+		oldValSlice, isOldValSlice := j.data[field].Value.([]interface{})
+		newValSliceInterface, isNewValSliceInterface := value.([]interface{})
+
+		if isOldValSlice && isNewValSliceInterface {
+			newVal = append(oldValSlice, newValSliceInterface...)
+		} else if isOldValSlice {
+			newVal = append(oldValSlice, value)
+		} else if isNewValSliceInterface {
+			newVal = append(newVal, jsonbField.Value)
+			newVal = append(newVal, newValSliceInterface...)
+		} else {
+			newVal = []interface{}{jsonbField.Value, value}
+		}
+
+		j.data[field] = JSONBField{Value: newVal, Action: act}
+	} else if wasNewValAsserted {
+		j.data[field] = JSONBField{Value: newValSlice, Action: act}
+	} else {
+		j.data[field] = JSONBField{Value: value, Action: act}
+		j.keys = append(j.keys, field)
+	}
 }
 
 // GetOrderedList returns ordered list of fields name and value in insertion order
@@ -154,7 +179,7 @@ func (f Fields) Type(s string) Fields {
 // Dot-seperated field name is treated as inner field of JSONB field (1 level only)
 // i.e data.author = data->>author
 func (f Fields) Set(field string, value interface{}) Fields {
-	f.set(field, value, JSONBArrSet)
+	f.set(field, value, NoneJSONBArr)
 
 	return f
 }
@@ -188,7 +213,8 @@ func (f Fields) set(field string, value interface{}, action uint8) {
 		if !ok { // if not jsonbfields, make it
 			jsonbFields = NewJSONBFields()
 		}
-		jsonbFields.Add(innerField, value, action)
+		vals, _ := expandValues(value)
+		jsonbFields.Add(innerField, vals, action)
 		f[FieldRelations] = jsonbFields
 	}
 }

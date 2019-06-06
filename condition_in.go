@@ -75,7 +75,7 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 		rhsBuff strings.Builder
 	)
 
-	vals = expandValues(c.Values)
+	vals, _ = expandValues(c.Values)
 
 	if IsFieldMeta(c.Field) || IsFieldData(c.Field) || IsFieldRelations(c.Field) {
 		field = `"` + c.Field + `"`

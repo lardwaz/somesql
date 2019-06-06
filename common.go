@@ -10,28 +10,32 @@ func getFieldValueFunctions(funcs []string) (string, string) {
 	return funcs[0], funcs[1]
 }
 
-func expandValues(val interface{}) []interface{} {
+func expandValues(val interface{}) ([]interface{}, bool) {
 	var (
-		values []interface{}
+		values   []interface{}
+		asserted bool
 	)
 
 	if data, ok := val.([]string); ok {
 		for d := range data {
 			values = append(values, data[d])
 		}
+		asserted = true
 	} else if data, ok := val.([]bool); ok {
 		for d := range data {
 			values = append(values, data[d])
 		}
+		asserted = true
 	} else if data, ok := val.([]int); ok {
 		for d := range data {
 			values = append(values, data[d])
 		}
+		asserted = true
 	} else {
-		return []interface{}{val}
+		return []interface{}{val}, false
 	}
 
-	return values
+	return values, asserted
 }
 
 // getSliceChange returns all elements that are present in sliceTwo but NOT in sliceOne
