@@ -58,9 +58,10 @@ func (j *JSONBFields) Add(field string, value interface{}, action ...uint8) {
 
 	// if key already exist append to previous value
 	var newVal []interface{}
+	isAdd := act == JSONBArrAdd
 	newValSlice, wasNewValAsserted := expandValues(value)
 	jsonbField, exist := j.data[field]
-	if exist {
+	if exist && isAdd {
 		oldValSlice, isOldValSlice := j.data[field].Value.([]interface{})
 		newValSliceInterface, isNewValSliceInterface := value.([]interface{})
 
@@ -76,7 +77,7 @@ func (j *JSONBFields) Add(field string, value interface{}, action ...uint8) {
 		}
 
 		j.data[field] = JSONBField{Value: newVal, Action: act}
-	} else if wasNewValAsserted {
+	} else if wasNewValAsserted && isAdd {
 		j.data[field] = JSONBField{Value: newValSlice, Action: act}
 	} else {
 		j.data[field] = JSONBField{Value: value, Action: act}

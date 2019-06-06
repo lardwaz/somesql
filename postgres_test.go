@@ -227,15 +227,27 @@ func TestQuery_AsSQL_Insert(t *testing.T) {
 		},
 		{
 			name:           "INSERT no default + 1 relation multiple seperate values",
-			query:          somesql.NewInsert().Fields(somesql.NewFields().Status("published").Set("relations.tags", "a").Set("relations.tags", "b").Set("relations.tags", []string{"c"})),
+			query:          somesql.NewInsert().Fields(somesql.NewFields().Status("published").Set("relations.tags", "a").Add("relations.tags", "b").Add("relations.tags", []string{"c"})),
 			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
 			expectedValues: []interface{}{"published", `{"tags":["a","b","c"]}`},
 		},
 		{
 			name:           "INSERT no default + 1 relation multiple seperate values 2",
-			query:          somesql.NewInsert().Fields(somesql.NewFields().Status("published").Set("relations.tags", []string{"a"}).Set("relations.tags", "b").Set("relations.tags", []string{"c"})),
+			query:          somesql.NewInsert().Fields(somesql.NewFields().Status("published").Set("relations.tags", []string{"a"}).Add("relations.tags", "b").Add("relations.tags", []string{"c"})),
 			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
 			expectedValues: []interface{}{"published", `{"tags":["a","b","c"]}`},
+		},
+		{
+			name:           "INSERT no default + 1 relation multiple seperate values 3",
+			query:          somesql.NewInsert().Fields(somesql.NewFields().Status("published").Add("relations.tags", "a").Add("relations.tags", "b").Add("relations.tags", "c")),
+			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
+			expectedValues: []interface{}{"published", `{"tags":["a","b","c"]}`},
+		},
+		{
+			name:           "INSERT no default + 1 relation multiple seperate values overwrite 4",
+			query:          somesql.NewInsert().Fields(somesql.NewFields().Status("published").Add("relations.tags", "a").Add("relations.tags", "b").Set("relations.tags", "c")),
+			expectedSQL:    `INSERT INTO repo ("status", "relations") VALUES ($1, $2)`,
+			expectedValues: []interface{}{"published", `{"tags":["c"]}`},
 		},
 	}
 
