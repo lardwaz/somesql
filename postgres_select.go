@@ -201,15 +201,6 @@ func (s Select) Rows() (*sql.Rows, error) {
 	return rows(s.GetSQL(), s.GetValues(), s.GetDB())
 }
 
-// RowsTx implements Accessor
-func (s Select) RowsTx(tx *sql.Tx) (*sql.Rows, error) {
-	if s.GetSQL() == "" || len(s.GetValues()) == 0 {
-		s.ToSQL()
-	}
-
-	return rowsTx(s.GetSQL(), s.GetValues(), tx)
-}
-
 // Fields sets the fields for Select
 func (s *Select) Fields(fields ...string) *Select {
 	if len(fields) == 0 {

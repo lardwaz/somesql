@@ -49,7 +49,6 @@ type Accessor interface {
 	SetInner(inner bool)
 	IsInner() bool
 	Rows() (*sql.Rows, error)
-	RowsTx(tx *sql.Tx) (*sql.Rows, error)
 }
 
 // Condition represents a conditional clause in a statement
