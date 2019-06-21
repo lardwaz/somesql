@@ -57,8 +57,14 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 	var (
 		lhs, rhs, field string
 		isInnerRel      bool
-		dataFieldLang   = GetLangFieldData(c.Lang)
+		dataFieldLang   string
 	)
+
+	if !IsLangValid(c.Lang) {
+		c.Lang = LangEN
+	}
+
+	dataFieldLang = GetLangFieldData(c.Lang)
 
 	if IsFieldMeta(c.Field) || IsFieldData(c.Field) || IsFieldRelations(c.Field) {
 		if IsFieldData(c.Field) {

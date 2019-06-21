@@ -75,11 +75,18 @@ func (s *Insert) ToSQL() {
 		fieldsStr        string
 		placesholdersStr string
 		placeholderIndex int
-		dataFieldLang    = GetLangFieldData(s.GetLang())
+		dataFieldLang    string
 
 		fieldsBuff       strings.Builder
 		placeholdersBuff strings.Builder
 	)
+
+	if !IsLangValid(s.GetLang()) {
+		s.SetLang(LangEN)
+	}
+
+	dataFieldLang = GetLangFieldData(s.GetLang())
+
 	fields, values := s.fields.List()
 
 	// Processing fields and values

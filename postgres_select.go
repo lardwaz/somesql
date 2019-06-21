@@ -97,13 +97,19 @@ func (s *Select) ToSQL() {
 		offsetStr     string
 		limitStr      string
 		isInnerQuery  = s.IsInner()
-		dataFieldLang = GetLangFieldData(s.GetLang())
+		dataFieldLang string
 
 		fieldsBuff     strings.Builder
 		metaFieldsBuff strings.Builder
 		dataFieldsBuff strings.Builder
 		relFieldsBuff  strings.Builder
 	)
+
+	if !IsLangValid(s.GetLang()) {
+		s.SetLang(LangEN)
+	}
+
+	dataFieldLang = GetLangFieldData(s.GetLang())
 
 	// Processing fields
 	for _, f := range s.fields {

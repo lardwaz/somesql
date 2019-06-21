@@ -70,10 +70,16 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 		lhs, rhs, field         string
 		isInnerData, isInnerRel bool
 		vals                    []interface{}
-		dataFieldLang           = GetLangFieldData(c.Lang)
+		dataFieldLang           string
 
 		rhsBuff strings.Builder
 	)
+
+	if !IsLangValid(c.Lang) {
+		c.Lang = LangEN
+	}
+
+	dataFieldLang = GetLangFieldData(c.Lang)
 
 	vals, _ = expandValues(c.Values)
 

@@ -10,11 +10,6 @@ const (
 	// OrCondition represents a condition added to the query via OR keyword
 	OrCondition
 
-	// LangEN represents the english language
-	LangEN string = "en"
-	// LangFR represents the french language
-	LangFR string = "fr"
-
 	// Table represnts the table name
 	Table = "repo"
 )

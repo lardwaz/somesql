@@ -73,7 +73,7 @@ func (s *Update) ToSQL() {
 	var (
 		fieldsStr     string
 		conditionsStr string
-		dataFieldLang = GetLangFieldData(s.GetLang())
+		dataFieldLang string
 
 		fieldsBuff           strings.Builder
 		metaFieldsBuff       strings.Builder
@@ -92,6 +92,13 @@ func (s *Update) ToSQL() {
 		relValuesAdd    []interface{}
 		relValuesRemove []interface{}
 	)
+
+	if !IsLangValid(s.GetLang()) {
+		s.SetLang(LangEN)
+	}
+
+	dataFieldLang = GetLangFieldData(s.GetLang())
+
 	fields, values := s.fields.List()
 
 	// Processing fields and values
