@@ -145,7 +145,7 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 		{
 			name:           "SELECT * with condition",
 			query:          somesql.NewSelect().Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
-			expectedSQL:    `SELECT "id", "created_at", "updated_at", "owner_id", "status", "type", "data_en", "relations" FROM repo WHERE "id"=$1 LIMIT 10`,
+			expectedSQL:    `SELECT "id", "created_at", "updated_at", "owner_id", "status", "type", "data_en", "relations" FROM repo WHERE "id" = $1 LIMIT 10`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
 		},
@@ -158,14 +158,14 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 		{
 			name:           "SELECT * + relations->rel, with conditions",
 			query:          somesql.NewSelect().Fields("relations.author", "relations.tags").Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
-			expectedSQL:    `SELECT json_build_object('author', "relations"->'author', 'tags', "relations"->'tags') "relations" FROM repo WHERE "id"=$1 LIMIT 10`,
+			expectedSQL:    `SELECT json_build_object('author', "relations"->'author', 'tags', "relations"->'tags') "relations" FROM repo WHERE "id" = $1 LIMIT 10`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
 		},
 		{
 			name:           "SELECT relations->rel only, with conditions",
 			query:          somesql.NewSelect().Fields("relations.author", "relations.tags").Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
-			expectedSQL:    `SELECT json_build_object('author', "relations"->'author', 'tags', "relations"->'tags') "relations" FROM repo WHERE "id"=$1 LIMIT 10`,
+			expectedSQL:    `SELECT json_build_object('author', "relations"->'author', 'tags', "relations"->'tags') "relations" FROM repo WHERE "id" = $1 LIMIT 10`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
 		},
@@ -305,13 +305,13 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 		{
 			name:           "UPDATE meta + data fields conditions",
 			query:          somesql.NewUpdate().Fields(somesql.NewFields().ID("1").Status("published").Set("data.body", "body value").Set("data.author_id", "123")).Where(somesql.And(somesql.LangEN, "id", "=", "234")),
-			expectedSQL:    `UPDATE repo SET "id" = $1, "status" = $2, "data_en" = "data_en" || {"body": $3, "author_id": $4} WHERE "id"=$5`,
+			expectedSQL:    `UPDATE repo SET "id" = $1, "status" = $2, "data_en" = "data_en" || {"body": $3, "author_id": $4} WHERE "id" = $5`,
 			expectedValues: []interface{}{"1", "published", "body value", "123", "234"},
 		},
 		{
 			name:           "UPDATE meta + data fields conditions 2",
 			query:          somesql.NewUpdate().Fields(somesql.NewFields().ID("1").Status("published").Set("data.body", "body value").Set("data.author_id", "123")).Where(somesql.And(somesql.LangEN, "data.author_id", "=", "234")),
-			expectedSQL:    `UPDATE repo SET "id" = $1, "status" = $2, "data_en" = "data_en" || {"body": $3, "author_id": $4} WHERE "data_en"->>'author_id'=$5`,
+			expectedSQL:    `UPDATE repo SET "id" = $1, "status" = $2, "data_en" = "data_en" || {"body": $3, "author_id": $4} WHERE "data_en"->>'author_id' = $5`,
 			expectedValues: []interface{}{"1", "published", "body value", "123", "234"},
 		},
 		// Update relations : add
@@ -330,7 +330,7 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 		{
 			name:           "UPDATE add 1 relation only + conditions",
 			query:          somesql.NewUpdate().Fields(somesql.NewFields().Add("relations.author", []string{"x"})).Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
-			expectedSQL:    `UPDATE repo SET "relations" = relAdd.relations FROM (SELECT (("relations" - 'author') || JSONB_BUILD_OBJECT('author', "relations"->'author' || '$1'::JSONB)) "relations" FROM repo WHERE "id"=$2) relAdd WHERE "id"=$3`,
+			expectedSQL:    `UPDATE repo SET "relations" = relAdd.relations FROM (SELECT (("relations" - 'author') || JSONB_BUILD_OBJECT('author', "relations"->'author' || '$1'::JSONB)) "relations" FROM repo WHERE "id" = $2) relAdd WHERE "id" = $3`,
 			expectedValues: []interface{}{`["x"]`, "uuid", "uuid"},
 		},
 		// // Update relations : remove
@@ -349,7 +349,7 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 		{
 			name:           "UPDATE remove 1 relation only + conditions",
 			query:          somesql.NewUpdate().Fields(somesql.NewFields().Remove("relations.author", []string{"x"})).Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
-			expectedSQL:    `UPDATE repo SET "relations" = updates.updRel FROM (SELECT (("relations" - 'author') || JSONB_BUILD_OBJECT('author', JSONB_AGG(authorUpd))) "updatedRel" FROM (SELECT "relations", JSONB_ARRAY_ELEMENTS_TEXT("relations"->'author') authorUpd FROM repo WHERE "id"=$1) expandedValues WHERE authorUpd NOT IN ($2) GROUP BY "relations") updates WHERE "id"=$3`,
+			expectedSQL:    `UPDATE repo SET "relations" = updates.updRel FROM (SELECT (("relations" - 'author') || JSONB_BUILD_OBJECT('author', JSONB_AGG(authorUpd))) "updatedRel" FROM (SELECT "relations", JSONB_ARRAY_ELEMENTS_TEXT("relations"->'author') authorUpd FROM repo WHERE "id" = $1) expandedValues WHERE authorUpd NOT IN ($2) GROUP BY "relations") updates WHERE "id" = $3`,
 			expectedValues: []interface{}{"uuid", `["x"]`, "uuid"},
 		},
 	}
@@ -398,7 +398,7 @@ func TestQuery_AsSQL_Delete(t *testing.T) {
 		{
 			name:           "DELETE with condition",
 			query:          somesql.NewDelete().Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
-			expectedSQL:    `DELETE FROM repo WHERE "id"=$1`,
+			expectedSQL:    `DELETE FROM repo WHERE "id" = $1`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
 		},

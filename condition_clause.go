@@ -70,7 +70,7 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 		field = `"` + dataFieldLang + `"->>'` + innerField + `'`
 	} else if innerField, ok := GetInnerField(FieldRelations, c.Field); ok {
 		field = `"` + FieldRelations + `"`
-		c.Operator = " @> "
+		c.Operator = "@>"
 		rhs = `'{"` + innerField + `":?}'::JSONB`
 		isInnerRel = true
 	}
@@ -97,8 +97,8 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 	vals, _ := expandValues(c.Value)
 
 	if isInnerRel {
-		return "(" + lhs + c.Operator + rhs + ")", vals
+		return "(" + lhs + " " + c.Operator + " " + rhs + ")", vals
 	}
 
-	return lhs + c.Operator + rhs, vals
+	return lhs + " " + c.Operator + " " + rhs, vals
 }
