@@ -117,7 +117,7 @@ func (s *Update) ToSQL() {
 				for idx, innerField := range innerFields {
 					switch innerActions[idx] {
 					case NoneJSONBArr:
-						relFieldsBuff.WriteString(`"` + innerField + `": ?`)
+						relFieldsBuff.WriteString(`'` + innerField + `', ?, `) // TODO: does not accept array (must cater for that)
 						relValues = append(relValues, innerValues[idx])
 					case JSONBArrAdd:
 						relFieldsAddBuff.WriteString(`("` + FieldRelations + `" - '` + innerField + `') || `)
