@@ -107,7 +107,7 @@ func (s *Update) ToSQL() {
 			if jsonbFields, ok := values[i].(JSONBFields); ok {
 				innerFields, innerValues, _ := jsonbFields.GetOrderedList()
 				for _, innerField := range innerFields {
-					dataFieldsBuff.WriteString(`'` + innerField + `', ?, `)
+					dataFieldsBuff.WriteString(`'` + innerField + `', ?::text, `)
 				}
 				dataValues = innerValues
 			}
@@ -117,8 +117,10 @@ func (s *Update) ToSQL() {
 				for idx, innerField := range innerFields {
 					switch innerActions[idx] {
 					case NoneJSONBArr:
-						relFieldsBuff.WriteString(`'` + innerField + `', ?, `) // TODO: does not accept array (must cater for that)
-						relValues = append(relValues, innerValues[idx])
+						relFieldsBuff.WriteString(`'` + innerField + `', ?::JSONB, `)
+						if jsonBytes, err := json.Marshal(innerValues[idx]); err == nil {
+							relValues = append(relValues, string(jsonBytes))
+						}
 					case JSONBArrAdd:
 						relFieldsAddBuff.WriteString(`("` + FieldRelations + `" - '` + innerField + `') || `)
 						relFieldsAddBuff2.WriteString(`'` + innerField + `', COALESCE("` + FieldRelations + `"->'` + innerField + `' || ?::JSONB, ?::JSONB), `)
@@ -156,16 +158,14 @@ func (s *Update) ToSQL() {
 	// Set data fields
 	if dataFieldsBuff.Len() > 0 {
 		dataFieldsStr := dataFieldsBuff.String()[:dataFieldsBuff.Len()-2] // trim ", "
-		fieldsBuff.WriteString(`"` + dataFieldLang + `" = COALESCE("` + dataFieldLang + `" || json_object(ARRAY[` + dataFieldsStr + `])::JSONB, json_object(ARRAY[` + dataFieldsStr + `])::JSONB), `)
-		s.values = append(s.values, dataValues...)
+		fieldsBuff.WriteString(`"` + dataFieldLang + `" = jsonb_build_object(` + dataFieldsStr + `)::JSONB, `)
 		s.values = append(s.values, dataValues...)
 	}
 
 	// Set relationship fields
 	if relFieldsBuff.Len() > 0 {
 		relFieldsStr := relFieldsBuff.String()[:relFieldsBuff.Len()-2] // trim ", "
-		fieldsBuff.WriteString(`"` + FieldRelations + `" = COALESCE("` + FieldRelations + `" || json_object(ARRAY[` + relFieldsStr + `])::JSONB, json_object(ARRAY[` + relFieldsStr + `])::JSONB), `)
-		s.values = append(s.values, relValues...)
+		fieldsBuff.WriteString(`"` + FieldRelations + `" = jsonb_build_object(` + relFieldsStr + `)::JSONB, `)
 		s.values = append(s.values, relValues...)
 	}
 
