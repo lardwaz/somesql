@@ -107,7 +107,7 @@ func (s *Update) ToSQL() {
 			if jsonbFields, ok := values[i].(JSONBFields); ok {
 				innerFields, innerValues, _ := jsonbFields.GetOrderedList()
 				for _, innerField := range innerFields {
-					dataFieldsBuff.WriteString(`"` + innerField + `": ?, `)
+					dataFieldsBuff.WriteString(`'` + innerField + `', ?, `)
 				}
 				dataValues = innerValues
 			}
@@ -121,8 +121,9 @@ func (s *Update) ToSQL() {
 						relValues = append(relValues, innerValues[idx])
 					case JSONBArrAdd:
 						relFieldsAddBuff.WriteString(`("` + FieldRelations + `" - '` + innerField + `') || `)
-						relFieldsAddBuff2.WriteString(`'` + innerField + `', "` + FieldRelations + `"->'` + innerField + `' || '?'::JSONB, `)
+						relFieldsAddBuff2.WriteString(`'` + innerField + `', COALESCE("` + FieldRelations + `"->'` + innerField + `' || ?::JSONB, ?::JSONB), `)
 						if jsonBytes, err := json.Marshal(innerValues[idx]); err == nil {
+							relValuesAdd = append(relValuesAdd, string(jsonBytes))
 							relValuesAdd = append(relValuesAdd, string(jsonBytes))
 						}
 					case JSONBArrRemove:
@@ -155,14 +156,16 @@ func (s *Update) ToSQL() {
 	// Set data fields
 	if dataFieldsBuff.Len() > 0 {
 		dataFieldsStr := dataFieldsBuff.String()[:dataFieldsBuff.Len()-2] // trim ", "
-		fieldsBuff.WriteString(`"` + dataFieldLang + `" = "` + dataFieldLang + `" || {` + dataFieldsStr + `}, `)
+		fieldsBuff.WriteString(`"` + dataFieldLang + `" = COALESCE("` + dataFieldLang + `" || json_object(ARRAY[` + dataFieldsStr + `])::JSONB, json_object(ARRAY[` + dataFieldsStr + `])::JSONB), `)
+		s.values = append(s.values, dataValues...)
 		s.values = append(s.values, dataValues...)
 	}
 
 	// Set relationship fields
 	if relFieldsBuff.Len() > 0 {
 		relFieldsStr := relFieldsBuff.String()[:relFieldsBuff.Len()-2] // trim ", "
-		fieldsBuff.WriteString(`"` + FieldRelations + `" = "` + FieldRelations + `" || {` + relFieldsStr + `}, `)
+		fieldsBuff.WriteString(`"` + FieldRelations + `" = COALESCE("` + FieldRelations + `" || json_object(ARRAY[` + relFieldsStr + `])::JSONB, json_object(ARRAY[` + relFieldsStr + `])::JSONB), `)
+		s.values = append(s.values, relValues...)
 		s.values = append(s.values, relValues...)
 	}
 
