@@ -58,9 +58,9 @@ func TestConditionQuery(t *testing.T) {
 		{
 			name:      "AndInQuery [2]",
 			fieldName: "author_id",
-			query:     somesql.NewSelectInner().Fields("data.author_id").Where(somesql.And(somesql.LangEN, "id", "=", "1")).Where(somesql.And(somesql.LangEN, "status", "=", "published")),
-			sql:       `"data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id" = ? AND "status" = ? LIMIT 10)`,
-			values:    []interface{}{"1", "published"},
+			query:     somesql.NewSelectInner().Fields("data.author_id").Where(somesql.And(somesql.LangEN, "id", "=", "1")).Where(somesql.And(somesql.LangEN, "type", "=", "entityA")),
+			sql:       `"data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id" = ? AND "type" = ? LIMIT 10)`,
+			values:    []interface{}{"1", "entityA"},
 			caseType:  caseAndIn,
 			lang:      somesql.LangEN,
 		},

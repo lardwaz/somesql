@@ -13,7 +13,6 @@ const (
 	FieldCreatedAt string = "created_at"
 	FieldUpdatedAt string = "updated_at"
 	FieldOwnerID   string = "owner_id"
-	FieldStatus    string = "status"
 	FieldType      string = "type"
 	FieldData      string = "data"
 	FieldRelations string = "relations"
@@ -25,7 +24,7 @@ const (
 
 // Fields variables
 var (
-	MetaFieldsList = []string{FieldID, FieldCreatedAt, FieldUpdatedAt, FieldOwnerID, FieldStatus, FieldType}
+	MetaFieldsList = []string{FieldID, FieldCreatedAt, FieldUpdatedAt, FieldOwnerID, FieldType}
 	FieldsList     = append(MetaFieldsList, FieldData, FieldRelations)
 )
 
@@ -126,7 +125,6 @@ func (f Fields) UseDefaults() Fields {
 	f[FieldCreatedAt] = time.Now()
 	f[FieldUpdatedAt] = time.Now()
 	f[FieldOwnerID] = uuid.Nil.String()
-	f[FieldStatus] = ""
 	f[FieldType] = ""
 	f[FieldData] = NewJSONBFields()
 	f[FieldRelations] = NewJSONBFields()
@@ -158,13 +156,6 @@ func (f Fields) UpdatedAt(t time.Time) Fields {
 // OwnerID is a setter for OwnerID in Fields
 func (f Fields) OwnerID(id string) Fields {
 	f.Set(FieldOwnerID, id)
-
-	return f
-}
-
-// Status is a setter for Status in Fields
-func (f Fields) Status(s string) Fields {
-	f.Set(FieldStatus, s)
 
 	return f
 }
@@ -253,7 +244,7 @@ func (f Fields) List() ([]string, []interface{}) {
 // IsFieldMeta returns true if field is a meta field
 func IsFieldMeta(field string) bool {
 	switch field {
-	case FieldID, FieldCreatedAt, FieldUpdatedAt, FieldOwnerID, FieldStatus, FieldType:
+	case FieldID, FieldCreatedAt, FieldUpdatedAt, FieldOwnerID, FieldType:
 		return true
 	}
 
