@@ -17,7 +17,6 @@ CREATE TABLE repo (
     "created_at" TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Indian/Mauritius'::TEXT),
     "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Indian/Mauritius'::TEXT),
     "owner_id"   UUID      NOT NULL DEFAULT uuid_nil(),
-    "status"     TEXT      NOT NULL DEFAULT 'draft',
     "type"       TEXT      NOT NULL DEFAULT 'article',
     "data_en"    JSONB     NOT NULL DEFAULT '[{}]',
     "data_fr"    JSONB     NOT NULL DEFAULT '[{}]'
