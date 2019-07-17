@@ -1,4 +1,4 @@
-module go.lsl.digital/gocipe/somesql
+module go.lsl.digital/lardwaz/somesql
 
 require (
 	github.com/kr/pretty v0.1.0 // indirect

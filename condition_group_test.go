@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.lsl.digital/gocipe/somesql"
+	"go.lsl.digital/lardwaz/somesql"
 )
 
 func TestConditionGroup(t *testing.T) {

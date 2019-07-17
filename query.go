@@ -1,4 +1,4 @@
-package somesql //import go.lsl.digital/gocipe/somesql
+package somesql //import go.lsl.digital/lardwaz/somesql
 
 import (
 	"database/sql"

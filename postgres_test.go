@@ -7,7 +7,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	"go.lsl.digital/gocipe/somesql"
+	"go.lsl.digital/lardwaz/somesql"
 )
 
 func TestQuery_AsSQL_Select(t *testing.T) {
