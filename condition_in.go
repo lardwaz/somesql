@@ -99,7 +99,7 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 		isInnerData = true
 	} else if innerField, ok := GetInnerField(FieldRelations, c.Field); ok {
 		field = `"` + innerField + `"`
-		lhs = `("` + FieldRelations + `" @> `
+		lhs = `("` + dataFieldLang + `" @> `
 		isInnerRel = true
 	}
 

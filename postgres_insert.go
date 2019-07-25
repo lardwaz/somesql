@@ -94,13 +94,7 @@ func (s *Insert) ToSQL() {
 	for i, f := range fields {
 		if IsFieldMeta(f) {
 			s.values[i] = values[i]
-		} else if IsFieldData(f) {
-			if jsonbFields, ok := values[i].(JSONBFields); ok {
-				if jsonBytes, err := json.Marshal(jsonbFields.Values()); err == nil {
-					s.values[i] = string(jsonBytes)
-				}
-			}
-		} else if IsFieldRelations(f) {
+		} else if IsFieldData(f) || IsFieldRelations(f) {
 			if jsonbFields, ok := values[i].(JSONBFields); ok {
 				if jsonBytes, err := json.Marshal(jsonbFields.Values()); err == nil {
 					s.values[i] = string(jsonBytes)
@@ -111,7 +105,7 @@ func (s *Insert) ToSQL() {
 		// Double quote the field name
 		// Placeholders
 		if IsFieldMeta(f) || IsFieldData(f) || IsFieldRelations(f) {
-			if IsFieldData(f) {
+			if IsFieldData(f) || IsFieldRelations(f) {
 				f = dataFieldLang // data => data_<lang>
 			}
 			fieldsBuff.WriteString(`"` + f + `", `)

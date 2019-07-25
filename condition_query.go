@@ -59,7 +59,7 @@ func (c ConditionQuery) AsSQL(in ...bool) (string, []interface{}) {
 		field string
 	)
 
-	if IsFieldMeta(c.Field) || IsFieldData(c.Field) {
+	if IsFieldMeta(c.Field) || IsFieldData(c.Field) || IsFieldRelations(c.Field) {
 		field = `"` + c.Field + `"`
 	} else {
 		field = `"` + GetLangFieldData(c.Lang) + `"->>'` + c.Field + `'`

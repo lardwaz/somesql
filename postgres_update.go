@@ -122,16 +122,16 @@ func (s *Update) ToSQL() {
 							relValues = append(relValues, string(jsonBytes))
 						}
 					case JSONBArrAdd:
-						relFieldsAddBuff.WriteString(`("` + FieldRelations + `" - '` + innerField + `') || `)
-						relFieldsAddBuff2.WriteString(`'` + innerField + `', COALESCE("` + FieldRelations + `"->'` + innerField + `' || ?::JSONB, ?::JSONB), `)
+						relFieldsAddBuff.WriteString(`("` + dataFieldLang + `" - '` + innerField + `') || `)
+						relFieldsAddBuff2.WriteString(`'` + innerField + `', COALESCE("` + dataFieldLang + `"->'` + innerField + `' || ?::JSONB, ?::JSONB), `)
 						if jsonBytes, err := json.Marshal(innerValues[idx]); err == nil {
 							relValuesAdd = append(relValuesAdd, string(jsonBytes))
 							relValuesAdd = append(relValuesAdd, string(jsonBytes))
 						}
 					case JSONBArrRemove:
-						relFieldsRemoveBuff.WriteString(`("` + FieldRelations + `" - '` + innerField + `') || `)
+						relFieldsRemoveBuff.WriteString(`("` + dataFieldLang + `" - '` + innerField + `') || `)
 						relFieldsRemoveBuff2.WriteString(`'` + innerField + `', JSONB_AGG(` + innerField + `Upd), `)
-						relFieldsRemoveBuff3.WriteString(`JSONB_ARRAY_ELEMENTS_TEXT("` + FieldRelations + `"->'` + innerField + `') ` + innerField + `Upd, `)
+						relFieldsRemoveBuff3.WriteString(`JSONB_ARRAY_ELEMENTS_TEXT("` + dataFieldLang + `"->'` + innerField + `') ` + innerField + `Upd, `)
 						relFieldsRemoveBuff4.WriteString(innerField + `Upd NOT IN (?) AND `)
 						if jsonBytes, err := json.Marshal(innerValues[idx]); err == nil {
 							relValuesRemove = append(relValuesRemove, string(jsonBytes))
@@ -165,7 +165,7 @@ func (s *Update) ToSQL() {
 	// Set relationship fields
 	if relFieldsBuff.Len() > 0 {
 		relFieldsStr := relFieldsBuff.String()[:relFieldsBuff.Len()-2] // trim ", "
-		fieldsBuff.WriteString(`"` + FieldRelations + `" = jsonb_build_object(` + relFieldsStr + `)::JSONB, `)
+		fieldsBuff.WriteString(`"` + dataFieldLang + `" = jsonb_build_object(` + relFieldsStr + `)::JSONB, `)
 		s.values = append(s.values, relValues...)
 	}
 
@@ -178,9 +178,9 @@ func (s *Update) ToSQL() {
 	if relFieldsAddBuff.Len() > 0 {
 		relFieldsAddStr := relFieldsAddBuff.String()[:relFieldsAddBuff.Len()-4]    // trim " || "
 		relFieldsAddStr2 := relFieldsAddBuff2.String()[:relFieldsAddBuff2.Len()-2] // trim ", "
-		fieldsBuff.WriteString(`"` + FieldRelations + `" = relAdd.` + FieldRelations + ` FROM `)
+		fieldsBuff.WriteString(`"` + dataFieldLang + `" = relAdd.` + dataFieldLang + ` FROM `)
 		fieldsBuff.WriteString(`(SELECT (` + relFieldsAddStr + ` || JSONB_BUILD_OBJECT(` + relFieldsAddStr2 + `))`)
-		fieldsBuff.WriteString(` "` + FieldRelations + `" FROM ` + Table + conditionsStr + `) relAdd, `)
+		fieldsBuff.WriteString(` "` + dataFieldLang + `" FROM ` + Table + conditionsStr + `) relAdd, `)
 		s.values = append(s.values, relValuesAdd...)
 		s.values = append(s.values, condValues...)
 	}
@@ -191,9 +191,9 @@ func (s *Update) ToSQL() {
 		relFieldsRemoveStr2 := relFieldsRemoveBuff2.String()[:relFieldsRemoveBuff2.Len()-2] // trim ", "
 		relFieldsRemoveStr3 := relFieldsRemoveBuff3.String()[:relFieldsRemoveBuff3.Len()-2] // trim ", "
 		relFieldsRemoveStr4 := relFieldsRemoveBuff4.String()[:relFieldsRemoveBuff4.Len()-5] // trim " AND "
-		fieldsBuff.WriteString(`"` + FieldRelations + `" = updates.updRel FROM (SELECT (` + relFieldsRemoveStr + ` || JSONB_BUILD_OBJECT(` + relFieldsRemoveStr2 + `))`)
-		fieldsBuff.WriteString(` "updatedRel" FROM (SELECT "` + FieldRelations + `", ` + relFieldsRemoveStr3 + ` FROM ` + Table + conditionsStr + `)`)
-		fieldsBuff.WriteString(` expandedValues WHERE ` + relFieldsRemoveStr4 + ` GROUP BY "` + FieldRelations + `") updates, `)
+		fieldsBuff.WriteString(`"` + dataFieldLang + `" = updates.updRel FROM (SELECT (` + relFieldsRemoveStr + ` || JSONB_BUILD_OBJECT(` + relFieldsRemoveStr2 + `))`)
+		fieldsBuff.WriteString(` "updatedRel" FROM (SELECT "` + dataFieldLang + `", ` + relFieldsRemoveStr3 + ` FROM ` + Table + conditionsStr + `)`)
+		fieldsBuff.WriteString(` expandedValues WHERE ` + relFieldsRemoveStr4 + ` GROUP BY "` + dataFieldLang + `") updates, `)
 		s.values = append(s.values, condValues...)
 		s.values = append(s.values, relValuesRemove...)
 	}

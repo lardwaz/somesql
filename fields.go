@@ -25,7 +25,7 @@ const (
 // Fields variables
 var (
 	MetaFieldsList = []string{FieldID, FieldCreatedAt, FieldUpdatedAt, FieldOwnerID, FieldType}
-	FieldsList     = append(MetaFieldsList, FieldData, FieldRelations)
+	FieldsList     = append(MetaFieldsList, FieldData)
 )
 
 // JSONBField represents information about a single JSONB field
@@ -127,7 +127,6 @@ func (f Fields) UseDefaults() Fields {
 	f[FieldOwnerID] = uuid.Nil.String()
 	f[FieldType] = ""
 	f[FieldData] = NewJSONBFields()
-	f[FieldRelations] = NewJSONBFields()
 
 	return f
 }

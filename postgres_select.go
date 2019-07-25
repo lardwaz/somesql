@@ -113,7 +113,7 @@ func (s *Select) ToSQL() {
 
 	// Processing fields
 	for _, f := range s.fields {
-		if IsFieldMeta(f) || IsFieldData(f) || IsFieldRelations(f) {
+		if IsFieldMeta(f) || IsFieldData(f) {
 			if f == FieldData {
 				f = dataFieldLang
 			}
@@ -126,9 +126,9 @@ func (s *Select) ToSQL() {
 			}
 		} else if innerField, ok := GetInnerField(FieldRelations, f); ok {
 			if isInnerQuery {
-				relFieldsBuff.WriteString(`"` + FieldRelations + `"->>'` + innerField + `' "` + innerField + `", `)
+				dataFieldsBuff.WriteString(`"` + dataFieldLang + `"->>'` + innerField + `' "` + innerField + `", `)
 			} else {
-				relFieldsBuff.WriteString(`'` + innerField + `', "` + FieldRelations + `"->'` + innerField + `', `)
+				dataFieldsBuff.WriteString(`'` + innerField + `', "` + dataFieldLang + `"->'` + innerField + `', `)
 			}
 		}
 	}

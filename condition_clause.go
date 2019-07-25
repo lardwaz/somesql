@@ -67,7 +67,7 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 	dataFieldLang = GetLangFieldData(c.Lang)
 
 	if IsFieldMeta(c.Field) || IsFieldData(c.Field) || IsFieldRelations(c.Field) {
-		if IsFieldData(c.Field) {
+		if IsFieldData(c.Field) || IsFieldRelations(c.Field) {
 			field = `"` + dataFieldLang + `"`
 		} else {
 			field = `"` + c.Field + `"`
@@ -75,7 +75,7 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 	} else if innerField, ok := GetInnerField(FieldData, c.Field); ok {
 		field = `"` + dataFieldLang + `"->>'` + innerField + `'`
 	} else if innerField, ok := GetInnerField(FieldRelations, c.Field); ok {
-		field = `"` + FieldRelations + `"`
+		field = `"` + dataFieldLang + `"`
 		c.Operator = "@>"
 		rhs = `'{"` + innerField + `":?}'::JSONB`
 		isInnerRel = true
