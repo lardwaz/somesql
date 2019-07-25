@@ -301,13 +301,13 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 			name:           "UPDATE set relation only",
 			query:          somesql.NewUpdate().Fields(somesql.NewFields().Set("relations.tags", []string{"a", "b"})),
 			expectedSQL:    `UPDATE repo SET "data_en" = jsonb_build_object('tags', $1::text)::JSONB`,
-			expectedValues: []interface{}{[]interface{}{"a", "b"}},
+			expectedValues: []interface{}{`["a","b"]`},
 		},
 		{
 			name:           "UPDATE set relation with data",
 			query:          somesql.NewUpdate().Fields(somesql.NewFields().Set("data.body", "body value").Set("relations.tags", []string{"a", "b"})),
 			expectedSQL:    `UPDATE repo SET "data_en" = jsonb_build_object('body', $1::text, 'tags', $2::text)::JSONB`,
-			expectedValues: []interface{}{"body value", []interface{}{"a", "b"}},
+			expectedValues: []interface{}{"body value", `["a","b"]`},
 		},
 	}
 

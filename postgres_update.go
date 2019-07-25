@@ -2,6 +2,7 @@ package somesql
 
 import (
 	"database/sql"
+	"encoding/json"
 	"strings"
 )
 
@@ -95,10 +96,18 @@ func (s *Update) ToSQL() {
 		if IsFieldData(f) {
 			if jsonbFields, ok := values[i].(JSONBFields); ok {
 				innerFields, innerValues, _ := jsonbFields.GetOrderedList()
-				for _, innerField := range innerFields {
-					dataFieldsBuff.WriteString(`'` + innerField + `', ?::text, `)
+				for idx, innerField := range innerFields {
+					if _, ok := innerValues[idx].([]interface{}); ok {
+						dataFieldsBuff.WriteString(`'` + innerField + `', ?::JSONB, `)
+						if jsonBytes, err := json.Marshal(innerValues[idx]); err == nil {
+							dataValues = append(dataValues, string(jsonBytes))
+						}
+					} else {
+
+						dataFieldsBuff.WriteString(`'` + innerField + `', ?::text, `)
+						dataValues = append(dataValues, innerValues[idx])
+					}
 				}
-				dataValues = innerValues
 			}
 		} else if IsFieldMeta(f) { // Check if Meta fields
 			metaFieldsBuff.WriteString(`"` + f + `" = ?, `)
