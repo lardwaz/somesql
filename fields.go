@@ -200,13 +200,13 @@ func (f Fields) set(field string, value interface{}, action uint8) {
 		jsonbFields.Add(innerField, value, action)
 		f[FieldData] = jsonbFields
 	} else if innerField, ok := GetInnerField(FieldRelations, field); ok {
-		jsonbFields, ok := f[FieldRelations].(JSONBFields)
+		jsonbFields, ok := f[FieldData].(JSONBFields)
 		if !ok { // if not jsonbfields, make it
 			jsonbFields = NewJSONBFields()
 		}
 		vals, _ := expandValues(value)
 		jsonbFields.Add(innerField, vals, action)
-		f[FieldRelations] = jsonbFields
+		f[FieldData] = jsonbFields
 	}
 }
 

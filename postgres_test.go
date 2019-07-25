@@ -208,6 +208,12 @@ func TestQuery_AsSQL_Insert(t *testing.T) {
 			expectedValues: []interface{}{"1", "entityA"},
 		},
 		{
+			name:           "INSERT no default + 1 data + 1 relation",
+			query:          somesql.NewInsert().Fields(somesql.NewFields().Type("entityA").Set("data.body", "abc").Set("relations.tags", []string{"a", "b", "c"})),
+			expectedSQL:    `INSERT INTO repo ("type", "data_en") VALUES ($1, $2)`,
+			expectedValues: []interface{}{"entityA", `{"body":"abc","tags":["a","b","c"]}`},
+		},
+		{
 			name:           "INSERT no default + 1 relation",
 			query:          somesql.NewInsert().Fields(somesql.NewFields().Type("entityA").Set("relations.tags", []string{"a", "b", "c"})),
 			expectedSQL:    `INSERT INTO repo ("type", "data_en") VALUES ($1, $2)`,
@@ -224,30 +230,6 @@ func TestQuery_AsSQL_Insert(t *testing.T) {
 			query:          somesql.NewInsert().Fields(somesql.NewFields().Type("entityA").Set("relations.tags", "a")),
 			expectedSQL:    `INSERT INTO repo ("type", "data_en") VALUES ($1, $2)`,
 			expectedValues: []interface{}{"entityA", `{"tags":["a"]}`},
-		},
-		{
-			name:           "INSERT no default + 1 relation multiple seperate values",
-			query:          somesql.NewInsert().Fields(somesql.NewFields().Type("entityA").Set("relations.tags", "a").Add("relations.tags", "b").Add("relations.tags", []string{"c"})),
-			expectedSQL:    `INSERT INTO repo ("type", "data_en") VALUES ($1, $2)`,
-			expectedValues: []interface{}{"entityA", `{"tags":["a","b","c"]}`},
-		},
-		{
-			name:           "INSERT no default + 1 relation multiple seperate values 2",
-			query:          somesql.NewInsert().Fields(somesql.NewFields().Type("entityA").Set("relations.tags", []string{"a"}).Add("relations.tags", "b").Add("relations.tags", []string{"c"})),
-			expectedSQL:    `INSERT INTO repo ("type", "data_en") VALUES ($1, $2)`,
-			expectedValues: []interface{}{"entityA", `{"tags":["a","b","c"]}`},
-		},
-		{
-			name:           "INSERT no default + 1 relation multiple seperate values 3",
-			query:          somesql.NewInsert().Fields(somesql.NewFields().Type("entityA").Add("relations.tags", "a").Add("relations.tags", "b").Add("relations.tags", "c")),
-			expectedSQL:    `INSERT INTO repo ("type", "data_en") VALUES ($1, $2)`,
-			expectedValues: []interface{}{"entityA", `{"tags":["a","b","c"]}`},
-		},
-		{
-			name:           "INSERT no default + 1 relation multiple seperate values overwrite 4",
-			query:          somesql.NewInsert().Fields(somesql.NewFields().Type("entityA").Add("relations.tags", "a").Add("relations.tags", "b").Set("relations.tags", "c")),
-			expectedSQL:    `INSERT INTO repo ("type", "data_en") VALUES ($1, $2)`,
-			expectedValues: []interface{}{"entityA", `{"tags":["c"]}`},
 		},
 	}
 
@@ -314,43 +296,18 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 			expectedSQL:    `UPDATE repo SET "id" = $1, "type" = $2, "data_en" = jsonb_build_object('body', $3::text, 'author_id', $4::text)::JSONB WHERE "data_en"->>'author_id' = $5`,
 			expectedValues: []interface{}{"1", "entityA", "body value", "123", "234"},
 		},
-		// Update relations : add
+		// Update relations
 		{
-			name:           "UPDATE add 1 relation only",
-			query:          somesql.NewUpdate().Fields(somesql.NewFields().Add("relations.tags", []string{"a", "b"})),
-			expectedSQL:    `UPDATE repo SET "data_en" = relAdd.data_en FROM (SELECT (("data_en" - 'tags') || JSONB_BUILD_OBJECT('tags', COALESCE("data_en"->'tags' || $1::JSONB, $2::JSONB))) "data_en" FROM repo) relAdd`,
-			expectedValues: []interface{}{`["a","b"]`, `["a","b"]`},
+			name:           "UPDATE set relation only",
+			query:          somesql.NewUpdate().Fields(somesql.NewFields().Set("relations.tags", []string{"a", "b"})),
+			expectedSQL:    `UPDATE repo SET "data_en" = jsonb_build_object('tags', $1::text)::JSONB`,
+			expectedValues: []interface{}{[]interface{}{"a", "b"}},
 		},
 		{
-			name:           "UPDATE add 1 or more relations only",
-			query:          somesql.NewUpdate().Fields(somesql.NewFields().Add("relations.tags", []string{"a", "b"}).Add("relations.author", []string{"x"})),
-			expectedSQL:    `UPDATE repo SET "data_en" = relAdd.data_en FROM (SELECT (("data_en" - 'tags') || ("data_en" - 'author') || JSONB_BUILD_OBJECT('tags', COALESCE("data_en"->'tags' || $1::JSONB, $2::JSONB), 'author', COALESCE("data_en"->'author' || $3::JSONB, $4::JSONB))) "data_en" FROM repo) relAdd`,
-			expectedValues: []interface{}{`["a","b"]`, `["a","b"]`, `["x"]`, `["x"]`},
-		},
-		{
-			name:           "UPDATE add 1 relation only + conditions",
-			query:          somesql.NewUpdate().Fields(somesql.NewFields().Add("relations.author", []string{"x"})).Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
-			expectedSQL:    `UPDATE repo SET "data_en" = relAdd.data_en FROM (SELECT (("data_en" - 'author') || JSONB_BUILD_OBJECT('author', COALESCE("data_en"->'author' || $1::JSONB, $2::JSONB))) "data_en" FROM repo WHERE "id" = $3) relAdd WHERE "id" = $4`,
-			expectedValues: []interface{}{`["x"]`, `["x"]`, "uuid", "uuid"},
-		},
-		// // Update relations : remove
-		{
-			name:           "UPDATE remove 1 relation only",
-			query:          somesql.NewUpdate().Fields(somesql.NewFields().Remove("relations.tags", []string{"a", "b"})),
-			expectedSQL:    `UPDATE repo SET "data_en" = updates.updRel FROM (SELECT (("data_en" - 'tags') || JSONB_BUILD_OBJECT('tags', JSONB_AGG(tagsUpd))) "updatedRel" FROM (SELECT "data_en", JSONB_ARRAY_ELEMENTS_TEXT("data_en"->'tags') tagsUpd FROM repo) expandedValues WHERE tagsUpd NOT IN ($1) GROUP BY "data_en") updates`,
-			expectedValues: []interface{}{`["a","b"]`},
-		},
-		{
-			name:           "UPDATE remove 1 or more relations only",
-			query:          somesql.NewUpdate().Fields(somesql.NewFields().Remove("relations.tags", []string{"a", "b"}).Remove("relations.author", []string{"x"})),
-			expectedSQL:    `UPDATE repo SET "data_en" = updates.updRel FROM (SELECT (("data_en" - 'tags') || ("data_en" - 'author') || JSONB_BUILD_OBJECT('tags', JSONB_AGG(tagsUpd), 'author', JSONB_AGG(authorUpd))) "updatedRel" FROM (SELECT "data_en", JSONB_ARRAY_ELEMENTS_TEXT("data_en"->'tags') tagsUpd, JSONB_ARRAY_ELEMENTS_TEXT("data_en"->'author') authorUpd FROM repo) expandedValues WHERE tagsUpd NOT IN ($1) AND authorUpd NOT IN ($2) GROUP BY "data_en") updates`,
-			expectedValues: []interface{}{`["a","b"]`, `["x"]`},
-		},
-		{
-			name:           "UPDATE remove 1 relation only + conditions",
-			query:          somesql.NewUpdate().Fields(somesql.NewFields().Remove("relations.author", []string{"x"})).Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
-			expectedSQL:    `UPDATE repo SET "data_en" = updates.updRel FROM (SELECT (("data_en" - 'author') || JSONB_BUILD_OBJECT('author', JSONB_AGG(authorUpd))) "updatedRel" FROM (SELECT "data_en", JSONB_ARRAY_ELEMENTS_TEXT("data_en"->'author') authorUpd FROM repo WHERE "id" = $1) expandedValues WHERE authorUpd NOT IN ($2) GROUP BY "data_en") updates WHERE "id" = $3`,
-			expectedValues: []interface{}{"uuid", `["x"]`, "uuid"},
+			name:           "UPDATE set relation with data",
+			query:          somesql.NewUpdate().Fields(somesql.NewFields().Set("data.body", "body value").Set("relations.tags", []string{"a", "b"})),
+			expectedSQL:    `UPDATE repo SET "data_en" = jsonb_build_object('body', $1::text, 'tags', $2::text)::JSONB`,
+			expectedValues: []interface{}{"body value", []interface{}{"a", "b"}},
 		},
 	}
 

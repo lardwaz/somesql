@@ -2,7 +2,6 @@ package somesql
 
 import (
 	"database/sql"
-	"encoding/json"
 	"strings"
 )
 
@@ -75,22 +74,12 @@ func (s *Update) ToSQL() {
 		conditionsStr string
 		dataFieldLang string
 
-		fieldsBuff           strings.Builder
-		metaFieldsBuff       strings.Builder
-		dataFieldsBuff       strings.Builder
-		relFieldsBuff        strings.Builder
-		relFieldsAddBuff     strings.Builder
-		relFieldsAddBuff2    strings.Builder
-		relFieldsRemoveBuff  strings.Builder
-		relFieldsRemoveBuff2 strings.Builder
-		relFieldsRemoveBuff3 strings.Builder
-		relFieldsRemoveBuff4 strings.Builder
+		fieldsBuff     strings.Builder
+		metaFieldsBuff strings.Builder
+		dataFieldsBuff strings.Builder
 
-		metaValues      []interface{}
-		dataValues      []interface{}
-		relValues       []interface{}
-		relValuesAdd    []interface{}
-		relValuesRemove []interface{}
+		metaValues []interface{}
+		dataValues []interface{}
 	)
 
 	if !IsLangValid(s.GetLang()) {
@@ -110,34 +99,6 @@ func (s *Update) ToSQL() {
 					dataFieldsBuff.WriteString(`'` + innerField + `', ?::text, `)
 				}
 				dataValues = innerValues
-			}
-		} else if IsFieldRelations(f) {
-			if jsonbFields, ok := values[i].(JSONBFields); ok {
-				innerFields, innerValues, innerActions := jsonbFields.GetOrderedList()
-				for idx, innerField := range innerFields {
-					switch innerActions[idx] {
-					case NoneJSONBArr:
-						relFieldsBuff.WriteString(`'` + innerField + `', ?::JSONB, `)
-						if jsonBytes, err := json.Marshal(innerValues[idx]); err == nil {
-							relValues = append(relValues, string(jsonBytes))
-						}
-					case JSONBArrAdd:
-						relFieldsAddBuff.WriteString(`("` + dataFieldLang + `" - '` + innerField + `') || `)
-						relFieldsAddBuff2.WriteString(`'` + innerField + `', COALESCE("` + dataFieldLang + `"->'` + innerField + `' || ?::JSONB, ?::JSONB), `)
-						if jsonBytes, err := json.Marshal(innerValues[idx]); err == nil {
-							relValuesAdd = append(relValuesAdd, string(jsonBytes))
-							relValuesAdd = append(relValuesAdd, string(jsonBytes))
-						}
-					case JSONBArrRemove:
-						relFieldsRemoveBuff.WriteString(`("` + dataFieldLang + `" - '` + innerField + `') || `)
-						relFieldsRemoveBuff2.WriteString(`'` + innerField + `', JSONB_AGG(` + innerField + `Upd), `)
-						relFieldsRemoveBuff3.WriteString(`JSONB_ARRAY_ELEMENTS_TEXT("` + dataFieldLang + `"->'` + innerField + `') ` + innerField + `Upd, `)
-						relFieldsRemoveBuff4.WriteString(innerField + `Upd NOT IN (?) AND `)
-						if jsonBytes, err := json.Marshal(innerValues[idx]); err == nil {
-							relValuesRemove = append(relValuesRemove, string(jsonBytes))
-						}
-					}
-				}
 			}
 		} else if IsFieldMeta(f) { // Check if Meta fields
 			metaFieldsBuff.WriteString(`"` + f + `" = ?, `)
@@ -162,40 +123,9 @@ func (s *Update) ToSQL() {
 		s.values = append(s.values, dataValues...)
 	}
 
-	// Set relationship fields
-	if relFieldsBuff.Len() > 0 {
-		relFieldsStr := relFieldsBuff.String()[:relFieldsBuff.Len()-2] // trim ", "
-		fieldsBuff.WriteString(`"` + dataFieldLang + `" = jsonb_build_object(` + relFieldsStr + `)::JSONB, `)
-		s.values = append(s.values, relValues...)
-	}
-
 	conditions, condValues := processConditions(s.conditions)
 	if len(conditions) > 0 {
 		conditionsStr = " WHERE " + conditions
-	}
-
-	// Add relationship fields
-	if relFieldsAddBuff.Len() > 0 {
-		relFieldsAddStr := relFieldsAddBuff.String()[:relFieldsAddBuff.Len()-4]    // trim " || "
-		relFieldsAddStr2 := relFieldsAddBuff2.String()[:relFieldsAddBuff2.Len()-2] // trim ", "
-		fieldsBuff.WriteString(`"` + dataFieldLang + `" = relAdd.` + dataFieldLang + ` FROM `)
-		fieldsBuff.WriteString(`(SELECT (` + relFieldsAddStr + ` || JSONB_BUILD_OBJECT(` + relFieldsAddStr2 + `))`)
-		fieldsBuff.WriteString(` "` + dataFieldLang + `" FROM ` + Table + conditionsStr + `) relAdd, `)
-		s.values = append(s.values, relValuesAdd...)
-		s.values = append(s.values, condValues...)
-	}
-
-	// Remove relationship fields
-	if relFieldsRemoveBuff.Len() > 0 {
-		relFieldsRemoveStr := relFieldsRemoveBuff.String()[:relFieldsRemoveBuff.Len()-4]    // trim " || "
-		relFieldsRemoveStr2 := relFieldsRemoveBuff2.String()[:relFieldsRemoveBuff2.Len()-2] // trim ", "
-		relFieldsRemoveStr3 := relFieldsRemoveBuff3.String()[:relFieldsRemoveBuff3.Len()-2] // trim ", "
-		relFieldsRemoveStr4 := relFieldsRemoveBuff4.String()[:relFieldsRemoveBuff4.Len()-5] // trim " AND "
-		fieldsBuff.WriteString(`"` + dataFieldLang + `" = updates.updRel FROM (SELECT (` + relFieldsRemoveStr + ` || JSONB_BUILD_OBJECT(` + relFieldsRemoveStr2 + `))`)
-		fieldsBuff.WriteString(` "updatedRel" FROM (SELECT "` + dataFieldLang + `", ` + relFieldsRemoveStr3 + ` FROM ` + Table + conditionsStr + `)`)
-		fieldsBuff.WriteString(` expandedValues WHERE ` + relFieldsRemoveStr4 + ` GROUP BY "` + dataFieldLang + `") updates, `)
-		s.values = append(s.values, condValues...)
-		s.values = append(s.values, relValuesRemove...)
 	}
 
 	if fieldsBuff.Len() > 0 {
