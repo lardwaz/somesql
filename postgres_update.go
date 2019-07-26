@@ -21,7 +21,7 @@ type Update struct {
 func NewUpdate(db ...*sql.DB) *Update {
 	var s Update
 
-	s.lang = LangEN
+	s.lang = DefaultLang
 
 	if len(db) > 0 {
 		s.db = db[0]
@@ -83,8 +83,8 @@ func (s *Update) ToSQL() {
 		dataValues []interface{}
 	)
 
-	if !IsLangValid(s.GetLang()) {
-		s.SetLang(LangEN)
+	if s.GetLang() == "" {
+		s.SetLang(DefaultLang)
 	}
 
 	dataFieldLang = GetLangFieldData(s.GetLang())

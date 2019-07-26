@@ -54,7 +54,7 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 		},
 		{
 			name:        "SELECT * (langFR)",
-			query:       somesql.NewSelectLang(somesql.LangFR),
+			query:       somesql.NewSelectLang("fr"),
 			expectedSQL: `SELECT "id", "created_at", "updated_at", "owner_id", "type", "data_fr" FROM repo LIMIT 10`,
 		},
 		// Select some pre-defined fields
@@ -75,7 +75,7 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 		},
 		{
 			name:        "SELECT id, type, data (LangFR)",
-			query:       somesql.NewSelectLang(somesql.LangFR).Fields("id", "type", "data"),
+			query:       somesql.NewSelectLang("fr").Fields("id", "type", "data"),
 			expectedSQL: `SELECT "id", "type", "data_fr" FROM repo LIMIT 10`,
 		},
 		// Select pre-defined fields and json attributes ('data_en'/'data_fr') from data_*
@@ -91,7 +91,7 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 		},
 		{
 			name:        "SELECT id, type, data_en (LangFR)",
-			query:       somesql.NewSelectLang(somesql.LangFR).Fields("id", "type", "data.data_en"),
+			query:       somesql.NewSelectLang("fr").Fields("id", "type", "data.data_en"),
 			expectedSQL: `SELECT "id", "type", json_build_object('data_en', "data_fr"->'data_en') "data" FROM repo LIMIT 10`,
 		},
 		{
@@ -106,7 +106,7 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 		},
 		{
 			name:        "SELECT id, type, data_fr (LangFR)",
-			query:       somesql.NewSelectLang(somesql.LangFR).Fields("id", "type", "data.data_fr"),
+			query:       somesql.NewSelectLang("fr").Fields("id", "type", "data.data_fr"),
 			expectedSQL: `SELECT "id", "type", json_build_object('data_fr', "data_fr"->'data_fr') "data" FROM repo LIMIT 10`,
 		},
 		// Select pre-defined fields and json attributes (any other) from data_*
@@ -122,7 +122,7 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 		},
 		{
 			name:        "SELECT id, type, data_fr->'body' (LangFR)",
-			query:       somesql.NewSelectLang(somesql.LangFR).Fields("id", "type", "data.body"),
+			query:       somesql.NewSelectLang("fr").Fields("id", "type", "data.body"),
 			expectedSQL: `SELECT "id", "type", json_build_object('body', "data_fr"->'body') "data" FROM repo LIMIT 10`,
 		},
 		// Select pre-defined fields and json attributes (any other + compound) from data_*
@@ -138,13 +138,13 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 		},
 		{
 			name:        "SELECT id, type, data_fr->'body', data_fr->'author_id' (LangFR)",
-			query:       somesql.NewSelectLang(somesql.LangFR).Fields("id", "type", "data.body", "data.author_id"),
+			query:       somesql.NewSelectLang("fr").Fields("id", "type", "data.body", "data.author_id"),
 			expectedSQL: `SELECT "id", "type", json_build_object('body', "data_fr"->'body', 'author_id', "data_fr"->'author_id') "data" FROM repo LIMIT 10`,
 		},
 		// SELECT with conditions
 		{
 			name:           "SELECT * with condition",
-			query:          somesql.NewSelect().Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
+			query:          somesql.NewSelect().Where(somesql.And("en", "id", "=", "uuid")),
 			expectedSQL:    `SELECT "id", "created_at", "updated_at", "owner_id", "type", "data_en" FROM repo WHERE "id" = $1 LIMIT 10`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
@@ -157,14 +157,14 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 		},
 		{
 			name:           "SELECT * + relations->rel, with conditions",
-			query:          somesql.NewSelect().Fields("relations.author", "relations.tags").Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
+			query:          somesql.NewSelect().Fields("relations.author", "relations.tags").Where(somesql.And("en", "id", "=", "uuid")),
 			expectedSQL:    `SELECT json_build_object('author', "data_en"->'author', 'tags', "data_en"->'tags') "data" FROM repo WHERE "id" = $1 LIMIT 10`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
 		},
 		{
 			name:           "SELECT relations->rel only, with conditions",
-			query:          somesql.NewSelect().Fields("relations.author", "relations.tags").Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
+			query:          somesql.NewSelect().Fields("relations.author", "relations.tags").Where(somesql.And("en", "id", "=", "uuid")),
 			expectedSQL:    `SELECT json_build_object('author', "data_en"->'author', 'tags', "data_en"->'tags') "data" FROM repo WHERE "id" = $1 LIMIT 10`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
@@ -268,7 +268,7 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 		},
 		{
 			name:           "UPDATE data fields (LangFR)",
-			query:          somesql.NewUpdateLang(somesql.LangFR).Fields(somesql.NewFields().Set("data.body", "body value").Set("data.author_id", "123")),
+			query:          somesql.NewUpdateLang("fr").Fields(somesql.NewFields().Set("data.body", "body value").Set("data.author_id", "123")),
 			expectedSQL:    `UPDATE repo SET "data_fr" = jsonb_build_object('body', $1::text, 'author_id', $2::text)::JSONB`,
 			expectedValues: []interface{}{"body value", "123"},
 		},
@@ -280,19 +280,19 @@ func TestQuery_AsSQL_Update(t *testing.T) {
 		},
 		{
 			name:           "UPDATE meta + data fields (LangFR)",
-			query:          somesql.NewUpdateLang(somesql.LangFR).Fields(somesql.NewFields().ID("1").Type("entityA").Set("data.body", "body value").Set("data.author_id", "123")),
+			query:          somesql.NewUpdateLang("fr").Fields(somesql.NewFields().ID("1").Type("entityA").Set("data.body", "body value").Set("data.author_id", "123")),
 			expectedSQL:    `UPDATE repo SET "id" = $1, "type" = $2, "data_fr" = jsonb_build_object('body', $3::text, 'author_id', $4::text)::JSONB`,
 			expectedValues: []interface{}{"1", "entityA", "body value", "123"},
 		},
 		{
 			name:           "UPDATE meta + data fields conditions",
-			query:          somesql.NewUpdate().Fields(somesql.NewFields().ID("1").Type("entityA").Set("data.body", "body value").Set("data.author_id", "123")).Where(somesql.And(somesql.LangEN, "id", "=", "234")),
+			query:          somesql.NewUpdate().Fields(somesql.NewFields().ID("1").Type("entityA").Set("data.body", "body value").Set("data.author_id", "123")).Where(somesql.And("en", "id", "=", "234")),
 			expectedSQL:    `UPDATE repo SET "id" = $1, "type" = $2, "data_en" = jsonb_build_object('body', $3::text, 'author_id', $4::text)::JSONB WHERE "id" = $5`,
 			expectedValues: []interface{}{"1", "entityA", "body value", "123", "234"},
 		},
 		{
 			name:           "UPDATE meta + data fields conditions 2",
-			query:          somesql.NewUpdate().Fields(somesql.NewFields().ID("1").Type("entityA").Set("data.body", "body value").Set("data.author_id", "123")).Where(somesql.And(somesql.LangEN, "data.author_id", "=", "234")),
+			query:          somesql.NewUpdate().Fields(somesql.NewFields().ID("1").Type("entityA").Set("data.body", "body value").Set("data.author_id", "123")).Where(somesql.And("en", "data.author_id", "=", "234")),
 			expectedSQL:    `UPDATE repo SET "id" = $1, "type" = $2, "data_en" = jsonb_build_object('body', $3::text, 'author_id', $4::text)::JSONB WHERE "data_en"->>'author_id' = $5`,
 			expectedValues: []interface{}{"1", "entityA", "body value", "123", "234"},
 		},
@@ -354,14 +354,14 @@ func TestQuery_AsSQL_Delete(t *testing.T) {
 		},
 		{
 			name:           "DELETE with condition",
-			query:          somesql.NewDelete().Where(somesql.And(somesql.LangEN, "id", "=", "uuid")),
+			query:          somesql.NewDelete().Where(somesql.And("en", "id", "=", "uuid")),
 			expectedSQL:    `DELETE FROM repo WHERE "id" = $1`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
 		},
 		{
 			name:           "DELETE with conditions + relations",
-			query:          somesql.NewDelete().Where(somesql.And("", "relations.article", "=", "uuid")),
+			query:          somesql.NewDelete().Where(somesql.And("en", "relations.article", "=", "uuid")),
 			expectedSQL:    `DELETE FROM repo WHERE ("data_en" @> '{"article":$1}'::JSONB)`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},

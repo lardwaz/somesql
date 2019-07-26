@@ -24,7 +24,7 @@ type Select struct {
 func NewSelect(db ...*sql.DB) *Select {
 	var s Select
 
-	s.lang = LangEN
+	s.lang = DefaultLang
 	s.fields = FieldsList
 	s.limit = 10
 
@@ -105,8 +105,8 @@ func (s *Select) ToSQL() {
 		relFieldsBuff  strings.Builder
 	)
 
-	if !IsLangValid(s.GetLang()) {
-		s.SetLang(LangEN)
+	if s.GetLang() == "" {
+		s.SetLang(DefaultLang)
 	}
 
 	dataFieldLang = GetLangFieldData(s.GetLang())

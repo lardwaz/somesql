@@ -10,8 +10,11 @@ const (
 	// OrCondition represents a condition added to the query via OR keyword
 	OrCondition
 
-	// Table represnts the table name
+	// Table represents the table name
 	Table = "repo"
+
+	// DefaultLang defines the default language for data jsonb
+	DefaultLang = "en"
 )
 
 const (

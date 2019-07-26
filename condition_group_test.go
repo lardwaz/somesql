@@ -26,8 +26,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"AND (1)",
 			[]somesql.Condition{
-				somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.And(somesql.LangEN, "type", "=", "entityA"),
+				somesql.And("en", "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.And("en", "type", "=", "entityA"),
 			},
 			`("id" = ? AND "type" = ?)`,
 			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", "entityA"},
@@ -36,8 +36,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"AND (2)",
 			[]somesql.Condition{
-				somesql.Or(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.And(somesql.LangEN, "type", "=", "entityA"),
+				somesql.Or("en", "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.And("en", "type", "=", "entityA"),
 			},
 			`("id" = ? AND "type" = ?)`,
 			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", "entityA"},
@@ -46,8 +46,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"AND (3)",
 			[]somesql.Condition{
-				somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.Or(somesql.LangEN, "type", "=", true),
+				somesql.And("en", "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.Or("en", "type", "=", true),
 			},
 			`("id" = ? OR ("type")::BOOLEAN = ?)`,
 			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", true},
@@ -56,8 +56,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"OR (1)",
 			[]somesql.Condition{
-				somesql.Or(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.Or(somesql.LangEN, "type", "=", "entityA"),
+				somesql.Or("en", "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.Or("en", "type", "=", "entityA"),
 			},
 			`("id" = ? OR "type" = ?)`,
 			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", "entityA"},
@@ -66,8 +66,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"OR (2)",
 			[]somesql.Condition{
-				somesql.Or(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.And(somesql.LangEN, "type", "=", true),
+				somesql.Or("en", "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.And("en", "type", "=", true),
 			},
 			`("id" = ? AND ("type")::BOOLEAN = ?)`,
 			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", true},
@@ -76,8 +76,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"OR (3)",
 			[]somesql.Condition{
-				somesql.And(somesql.LangEN, "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
-				somesql.Or(somesql.LangEN, "type", "=", true),
+				somesql.And("en", "id", "=", "002fd6b1-f715-4875-838b-1546f27327df"),
+				somesql.Or("en", "type", "=", true),
 			},
 			`("id" = ? OR ("type")::BOOLEAN = ?)`,
 			[]interface{}{"002fd6b1-f715-4875-838b-1546f27327df", true},
@@ -86,8 +86,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"AND JSONB (fields in 'data' only)",
 			[]somesql.Condition{
-				somesql.And(somesql.LangEN, "data.badge", "=", "video"),
-				somesql.And(somesql.LangEN, "data.has_video", "=", true),
+				somesql.And("en", "data.badge", "=", "video"),
+				somesql.And("en", "data.has_video", "=", true),
 			},
 			`("data_en"->>'badge' = ? AND ("data_en"->>'has_video')::BOOLEAN = ?)`,
 			[]interface{}{"video", true},
@@ -98,8 +98,8 @@ func TestConditionGroup(t *testing.T) {
 		{
 			"AND JSONB with relations",
 			[]somesql.Condition{
-				somesql.And(somesql.LangEN, "relations.tags", "=", "video"),
-				somesql.And(somesql.LangEN, "data.has_video", "=", true),
+				somesql.And("en", "relations.tags", "=", "video"),
+				somesql.And("en", "data.has_video", "=", true),
 			},
 			`(("data_en" @> '{"tags":?}'::JSONB) AND ("data_en"->>'has_video')::BOOLEAN = ?)`,
 			[]interface{}{"video", true},

@@ -60,8 +60,8 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 		dataFieldLang   string
 	)
 
-	if !IsLangValid(c.Lang) {
-		c.Lang = LangEN
+	if c.Lang == "" {
+		c.Lang = DefaultLang
 	}
 
 	dataFieldLang = GetLangFieldData(c.Lang)

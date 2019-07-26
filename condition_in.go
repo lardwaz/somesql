@@ -75,8 +75,8 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 		rhsBuff strings.Builder
 	)
 
-	if !IsLangValid(c.Lang) {
-		c.Lang = LangEN
+	if c.Lang == "" {
+		c.Lang = DefaultLang
 	}
 
 	dataFieldLang = GetLangFieldData(c.Lang)

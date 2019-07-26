@@ -21,7 +21,7 @@ type Insert struct {
 func NewInsert(db ...*sql.DB) *Insert {
 	var s Insert
 
-	s.lang = LangEN
+	s.lang = DefaultLang
 	s.fields = NewFields()
 
 	if len(db) > 0 {
@@ -81,8 +81,8 @@ func (s *Insert) ToSQL() {
 		placeholdersBuff strings.Builder
 	)
 
-	if !IsLangValid(s.GetLang()) {
-		s.SetLang(LangEN)
+	if s.GetLang() == "" {
+		s.SetLang(DefaultLang)
 	}
 
 	dataFieldLang = GetLangFieldData(s.GetLang())

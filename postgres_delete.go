@@ -21,7 +21,7 @@ type Delete struct {
 func NewDelete(db ...*sql.DB) *Delete {
 	var s Delete
 
-	s.lang = LangEN
+	s.lang = DefaultLang
 
 	if len(db) > 0 {
 		s.db = db[0]
@@ -75,6 +75,10 @@ func (s *Delete) ToSQL() {
 		offsetStr     string
 		limitStr      string
 	)
+
+	if s.GetLang() == "" {
+		s.SetLang(DefaultLang)
+	}
 
 	conditions, values := processConditions(s.conditions)
 	s.values = values

@@ -35,7 +35,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "id",
 				value: []string{"A", "B", "C"},
 			},
@@ -46,7 +46,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (boolean values)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "type",
 				value: []bool{true, false},
 			},
@@ -57,7 +57,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (integer values)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "type",
 				value: []int{1, 2},
 			},
@@ -68,7 +68,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (with func on field)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "updated_at",
 				value: []string{"2019"},
 				funcs: []string{"YEAR"},
@@ -80,7 +80,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "id",
 				value: []string{"A", "B", "C"},
 			},
@@ -91,7 +91,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN (with func on field)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "updated_at",
 				value: []string{"2016"},
 				funcs: []string{"YEAR"},
@@ -103,7 +103,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (JSONB)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "data.name",
 				value: []string{"A", "B"},
 			},
@@ -114,7 +114,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN (JSONB)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "data.name",
 				value: []string{"A", "B"},
 			},
@@ -125,7 +125,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (JSONB) (with func on field)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "data.badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
@@ -137,7 +137,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN (JSONB) (with func on field)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "data.badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
@@ -149,7 +149,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (JSONB) - relations",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "relations.name",
 				value: []string{"A", "B"},
 			},
@@ -160,7 +160,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN (JSONB) - relations",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "relations.name",
 				value: []string{"A", "B"},
 			},
@@ -171,7 +171,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND IN (JSONB) (with func on field) - relations",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "relations.badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
@@ -183,7 +183,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"AND NOT IN (JSONB) (with func on field) - relations",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "relations.badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
@@ -196,7 +196,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "id",
 				value: []string{"A", "B", "C"},
 			},
@@ -207,7 +207,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN (with func on field)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "updated_at",
 				value: []string{"2019"},
 				funcs: []string{"YEAR"},
@@ -219,7 +219,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "id",
 				value: []string{"A", "B", "C"},
 			},
@@ -230,7 +230,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN (with func on field)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "updated_at",
 				value: []string{"2015"},
 				funcs: []string{"YEAR"},
@@ -242,7 +242,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN (JSONB)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "data.name",
 				value: []string{"A", "B"},
 			},
@@ -253,7 +253,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN (JSONB)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "data.name",
 				value: []string{"A", "B"},
 			},
@@ -264,7 +264,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN (JSONB) (with func on field)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "data.badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
@@ -276,7 +276,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN (JSONB) (with func on field)",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "data.badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
@@ -288,7 +288,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN (JSONB) - relations",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "relations.name",
 				value: []string{"A", "B"},
 			},
@@ -299,7 +299,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN (JSONB) - relations",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "relations.name",
 				value: []string{"A", "B"},
 			},
@@ -310,7 +310,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR IN (JSONB) (with func on field) - relations",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "relations.badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
@@ -322,7 +322,7 @@ func TestConditionIn(t *testing.T) {
 		{
 			"OR NOT IN (JSONB) (with func on field) - relations",
 			args{
-				lang:  somesql.LangEN,
+				lang:  "en",
 				field: "relations.badge",
 				value: []string{"video", "audio"},
 				funcs: []string{"LOWER"},
