@@ -16,7 +16,9 @@ func exec(sql string, values []interface{}, db *sql.DB, autocommit bool) error {
 		}
 	}()
 
-	return execTx(sql, values, tx, autocommit)
+	err = execTx(sql, values, tx, autocommit)
+
+	return err
 }
 
 func execTx(sql string, values []interface{}, tx *sql.Tx, autocommit bool) error {
