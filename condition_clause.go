@@ -60,10 +60,6 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 		dataFieldLang   string
 	)
 
-	if c.Lang == "" {
-		c.Lang = DefaultLang
-	}
-
 	dataFieldLang = GetLangFieldData(c.Lang)
 
 	if IsFieldMeta(c.Field) || IsFieldData(c.Field) || IsFieldRelations(c.Field) {

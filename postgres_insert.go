@@ -18,25 +18,17 @@ type Insert struct {
 }
 
 // NewInsert returns a new Insert
-func NewInsert(db ...*sql.DB) *Insert {
+func NewInsert(lang string, db ...*sql.DB) *Insert {
 	var s Insert
 
-	s.lang = DefaultLang
 	s.fields = NewFields()
+	s.lang = lang
 
 	if len(db) > 0 {
 		s.db = db[0]
 	}
 
 	return &s
-}
-
-// NewInsertLang returns a new Insert with specific lang
-func NewInsertLang(lang string, db ...*sql.DB) *Insert {
-	s := NewInsert(db...)
-	s.SetLang(lang)
-
-	return s
 }
 
 // SetDB implements Statement
@@ -80,10 +72,6 @@ func (s *Insert) ToSQL() {
 		fieldsBuff       strings.Builder
 		placeholdersBuff strings.Builder
 	)
-
-	if s.GetLang() == "" {
-		s.SetLang(DefaultLang)
-	}
 
 	dataFieldLang = GetLangFieldData(s.GetLang())
 

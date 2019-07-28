@@ -75,10 +75,6 @@ func (c ConditionIn) AsSQL(in ...bool) (string, []interface{}) {
 		rhsBuff strings.Builder
 	)
 
-	if c.Lang == "" {
-		c.Lang = DefaultLang
-	}
-
 	dataFieldLang = GetLangFieldData(c.Lang)
 
 	vals, _ = expandValues(c.Values)

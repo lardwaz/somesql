@@ -21,12 +21,12 @@ type Select struct {
 }
 
 // NewSelect returns a new Select
-func NewSelect(db ...*sql.DB) *Select {
+func NewSelect(lang string, db ...*sql.DB) *Select {
 	var s Select
 
-	s.lang = DefaultLang
 	s.fields = FieldsList
 	s.limit = 10
+	s.lang = lang
 
 	if len(db) > 0 {
 		s.db = db[0]
@@ -36,25 +36,10 @@ func NewSelect(db ...*sql.DB) *Select {
 }
 
 // NewSelectInner returns a new inner Select
-func NewSelectInner(db ...*sql.DB) *Select {
-	s := NewSelect(db...)
+func NewSelectInner(lang string, db ...*sql.DB) *Select {
+	s := NewSelect(lang, db...)
+	s.SetLang(lang)
 	s.SetInner(true)
-
-	return s
-}
-
-// NewSelectLang returns a new Delete with specific lang
-func NewSelectLang(lang string, db ...*sql.DB) *Select {
-	s := NewSelect(db...)
-	s.SetLang(lang)
-
-	return s
-}
-
-// NewSelectLangInner returns a new Delete with specific lang
-func NewSelectLangInner(lang string, db ...*sql.DB) *Select {
-	s := NewSelectInner(db...)
-	s.SetLang(lang)
 
 	return s
 }
@@ -104,10 +89,6 @@ func (s *Select) ToSQL() {
 		dataFieldsBuff strings.Builder
 		relFieldsBuff  strings.Builder
 	)
-
-	if s.GetLang() == "" {
-		s.SetLang(DefaultLang)
-	}
 
 	dataFieldLang = GetLangFieldData(s.GetLang())
 

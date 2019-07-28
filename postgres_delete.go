@@ -18,24 +18,16 @@ type Delete struct {
 }
 
 // NewDelete returns a new Delete
-func NewDelete(db ...*sql.DB) *Delete {
+func NewDelete(lang string, db ...*sql.DB) *Delete {
 	var s Delete
 
-	s.lang = DefaultLang
+	s.lang = lang
 
 	if len(db) > 0 {
 		s.db = db[0]
 	}
 
 	return &s
-}
-
-// NewDeleteLang returns a new Delete with specific lang
-func NewDeleteLang(lang string, db ...*sql.DB) *Delete {
-	s := NewDelete(db...)
-	s.SetLang(lang)
-
-	return s
 }
 
 // SetDB implements Statement
@@ -75,10 +67,6 @@ func (s *Delete) ToSQL() {
 		offsetStr     string
 		limitStr      string
 	)
-
-	if s.GetLang() == "" {
-		s.SetLang(DefaultLang)
-	}
 
 	conditions, values := processConditions(s.conditions)
 	s.values = values

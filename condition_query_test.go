@@ -31,8 +31,8 @@ func TestConditionQuery(t *testing.T) {
 		{
 			name:      "AndInQuery [error 1]",
 			fieldName: "author_id",
-			query:     somesql.NewSelectInner().Fields("type", "data.slug").Where(somesql.And("en", "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")),
-			sql:       `"data_en"->>'author_id' IN (SELECT "type", "data_en"->>'slug' "slug" FROM repo WHERE "id" = ? LIMIT 10)`,
+			query:     somesql.NewSelectInner("").Fields("type", "data.slug").Where(somesql.And("en", "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")),
+			sql:       `"data_en"->>'author_id' IN (SELECT "type", "data_"->>'slug' "slug" FROM repo WHERE "id" = ? LIMIT 10)`,
 			values:    []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 			caseType:  caseAndIn,
 			lang:      "en",
@@ -40,8 +40,8 @@ func TestConditionQuery(t *testing.T) {
 		{
 			name:      "OrInQuery [error 2]",
 			fieldName: "author_id",
-			query:     somesql.NewSelectInner().Fields("type", "data.slug").Where(somesql.And("en", "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")),
-			sql:       `"data_en"->>'author_id' IN (SELECT "type", "data_en"->>'slug' "slug" FROM repo WHERE "id" = ? LIMIT 10)`,
+			query:     somesql.NewSelectInner("").Fields("type", "data.slug").Where(somesql.And("en", "id", "=", "002fd6b1-f715-4875-838b-1546f27327df")),
+			sql:       `"data_en"->>'author_id' IN (SELECT "type", "data_"->>'slug' "slug" FROM repo WHERE "id" = ? LIMIT 10)`,
 			values:    []interface{}{"002fd6b1-f715-4875-838b-1546f27327df"},
 			caseType:  caseOrIn,
 			lang:      "en",
@@ -49,7 +49,7 @@ func TestConditionQuery(t *testing.T) {
 		{
 			name:      "AndInQuery [1]",
 			fieldName: "author_id",
-			query:     somesql.NewSelectInner().Fields("data.author_id").Where(somesql.And("en", "id", "=", "1")),
+			query:     somesql.NewSelectInner("en").Fields("data.author_id").Where(somesql.And("en", "id", "=", "1")),
 			sql:       `"data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id" = ? LIMIT 10)`,
 			values:    []interface{}{"1"},
 			caseType:  caseAndIn,
@@ -58,7 +58,7 @@ func TestConditionQuery(t *testing.T) {
 		{
 			name:      "AndInQuery [2]",
 			fieldName: "author_id",
-			query:     somesql.NewSelectInner().Fields("data.author_id").Where(somesql.And("en", "id", "=", "1")).Where(somesql.And("en", "type", "=", "entityA")),
+			query:     somesql.NewSelectInner("en").Fields("data.author_id").Where(somesql.And("en", "id", "=", "1")).Where(somesql.And("en", "type", "=", "entityA")),
 			sql:       `"data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id" = ? AND "type" = ? LIMIT 10)`,
 			values:    []interface{}{"1", "entityA"},
 			caseType:  caseAndIn,
@@ -67,7 +67,7 @@ func TestConditionQuery(t *testing.T) {
 		{
 			name:      "AndNotInQuery",
 			fieldName: "author_id",
-			query:     somesql.NewSelectInner().Fields("data.author_id").Where(somesql.And("en", "id", "=", "1")),
+			query:     somesql.NewSelectInner("en").Fields("data.author_id").Where(somesql.And("en", "id", "=", "1")),
 			sql:       `"data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id" = ? LIMIT 10)`,
 			values:    []interface{}{"1"},
 			caseType:  caseAndNotIn,
@@ -76,7 +76,7 @@ func TestConditionQuery(t *testing.T) {
 		{
 			name:      "OrInQuery",
 			fieldName: "author_id",
-			query:     somesql.NewSelectInner().Fields("data.author_id").Where(somesql.And("en", "id", "=", "1")),
+			query:     somesql.NewSelectInner("en").Fields("data.author_id").Where(somesql.And("en", "id", "=", "1")),
 			sql:       `"data_en"->>'author_id' IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id" = ? LIMIT 10)`,
 			values:    []interface{}{"1"},
 			caseType:  caseOrIn,
@@ -85,7 +85,7 @@ func TestConditionQuery(t *testing.T) {
 		{
 			name:      "OrNotInQuery",
 			fieldName: "author_id",
-			query:     somesql.NewSelectInner().Fields("data.author_id").Where(somesql.And("en", "id", "=", "1")),
+			query:     somesql.NewSelectInner("en").Fields("data.author_id").Where(somesql.And("en", "id", "=", "1")),
 			sql:       `"data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE "id" = ? LIMIT 10)`,
 			values:    []interface{}{"1"},
 			caseType:  caseOrNotIn,
@@ -94,7 +94,7 @@ func TestConditionQuery(t *testing.T) {
 		{
 			name:      "OrNotInQuery",
 			fieldName: "author_id",
-			query:     somesql.NewSelectInner().Fields("data.author_id").Where(somesql.And("en", "relations.tags", "", "video")),
+			query:     somesql.NewSelectInner("en").Fields("data.author_id").Where(somesql.And("en", "relations.tags", "", "video")),
 			sql:       `"data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE ("data_en" @> '{"tags":?}'::JSONB) LIMIT 10)`,
 			values:    []interface{}{"video"},
 			caseType:  caseOrNotIn,

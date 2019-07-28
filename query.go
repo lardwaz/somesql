@@ -11,10 +11,8 @@ const (
 	OrCondition
 
 	// Table represents the table name
+	// TODO: make configurable
 	Table = "repo"
-
-	// DefaultLang defines the default language for data jsonb
-	DefaultLang = "en"
 )
 
 const (
