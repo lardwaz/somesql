@@ -95,7 +95,7 @@ func TestConditionQuery(t *testing.T) {
 			name:      "OrNotInQuery",
 			fieldName: "author_id",
 			query:     somesql.NewSelectInner("en").Fields("data.author_id").Where(somesql.And("en", "relations.tags", "", "video")),
-			sql:       `"data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE ("data_en" @> '{"tags":?}'::JSONB) LIMIT 10)`,
+			sql:       `"data_en"->>'author_id' NOT IN (SELECT "data_en"->>'author_id' "author_id" FROM repo WHERE (jsonb_path_exists("data_en", '$.tags[*] £ (@ == $val)', json_object(ARRAY['val', ?])::jsonb)) LIMIT 10)`,
 			values:    []interface{}{"video"},
 			caseType:  caseOrNotIn,
 			lang:      "en",

@@ -71,9 +71,9 @@ func (c ConditionClause) AsSQL(in ...bool) (string, []interface{}) {
 	} else if innerField, ok := GetInnerField(FieldData, c.Field); ok {
 		field = `"` + dataFieldLang + `"->>'` + innerField + `'`
 	} else if innerField, ok := GetInnerField(FieldRelations, c.Field); ok {
-		field = `"` + dataFieldLang + `"`
-		c.Operator = "@>"
-		rhs = `'{"` + innerField + `":?}'::JSONB`
+		field = `jsonb_path_exists("` + dataFieldLang + `", '$.` + innerField + `[*] £ (@ `
+		c.Operator = "=="
+		rhs = `$val)', json_object(ARRAY['val', ?])::jsonb)`
 		isInnerRel = true
 	}
 

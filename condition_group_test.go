@@ -101,7 +101,7 @@ func TestConditionGroup(t *testing.T) {
 				somesql.And("en", "relations.tags", "=", "video"),
 				somesql.And("en", "data.has_video", "=", true),
 			},
-			`(("data_en" @> '{"tags":?}'::JSONB) AND ("data_en"->>'has_video')::BOOLEAN = ?)`,
+			`((jsonb_path_exists("data_en", '$.tags[*] £ (@  == $val)', json_object(ARRAY['val', ?])::jsonb)) AND ("data_en"->>'has_video')::BOOLEAN = ?)`,
 			[]interface{}{"video", true},
 			caseAnd,
 		},
