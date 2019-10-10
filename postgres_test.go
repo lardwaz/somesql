@@ -362,7 +362,7 @@ func TestQuery_AsSQL_Delete(t *testing.T) {
 		{
 			name:           "DELETE with conditions + relations",
 			query:          somesql.NewDelete("en").Where(somesql.And("en", "relations.article", "=", "uuid")),
-			expectedSQL:    `DELETE FROM repo WHERE ("data_en" @> '{"article":$1}'::JSONB)`,
+			expectedSQL:    `DELETE FROM repo WHERE (jsonb_path_exists("data_en", '$.article[*] ? (@ == $val)', json_object(ARRAY['val', $1])::jsonb))`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
 		},

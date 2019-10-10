@@ -3,6 +3,8 @@ package somesql
 import (
 	"database/sql"
 	"errors"
+
+	_ "github.com/lib/pq"
 )
 
 func rows(sql string, values []interface{}, db *sql.DB) (*sql.Rows, error) {

@@ -20,6 +20,9 @@ func processPlaceholders(sql string) string {
 		}
 	}
 
+	// Replace '£' with '?'
+	sql = strings.ReplaceAll(sql, "£", "?")
+
 	return sql
 }
 
