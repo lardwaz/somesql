@@ -96,12 +96,12 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 		},
 		{
 			name:        "SELECT id, type, data ORDER BY id ASC, type DESC, data_en ASC, data_en.age DESC",
-			query:       somesql.NewSelect("en").Fields("id", "type", "data").Order("id", true).Order("type", false).Order("data", true).Order("data.age", false),
+			query:       somesql.NewSelect("en").Fields("id", "type", "data").Order("id", true).Order("type", false).Order("data", true).Order("age", false),
 			expectedSQL: `SELECT "id", "type", "data_en" FROM repo ORDER BY id ASC, type DESC, data_en ASC, "data_en"->>'age' DESC LIMIT 10`,
 		},
 		{
 			name:        "SELECT id, type, data ORDER BY id ASC, type DESC, data_en ASC, data_en.age DESC, data_en.time ASC",
-			query:       somesql.NewSelect("en").Fields("id", "type", "data").Order("id", true).Order("type", false).Order("data", true).Order("data.age", false).Order("data.time", true),
+			query:       somesql.NewSelect("en").Fields("id", "type", "data").Order("id", true).Order("type", false).Order("data", true).Order("age", false).Order("time", true),
 			expectedSQL: `SELECT "id", "type", "data_en" FROM repo ORDER BY id ASC, type DESC, data_en ASC, "data_en"->>'age' DESC, "data_en"->>'time' ASC LIMIT 10`,
 		},
 		// Select pre-defined fields and json attributes ('data_en'/'data_fr') from data_*
@@ -172,6 +172,13 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 			name:           "SELECT * with condition",
 			query:          somesql.NewSelect("en").Where(somesql.And("en", "id", "=", "uuid")),
 			expectedSQL:    `SELECT "id", "created_at", "updated_at", "owner_id", "type", "data_en" FROM repo WHERE "id" = $1 LIMIT 10`,
+			checkValues:    true,
+			expectedValues: []interface{}{"uuid"},
+		},
+		{
+			name:           "SELECT * with condition ORDER",
+			query:          somesql.NewSelect("en").Where(somesql.And("en", "id", "=", "uuid")).Order("name", true),
+			expectedSQL:    `SELECT "id", "created_at", "updated_at", "owner_id", "type", "data_en" FROM repo WHERE "id" = $1 ORDER BY "data_en"->>'name' ASC LIMIT 10`,
 			checkValues:    true,
 			expectedValues: []interface{}{"uuid"},
 		},
