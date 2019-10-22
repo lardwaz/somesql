@@ -181,17 +181,15 @@ func (s *Select) ToSQL() {
 				orderBuff.WriteString(o.field + " " + orderStr + `, `)
 			} else if IsFieldData(o.field) {
 				orderBuff.WriteString(dataFieldLang + " " + orderStr + `, `)
-			} else if innerField, ok := GetInnerField(FieldData, o.field); ok {
-				orderBuff.WriteString(`"` + dataFieldLang + `"->>'` + innerField + `' ` + orderStr + `, `)
-			} else if _, ok := GetInnerField(FieldRelations, o.field); ok {
-				// We don't cater for relationships
+			} else {
+				orderBuff.WriteString(`"` + dataFieldLang + `"->>'` + o.field + `' ` + orderStr + `, `)
 			}
 		}
 
 		orderStr = orderBuff.String()[:orderBuff.Len()-2]
 	}
 
-	sql := "SELECT " + fieldsStr + " FROM " + Table + " " + conditionsStr + orderStr + " " + limitStr + " " + offsetStr
+	sql := "SELECT " + fieldsStr + " FROM " + Table + " " + conditionsStr + " " + orderStr + " " + limitStr + " " + offsetStr
 
 	if !isInnerQuery {
 		sql = processPlaceholders(sql)
