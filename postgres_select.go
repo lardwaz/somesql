@@ -14,10 +14,16 @@ type Select struct {
 	inner      bool
 	offset     int
 	limit      int
+	order      []order
 	sql        string
 	values     []interface{}
 	db         *sql.DB
 	lang       string
+}
+
+type order struct {
+	field string
+	order bool
 }
 
 // NewSelect returns a new Select
@@ -81,6 +87,7 @@ func (s *Select) ToSQL() {
 		conditionsStr string
 		offsetStr     string
 		limitStr      string
+		orderStr      string
 		isInnerQuery  = s.IsInner()
 		dataFieldLang string
 
@@ -88,6 +95,7 @@ func (s *Select) ToSQL() {
 		metaFieldsBuff strings.Builder
 		dataFieldsBuff strings.Builder
 		relFieldsBuff  strings.Builder
+		orderBuff      strings.Builder
 	)
 
 	dataFieldLang = GetLangFieldData(s.GetLang())
@@ -160,7 +168,30 @@ func (s *Select) ToSQL() {
 		offsetStr = "OFFSET " + strconv.Itoa(s.offset)
 	}
 
-	sql := "SELECT " + fieldsStr + " FROM " + Table + " " + conditionsStr + " " + limitStr + " " + offsetStr
+	if len(s.order) > 0 {
+		orderBuff.WriteString("ORDER BY ")
+
+		for _, o := range s.order {
+			orderStr := "DESC"
+			if o.order {
+				orderStr = "ASC"
+			}
+
+			if IsFieldMeta(o.field) {
+				orderBuff.WriteString(o.field + " " + orderStr + `, `)
+			} else if IsFieldData(o.field) {
+				orderBuff.WriteString(dataFieldLang + " " + orderStr + `, `)
+			} else if innerField, ok := GetInnerField(FieldData, o.field); ok {
+				orderBuff.WriteString(`"` + dataFieldLang + `"->>'` + innerField + `' ` + orderStr + `, `)
+			} else if _, ok := GetInnerField(FieldRelations, o.field); ok {
+				// We don't cater for relationships
+			}
+		}
+
+		orderStr = orderBuff.String()[:orderBuff.Len()-2]
+	}
+
+	sql := "SELECT " + fieldsStr + " FROM " + Table + " " + conditionsStr + orderStr + " " + limitStr + " " + offsetStr
 
 	if !isInnerQuery {
 		sql = processPlaceholders(sql)
@@ -212,5 +243,14 @@ func (s *Select) Offset(offset int) *Select {
 // Limit sets the Limit for Select
 func (s *Select) Limit(limit int) *Select {
 	s.limit = limit
+	return s
+}
+
+// Order sets the Order for Select
+func (s *Select) Order(field string, asc bool) *Select {
+	s.order = append(s.order, order{
+		field: field,
+		order: asc,
+	})
 	return s
 }
