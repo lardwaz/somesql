@@ -78,6 +78,32 @@ func TestQuery_AsSQL_Select(t *testing.T) {
 			query:       somesql.NewSelect("fr").Fields("id", "type", "data"),
 			expectedSQL: `SELECT "id", "type", "data_fr" FROM repo LIMIT 10`,
 		},
+		// Order by
+		{
+			name:        "SELECT id, type, data ORDER BY id ASC",
+			query:       somesql.NewSelect("en").Fields("id", "type", "data").Order("id", true),
+			expectedSQL: `SELECT "id", "type", "data_en" FROM repo ORDER BY id ASC LIMIT 10`,
+		},
+		{
+			name:        "SELECT id, type, data ORDER BY id ASC, type DESC",
+			query:       somesql.NewSelect("en").Fields("id", "type", "data").Order("id", true).Order("type", false),
+			expectedSQL: `SELECT "id", "type", "data_en" FROM repo ORDER BY id ASC, type DESC LIMIT 10`,
+		},
+		{
+			name:        "SELECT id, type, data ORDER BY id ASC, type DESC, data_en ASC",
+			query:       somesql.NewSelect("en").Fields("id", "type", "data").Order("id", true).Order("type", false).Order("data", true),
+			expectedSQL: `SELECT "id", "type", "data_en" FROM repo ORDER BY id ASC, type DESC, data_en ASC LIMIT 10`,
+		},
+		{
+			name:        "SELECT id, type, data ORDER BY id ASC, type DESC, data_en ASC, data_en.age DESC",
+			query:       somesql.NewSelect("en").Fields("id", "type", "data").Order("id", true).Order("type", false).Order("data", true).Order("data.age", false),
+			expectedSQL: `SELECT "id", "type", "data_en" FROM repo ORDER BY id ASC, type DESC, data_en ASC, "data_en"->>'age' DESC LIMIT 10`,
+		},
+		{
+			name:        "SELECT id, type, data ORDER BY id ASC, type DESC, data_en ASC, data_en.age DESC, data_en.time ASC",
+			query:       somesql.NewSelect("en").Fields("id", "type", "data").Order("id", true).Order("type", false).Order("data", true).Order("data.age", false).Order("data.time", true),
+			expectedSQL: `SELECT "id", "type", "data_en" FROM repo ORDER BY id ASC, type DESC, data_en ASC, "data_en"->>'age' DESC, "data_en"->>'time' ASC LIMIT 10`,
+		},
 		// Select pre-defined fields and json attributes ('data_en'/'data_fr') from data_*
 		{
 			name:        "SELECT id, type, data_en",
