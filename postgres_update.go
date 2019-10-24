@@ -92,7 +92,7 @@ func (s *Update) ToSQL() {
 						}
 					} else {
 
-						dataFieldsBuff.WriteString(`'` + innerField + `', ?::text, `)
+						dataFieldsBuff.WriteString(`'` + innerField + `', ?::` + getSQLType(innerValues[idx]) + `, `)
 						dataValues = append(dataValues, innerValues[idx])
 					}
 				}

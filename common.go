@@ -68,3 +68,16 @@ func getSliceChange(sliceOne, sliceTwo []string) []string {
 
 	return change
 }
+
+func getSQLType(v interface{}) string {
+	switch v.(type) {
+	case uint8, uint16, uint32, uint64, int8, int16, int32, int64, int, uint:
+		return "INT"
+	case string:
+		return "TEXT"
+	case bool:
+		return "BOOLEAN"
+	}
+
+	return "TEXT"
+}
